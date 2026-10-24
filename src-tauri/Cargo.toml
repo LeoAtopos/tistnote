@@ -1,0 +1,33 @@
+[package]
+name = "tistnote"
+version = "0.1.0"
+description = "品记 — 本地审美列表笔记"
+edition = "2021"
+
+[lib]
+name = "tistnote_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "v5", "serde"] }
+sha2 = "0.10"
+rfd = "0.15"
+base64 = "0.22"
+image = { version = "0.25", default-features = false, features = ["png", "ico"] }
+arboard = "3"
+tempfile = "3"
+fs2 = "0.4"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+panic = "abort"

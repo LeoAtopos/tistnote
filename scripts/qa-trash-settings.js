@@ -1,0 +1,41 @@
+async page => {
+  if (!new URL(page.url()).searchParams.has('preview')) throw Error('Use isolated preview');
+  const check=(ok,message)=>{if(!ok) throw Error(message);};
+  await page.evaluate(()=>localStorage.removeItem('tistnote-development-preview-v1'));
+  await page.reload();
+  await page.setViewportSize({width:1440,height:960});
+  const settings=page.getByRole('dialog',{name:'本地资料库',exact:true});
+  const open=()=>page.getByRole('button',{name:'设置',exact:true}).click();
+  await open();
+  check(await settings.getByRole('button',{name:'回收站',exact:true}).isDisabled(),'Trash should be disabled without a vault');
+  await settings.getByRole('button',{name:'关闭对话框',exact:true}).click();
+  await page.getByRole('button',{name:'创建或打开本地资料库',exact:true}).click();
+  await page.evaluate(async()=>{
+    const {command}=await import('/src/api.ts');
+    const {newNote}=await import('/src/model.ts');
+    const note={...newNote(),title:'待恢复笔记'};
+    const r=await command('save',{note,expected:null});
+    await command('trash',{id:note.id,restore:false,expected:r.revision});
+  });
+  await page.reload();
+  const nav=page.getByRole('navigation',{name:'主导航',exact:true});
+  check(await nav.getByRole('button',{name:'回收站',exact:true}).count()===0,'Trash remains in main navigation');
+  await open();
+  await page.screenshot({path:'output/playwright/trash-settings-desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'output/playwright/trash-settings-narrow.png',fullPage:true});
+  const audit=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,fonts:[...document.querySelectorAll('.modal button')].filter(el=>el.getClientRects().length).map(el=>parseFloat(getComputedStyle(el).fontSize))}));
+  check(audit.width>=audit.scrollWidth&&audit.fonts.every(px=>px>=18),'Settings font or overflow regression');
+  await settings.getByRole('button',{name:'回收站',exact:true}).click();
+  await page.getByRole('heading',{name:'回收站',exact:true}).waitFor();
+  check(await settings.count()===0,'Settings did not close after opening trash');
+  const row=page.locator('.trash-list article').filter({hasText:'待恢复笔记'});
+  await row.getByRole('button',{name:'永久删除',exact:true}).click();
+  await page.getByRole('dialog',{name:'确认操作',exact:true}).getByRole('button',{name:'取消',exact:true}).click();
+  check(await row.count()===1,'Cancel changed trash contents');
+  await row.getByRole('button',{name:'恢复',exact:true}).click();
+  await page.getByText('回收站是空的。',{exact:true}).waitFor();
+  await nav.getByRole('button',{name:/^笔记/}).click();
+  check(await page.getByRole('heading',{name:'待恢复笔记',exact:true}).count()===1,'Restore lost the note');
+  return {nav:'trash removed',settings:'disabled without vault; opens trash and closes modal',trash:'delete confirmation cancellation and restore preserved',audit};
+}

@@ -1,0 +1,33 @@
+async(page)=>{
+ await page.getByRole('button',{name:'展开或收起标签筛选',exact:true}).click();
+ await page.getByRole('button',{name:'电影',exact:true}).click();
+ if(await page.getByRole('article').count()!==6)throw Error('template filter failed');
+ await page.getByRole('button',{name:'随机一品 ↗',exact:true}).click();
+ const previous=await page.locator('.random-card h2').innerText();
+ await page.getByRole('button',{name:'换个主题',exact:true}).click();
+ if(await page.locator('.random-card h2').innerText()===previous)throw Error('random repeated');
+ await page.evaluate(()=>window.scrollTo(0,0));
+ await page.screenshot({path:'output/playwright/templates-desktop.png'});
+ await page.locator('.random-card').getByRole('button',{name:'开始填写',exact:true}).click();
+ await page.getByRole('textbox',{name:'笔记主题',exact:true}).waitFor();
+ if(await page.locator('.entry').count()!==0)throw Error('template copied answers');
+ await page.getByRole('button',{name:'更多笔记操作',exact:true}).click();
+ await page.getByRole('button',{name:'保存为模板',exact:true}).click();
+ await page.getByRole('dialog',{name:'编辑模板'}).waitFor();
+ await page.getByRole('textbox',{name:'主题',exact:true}).fill('我的测试模板');
+ await page.getByRole('textbox',{name:'填写提示',exact:true}).fill('想一想最近发生的变化。');
+ await page.getByRole('button',{name:'保存模板',exact:true}).click();
+ await page.getByRole('dialog').waitFor({state:'hidden'});
+ await page.getByRole('button',{name:'模板库',exact:true}).click();
+ await page.getByRole('button',{name:'展开或收起搜索',exact:true}).click();
+ await page.getByRole('textbox',{name:'搜索',exact:true}).fill('我的测试模板');
+ await page.getByRole('heading',{name:'我的测试模板',exact:true}).waitFor();
+ if(await page.getByRole('article').count()!==1)throw Error('personal template search failed');
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>window.scrollTo(0,0));
+ await page.screenshot({path:'output/playwright/templates-mobile.png',fullPage:true});
+ const bad=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,small:[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&e.textContent.trim()&&parseFloat(getComputedStyle(e).fontSize)<18).length}));
+ if(bad.overflow||bad.small)throw Error(JSON.stringify(bad));
+ await page.setViewportSize({width:1440,height:1000});
+ return {templates:'filter, random, independent note, personal template, mobile passed'};
+}

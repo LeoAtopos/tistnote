@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "品记",
+  "version": "0.1.0",
+  "identifier": "app.tistnote.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "品记 tistnote",
+        "width": 1440,
+        "height": 960,
+        "minWidth": 380,
+        "minHeight": 600,
+        "dragDropEnabled": false,
+        "generalAutofillEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-src 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico"],
+    "shortDescription": "品察世间人生，记录个人审美与偏好",
+    "windows": {
+      "webviewInstallMode": { "type": "skip" },
+      "nsis": { "languages": ["SimpChinese"], "displayLanguageSelector": false }
+    }
+  }
+}

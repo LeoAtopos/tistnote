@@ -1,0 +1,10 @@
+{
+  "identifier": "main",
+  "description": "仅主窗口的生命周期与本地事件",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:default",
+    "core:window:allow-destroy",
+    "core:window:allow-close"
+  ]
+}
