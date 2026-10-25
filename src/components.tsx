@@ -142,11 +142,13 @@ export function Modal({
   children,
   onClose,
   wide = false,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const closeRef = useRef(onClose);
@@ -163,7 +165,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className={wide ? "modal wide" : "modal"}
+      className={`modal ${wide ? "wide" : ""} ${className}`}
       onCancel={(e) => {
         e.preventDefault();
         closeRef.current();
@@ -532,7 +534,7 @@ export function ShareDialog({
   };
   return (
     <Modal
-      title={invitation ? "邀请对方分享" : "分享我的选择"}
+      title={invitation ? "求品" : "展品"}
       onClose={onClose}
       wide
     >
@@ -550,7 +552,7 @@ export function ShareDialog({
           ) : (
             <>
               <fieldset>
-                <legend>分享内容</legend>
+                <legend>展品内容</legend>
                 <label className="check">
                   <input
                     type="checkbox"
@@ -686,7 +688,7 @@ export function ShareDialog({
               <img
                 className="share-image"
                 src={pages[page]}
-                alt={`${note.title}的${invitation ? "求分享" : "分享"}图片，第 ${page + 1} 页`}
+                alt={`${note.title}的${invitation ? "求品" : "展品"}图片，第 ${page + 1} 页`}
               />
             )}
           </div>

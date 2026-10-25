@@ -5,8 +5,9 @@ async(page)=>{
  if(!await dialog.getByText('改名：花样年华 → 一一',{exact:true}).last().isVisible())throw Error('version diff missing');
  await page.screenshot({path:'output/playwright/native-history.png'});
  await page.getByRole('button',{name:'关闭对话框',exact:true}).click();
- await page.getByRole('button',{name:'分享',exact:true}).click();
- await page.getByRole('dialog',{name:'分享我的选择'}).waitFor();
+ await page.getByRole('button',{name:'品交',exact:true}).click();
+ await page.getByRole('button',{name:'展品',exact:true}).click();
+ await page.getByRole('dialog',{name:'展品',exact:true}).waitFor();
  await page.getByRole('button',{name:'复制当前页',exact:true}).click();
  await page.getByText('当前页已复制',{exact:true}).waitFor();
  await page.getByRole('button',{name:'关闭对话框',exact:true}).click();

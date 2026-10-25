@@ -190,6 +190,7 @@ export function NoteTree({
               aria-level={level}
               aria-expanded={expanded}
               data-folder={child.path}
+              data-create-in={child.path}
               className={`tree-folder-button ${currentGroup === child.path ? "active" : ""} ${dropTarget === child.path ? "tree-drop-target" : ""}`}
               disabled={busy}
               {...dragHandlers({ type: "group", id: child.path })}
@@ -221,6 +222,7 @@ export function NoteTree({
             tabIndex={-1}
             aria-level={level}
             aria-selected={currentId === note.id}
+            data-create-in={folder.path}
             className={`note-card tree-note ${currentId === note.id ? "selected" : ""}`}
             disabled={busy}
             {...dragHandlers({ type: "note", id: note.id })}

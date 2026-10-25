@@ -8,9 +8,9 @@ async (page) => {
   const [download]=await Promise.all([page.waitForEvent('download'),save.click()]);
   await download.saveAs('output/playwright/share-selected.png');
   await page.getByRole('button',{name:'关闭对话框',exact:true}).click();
-  if(!await page.getByRole('button',{name:'求分享',exact:true}).isVisible()) await page.getByRole('button',{name:'更多笔记操作',exact:true}).click();
-  await page.getByRole('button',{name:'求分享',exact:true}).click();
-  await page.getByRole('dialog',{name:'邀请对方分享'}).waitFor();
+  await page.getByRole('button',{name:'品交',exact:true}).click();
+  await page.getByRole('button',{name:'求品',exact:true}).click();
+  await page.getByRole('dialog',{name:'求品',exact:true}).waitFor();
   const [invite]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'保存全部图片',exact:true}).click()]);
   await invite.saveAs('output/playwright/share-invitation.png');
   await page.getByRole('button',{name:'关闭对话框',exact:true}).click();

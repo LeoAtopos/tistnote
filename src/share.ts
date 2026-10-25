@@ -171,7 +171,7 @@ export async function renderShare(
     },
     top,
   );
-  if (pages.length > 200) throw Error("内容超过 200 页，请减少本次分享条目。");
+  if (pages.length > 200) throw Error("内容超过 200 页，请减少本次品交条目。");
   const subset = !o.invitation && o.selected.length < validEntries(note).length;
   return pages.map((lines, index) => {
     const height = Math.max(

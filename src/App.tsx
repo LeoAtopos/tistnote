@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -34,6 +35,7 @@ import {
 import { builtinTemplates } from "./templates";
 import { NoteTree } from "./NoteTree";
 import { ActivityPage } from "./ActivityPage";
+import { Introduction, introductionSeenKey } from "./Introduction";
 import {
   AutoTextarea,
   dateTime,
@@ -56,6 +58,7 @@ type Dialog =
   | "milestone"
   | "help"
   | "groups"
+  | "new-folder"
   | null;
 export default function App() {
   const [vault, setVault] = useState<Vault | null>(null),
@@ -80,7 +83,24 @@ export default function App() {
     [milestone, setMilestone] = useState("");
   const [changeLog, setChangeLog] = useState(""),
     [changeLogError, setChangeLogError] = useState("");
+  const [introductionOpen, setIntroductionOpen] = useState(false);
+  const introductionSeen = useRef(false);
+  function introduceIfNeeded() {
+    if (introductionSeen.current) return;
+    introductionSeen.current = true;
+    try {
+      if (localStorage.getItem(introductionSeenKey) === "1") return;
+    } catch { /* The introduction still works when preferences cannot be read. */ }
+    setIntroductionOpen(true);
+  }
+  function closeIntroduction() {
+    setIntroductionOpen(false);
+    introductionSeen.current = true;
+    try { localStorage.setItem(introductionSeenKey, "1"); }
+    catch { setError("无法保存介绍阅读状态，下次启动可能再次显示介绍。"); }
+  }
   const [more, setMore] = useState(false),
+    [tradeOpen, setTradeOpen] = useState(false),
     [editing, setEditing] = useState(false),
     [compact, setCompact] = useState(true),
     [duplicateTitle, setDuplicateTitle] = useState(""),
@@ -97,6 +117,83 @@ export default function App() {
   }, [minuteReviewEnabled]);
   const [listPanel, setListPanel] = useState<"search" | "options" | null>(null);
   const listTools = useRef<HTMLDivElement>(null);
+  const [treeMenu, setTreeMenu] = useState<{
+    x: number; y: number; group: string; anchor: HTMLElement;
+  } | null>(null);
+  const treeMenuRef = useRef<HTMLDivElement>(null);
+  const [newFolderParent, setNewFolderParent] = useState("");
+  useLayoutEffect(() => {
+    if (!treeMenu) return;
+    const menu = treeMenuRef.current!;
+    const bounds = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(treeMenu.x, innerWidth - bounds.width - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(treeMenu.y, innerHeight - bounds.height - 8))}px`;
+    menu.querySelector<HTMLButtonElement>("button")?.focus();
+    const dismiss = () => setTreeMenu(null);
+    const outside = (event: PointerEvent) => {
+      if (!menu.contains(event.target as Node)) dismiss();
+    };
+    const keyboard = (event: globalThis.KeyboardEvent) => {
+      const buttons = [...menu.querySelectorAll<HTMLButtonElement>("button")];
+      const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      if (["Escape", "Tab"].includes(event.key)) {
+        dismiss();
+        treeMenu.anchor.focus();
+        if (event.key === "Escape") event.preventDefault();
+      } else if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
+          : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length;
+        buttons[next]?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", keyboard);
+    window.addEventListener("resize", dismiss);
+    window.addEventListener("scroll", dismiss, true);
+    window.addEventListener("blur", dismiss);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", keyboard);
+      window.removeEventListener("resize", dismiss);
+      window.removeEventListener("scroll", dismiss, true);
+      window.removeEventListener("blur", dismiss);
+    };
+  }, [treeMenu]);
+  useEffect(() => setTreeMenu(null), [view, dialog, busy, introductionOpen]);
+  const tradeTools = useRef<HTMLDivElement>(null);
+  useEffect(() => setTradeOpen(false), [dialog, note?.id, editing, view]);
+  useLayoutEffect(() => {
+    if (!tradeOpen) return;
+    const position = () => {
+      const menu = tradeTools.current?.querySelector<HTMLElement>('[data-trade-menu]');
+      if (!menu) return;
+      menu.style.left = "auto";
+      menu.style.right = "0";
+      if (menu.getBoundingClientRect().left < 8) {
+        menu.style.left = "0";
+        menu.style.right = "auto";
+      }
+    };
+    position();
+    tradeTools.current?.querySelector<HTMLElement>('[data-trade-menu] button')?.focus();
+    const dismiss = (event: PointerEvent) => {
+      if (!tradeTools.current?.contains(event.target as Node)) setTradeOpen(false);
+    };
+    const escape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setTradeOpen(false);
+      tradeTools.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    window.addEventListener("resize", position);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+      window.removeEventListener("resize", position);
+    };
+  }, [tradeOpen]);
   useEffect(() => {
     if (!listPanel) return;
     const dismiss = (event: PointerEvent) => {
@@ -203,6 +300,7 @@ export default function App() {
     setQuery("");
     setGroup(null);
     setClosedGroups(new Set());
+    if (v.notes.length) introduceIfNeeded();
   }
   function edit(change: (n: Note) => void) {
     if (!editing || !doc.current || conflictRef.current || busyRef.current)
@@ -337,30 +435,33 @@ export default function App() {
     setView("notes");
     setListVisible(false);
     setGroup(r.group ?? "");
+    introduceIfNeeded();
   }
-  async function create(t?: Template) {
+  async function create(t?: Template, targetGroup = group ?? "") {
     await checkpoint();
     const n = newNote(t, (await reload()).notes);
     const r = await api.command<RecordNote>("save", {
       note: n,
       expected: null,
-      group: group ?? "",
+      group: targetGroup,
     });
     setVault((v) => (v ? { ...v, notes: [...v.notes, r] } : v));
     select(r, true);
+    setGroup(targetGroup);
     setView("notes");
     setPicked(null);
     setFilter([]);
     setQuery("");
     setListVisible(false);
+    introduceIfNeeded();
   }
   async function openDialog(next: Dialog) {
     await checkpoint();
     if ((next === "share" || next === "invite") && doc.current) {
       if (!validTitle(doc.current))
-        throw Error("先为这份列表写一个主题，再生成分享图片。");
+        throw Error("先为这份列表写一个主题，再生成品交图片。");
       if (next === "share" && !validEntries(doc.current).length)
-        throw Error("先填写至少一个条目，或使用“求分享”邀请别人回答。");
+        throw Error("先填写至少一个条目，或使用“求品”邀请别人回答。");
     }
     if (next === "history" && doc.current)
       setVersions(
@@ -557,6 +658,7 @@ export default function App() {
       template ||
       confirmation ||
       duplicateTitle ||
+      introductionOpen ||
       busy ||
       conflict
     )
@@ -681,13 +783,13 @@ export default function App() {
       onKeyDown={keyboard}
     >
       <aside className="rail">
-        <div className="brand">
+        <button className="brand" aria-label="关于品记" disabled={busy} onClick={() => setIntroductionOpen(true)}>
           <img src="/app-icon.svg" alt="" />
           <div>
             <strong>品记</strong>
             <span>tistnote</span>
           </div>
-        </div>
+        </button>
         <nav aria-label="主导航">
           {(
             [
@@ -801,7 +903,20 @@ export default function App() {
           <div
             className={`notes-layout ${listVisible && vault.notes.length > 0 ? "show-list" : "show-editor"}`}
           >
-            <section className="note-browser">
+            <section className="note-browser" tabIndex={-1} onContextMenu={(event) => {
+              event.preventDefault();
+              if (busy) return;
+              const item = (event.target as HTMLElement).closest<HTMLElement>("[data-create-in]");
+              const anchor = item ?? event.currentTarget;
+              const bounds = anchor.getBoundingClientRect();
+              setListPanel(null);
+              setTreeMenu({
+                x: event.clientX || bounds.left + 16,
+                y: event.clientY || bounds.top + 16,
+                group: item?.dataset.createIn ?? "",
+                anchor,
+              });
+            }}>
               <div className="note-list-tools" ref={listTools}>
                 <div className="section-heading note-list-heading">
                   <h1>我的笔记</h1>
@@ -1043,11 +1158,6 @@ export default function App() {
                           >
                             历史
                           </button>
-                          <button
-                            onClick={() => void run(() => openDialog("invite"))}
-                          >
-                            求分享
-                          </button>
                         </>
                       )}
                       {!editing && (
@@ -1074,16 +1184,33 @@ export default function App() {
                           )}
                         </button>
                       )}
-                      <button
-                        onClick={() => void run(() => openDialog("share"))}
-                      >
-                        分享
-                      </button>
+                      <div className="more-wrap" ref={tradeTools}>
+                        <button
+                          aria-expanded={tradeOpen}
+                          aria-controls="trade-menu"
+                          disabled={busy || conflict}
+                          onClick={() => { setMore(false); setTradeOpen(!tradeOpen); }}
+                        >
+                          品交 <span className="trade-chevron"><Icon name="arrow" /></span>
+                        </button>
+                        {tradeOpen && (
+                          <div className="more-menu" id="trade-menu" data-trade-menu role="group" aria-label="品交选项">
+                            <button onClick={() => {
+                              setTradeOpen(false);
+                              void run(() => openDialog("share"));
+                            }}>展品</button>
+                            <button onClick={() => {
+                              setTradeOpen(false);
+                              void run(() => openDialog("invite"));
+                            }}>求品</button>
+                          </div>
+                        )}
+                      </div>
                       <div className="more-wrap">
                         <button
                           aria-label="更多笔记操作"
                           aria-expanded={more}
-                          onClick={() => setMore(!more)}
+                          onClick={() => { setTradeOpen(false); setMore(!more); }}
                         >
                           ···
                         </button>
@@ -1097,13 +1224,6 @@ export default function App() {
                                   }
                                 >
                                   历史
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    void run(() => openDialog("invite"))
-                                  }
-                                >
-                                  求分享
                                 </button>
                               </>
                             ) : (
@@ -1731,6 +1851,56 @@ export default function App() {
           </section>
         )}
       </main>
+      {treeMenu && (
+        <div className="more-menu note-context-menu" ref={treeMenuRef}
+          role="menu" aria-label="笔记新建菜单"
+          style={{ left: treeMenu.x, top: treeMenu.y }}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <button role="menuitem" onClick={() => {
+            setTreeMenu(null);
+            void run(() => create(undefined, treeMenu.group));
+          }}>新建笔记</button>
+          <button role="menuitem" onClick={() => {
+            setTreeMenu(null);
+            setNewFolderParent(treeMenu.group);
+            setGroupInput("");
+            setGroupError("");
+            void run(() => openDialog("new-folder"));
+          }}>新建分组</button>
+        </div>
+      )}
+      {dialog === "new-folder" && vault && (
+        <Modal title="新建分组" onClose={() => { if (!busy) setDialog(null); }}>
+          <form className="form-stack" onSubmit={(event) => {
+            event.preventDefault();
+            void runGroup(async () => {
+              setGroupError("");
+              const name = groupName([newFolderParent, groupInput.trim()].filter(Boolean).join("/"));
+              await checkpoint();
+              await api.command("group_create", { name });
+              const v = await refreshGroups();
+              const created = v.groups.find(path => path.toLowerCase() === name.toLowerCase()) ?? name;
+              setGroup(created);
+              setClosedGroups(previous => new Set([...previous].filter(path => !inGroup(created, path))));
+              setNotice("分组已创建");
+              setDialog(null);
+            });
+          }}>
+            <p className="muted">新建位置：{newFolderParent || "根目录"}</p>
+            <label className="form-stack">
+              <span>分组名称</span>
+              <input aria-label="分组名称" autoFocus value={groupInput}
+                disabled={busy} onChange={event => setGroupInput(event.target.value)} />
+            </label>
+            {groupError && <p className="error" role="alert">{groupError}</p>}
+            <div className="actions">
+              <button className="primary" disabled={busy || !groupInput.trim()}>新建分组</button>
+              <button type="button" disabled={busy} onClick={() => setDialog(null)}>取消</button>
+            </div>
+          </form>
+        </Modal>
+      )}
       {dialog === "groups" && vault && (
         <Modal
           title="管理分组"
@@ -1887,6 +2057,7 @@ export default function App() {
           onClose={() => setDialog(null)}
         />
       )}
+      {introductionOpen && <Introduction onClose={closeIntroduction} />}
       {dialog === "history" && (
         <History
           versions={versions}
@@ -2112,9 +2283,9 @@ export default function App() {
               秒、离开笔记或关闭应用时保存一个历史版本。“保存里程碑”可以为某个阶段命名。Ctrl
               + Z 撤销，Ctrl + Shift + Z 或 Ctrl + Y 重做，Ctrl + S 立即保存。
             </p>
-            <h3>分享与邀请</h3>
+            <h3>品交：展品与求品</h3>
             <p>
-              分享前选择公开的条目与字段。长内容自动分页，节选保留原排名。求分享图片只发出主题邀请，不包含你的答案。
+              点击“品交”，选择“展品”展示自己的选择，或选择“求品”邀请别人回答。展品前可选择公开的条目与字段，长内容自动分页，节选保留原排名。求品图片不包含你的答案。
             </p>
             <h3>本地文件</h3>
             <p>

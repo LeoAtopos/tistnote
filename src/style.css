@@ -181,7 +181,12 @@ svg {
   display: flex;
   gap: 13px;
   align-items: center;
-  padding: 0 12px 48px;
+  padding: 0 12px;
+  margin-bottom: 48px;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
 }
 .brand img {
   width: 44px;
@@ -189,6 +194,7 @@ svg {
 }
 .brand strong {
   display: block;
+  color: var(--green);
   font-size: 28px;
   letter-spacing: 0.12em;
   font-weight: 600;
@@ -785,6 +791,14 @@ svg {
 .more-wrap {
   position: relative;
 }
+.trade-chevron {
+  display: flex;
+  transform: rotate(90deg);
+}
+.trade-chevron svg {
+  width: 18px;
+  height: 18px;
+}
 .more-menu {
   position: absolute;
   right: 0;
@@ -804,6 +818,15 @@ svg {
   border: 0;
   font-size: 20px;
   padding: 12px;
+}
+.note-context-menu {
+  position: fixed;
+  right: auto;
+  z-index: 10;
+  max-width: calc(100vw - 16px);
+}
+.note-context-menu button {
+  font-size: 22px;
 }
 .editor-page {
   max-width: 1000px;
@@ -1188,6 +1211,132 @@ summary {
 .modal.wide {
   width: min(1240px, calc(100vw - 32px));
 }
+.modal.intro-modal {
+  width: min(900px, calc(100vw - 24px));
+  height: min(820px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  background: #fff;
+}
+.intro-modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+.intro-modal .modal-header {
+  flex-shrink: 0;
+  padding: 16px 24px;
+  background: #fff;
+}
+.intro-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.intro-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+}
+.intro-track {
+  height: 100%;
+  display: flex;
+  transition: transform 360ms cubic-bezier(.2, .75, .25, 1);
+}
+.intro-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: 18px;
+}
+.intro-art {
+  flex: 1;
+  min-height: 120px;
+  margin: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.intro-art img,
+.intro-writing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+.intro-caption {
+  flex-shrink: 0;
+  margin: 22px 48px 26px;
+  text-align: center;
+  text-wrap: pretty;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+.intro-slide[data-intro-page="1"] .intro-caption {
+  position: relative;
+  top: clamp(-120px, -12vh, -56px);
+}
+.intro-navigation {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-top: 1px solid var(--line);
+}
+.intro-page-count {
+  font-size: 18px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.intro-stroke {
+  fill: none;
+  stroke: #000;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.intro-point {
+  fill: #000;
+  opacity: 0;
+}
+.intro-writing.active .intro-stroke {
+  animation: intro-write 650ms ease-out both;
+}
+.intro-writing.active .intro-point {
+  animation: intro-dot 200ms ease-out both;
+}
+@keyframes intro-write {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes intro-dot {
+  to { opacity: 1; }
+}
+@media (max-width: 640px) {
+  .intro-modal .modal-header { padding: 12px 16px; }
+  .intro-art { margin: 0 10px; }
+  .intro-caption { margin: 14px 20px 20px; font-size: 24px; line-height: 1.5; }
+  .intro-navigation { padding: 14px 16px; gap: 8px; }
+  .intro-navigation button { padding: 9px 12px; }
+}
+@media (max-height: 650px) {
+  .intro-slide { padding-top: 6px; }
+  .intro-caption { margin-top: 8px; margin-bottom: 12px; font-size: 22px; }
+  .intro-navigation { padding-top: 10px; padding-bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-track { transition: none; }
+  .intro-writing .intro-stroke { animation: none !important; stroke-dashoffset: 0; }
+  .intro-writing .intro-point { animation: none !important; opacity: 1; }
+}
 .modal::backdrop {
   background: #20291e60;
   backdrop-filter: blur(3px);
@@ -1428,7 +1577,8 @@ summary {
     padding: 28px 12px;
   }
   .brand {
-    padding: 0 8px 35px;
+    padding: 0 8px;
+    margin-bottom: 35px;
     gap: 8px;
   }
   .brand img {
@@ -1531,6 +1681,7 @@ summary {
   }
   .brand {
     padding: 0;
+    margin-bottom: 0;
     gap: 10px;
   }
   .brand img {
