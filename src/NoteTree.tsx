@@ -12,6 +12,7 @@ import {
   noteTree,
   groupMovePath,
   validEntries,
+  needsReview,
   type NoteFolder,
   type RecordNote,
   type TreeItem,
@@ -23,6 +24,7 @@ export function NoteTree({
   currentId,
   currentGroup,
   compact,
+  now,
   busy,
   query,
   tags,
@@ -37,6 +39,7 @@ export function NoteTree({
   currentId?: string;
   currentGroup: string | null;
   compact: boolean;
+  now: number;
   busy: boolean;
   query: string;
   tags: string[];
@@ -227,6 +230,9 @@ export function NoteTree({
             <div className="note-card-heading">
               <Icon name="file" />
               <h2>{note.title}</h2>
+              {needsReview(note, now) && (
+                <span className="review-dot" role="img" aria-label="需要回顾" title="需要回顾" />
+              )}
               {compact && !validEntries(note).length && (
                 <span className="empty-mark">（空）</span>
               )}

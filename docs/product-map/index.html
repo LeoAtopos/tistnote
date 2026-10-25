@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="用范例1的真实界面截图，沿功能脑图浏览品记。">
+  <title>品记 · 功能全景图</title>
+  <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="map.css">
+</head>
+<body>
+  <a class="skip-link" href="#mindmap">跳到功能脑图</a>
+  <header class="page-header">
+    <div class="title-block"><img src="assets/app-icon.svg" alt="" width="48" height="48"><div><h1>品记功能全景</h1><p>跟着林知夏的范例，逐张看看品记怎么用。</p></div></div>
+    <button class="primary" id="start-tour">按顺序浏览<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button>
+  </header>
+  <main>
+    <div class="map-tools">
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="查找功能，如：回顾、分享、分组" aria-label="查找功能"></label>
+      <div class="tools-actions"><button id="expand-all">展开全部</button><button id="collapse-all">收起全部</button></div>
+      <p id="map-count" role="status"></p>
+    </div>
+    <p class="map-hint">点功能节点看截图。也可以从任意分支开始。</p>
+    <section class="mindmap" id="mindmap" aria-label="品记功能脑图">
+      <svg class="connections" aria-hidden="true"></svg>
+      <div class="map-side left" id="left-branches"></div>
+      <div class="root-node" id="root-node"><img src="assets/app-icon.svg" width="44" height="44" alt=""><strong>品记</strong><span>记录选择 <br>保存变化 <br>交换答案</span></div>
+      <div class="map-side right" id="right-branches"></div>
+      <p id="empty" hidden>没有找到这个功能。试试“笔记”“历史”或“模板”。</p>
+    </section>
+    <details class="source-note"><summary>关于范例与截图</summary><div><p>范例1：林知夏，23 岁，在北京工作与生活。53 篇笔记，其中 26 篇为非模板主题；45 个内置模板中已有 27 个主题，覆盖率 60%。人物、经历和笔记均为虚构。</p><p>界面取自当前代码的显式开发预览，内容来自范例1。部分截图展示基于范例的临时操作，如新建、排序、回顾、删除和外部修改；原资料库未修改。PNG 成品由应用实际导出。截图日期：2026 年 10 月 25 日。</p><p>正式产品是完全本地的 Windows 应用。截图中的浏览器开发预览不是正式存储方式；文件管理器、完整备份、备份恢复与 Markdown 导入只展示入口，本次未验证 Windows 系统对话框。</p><p>本页面可离线打开。图片保持原始像素，可在图内横向、纵向滚动；没有用缩小截图的方式压缩文字。</p></div></details>
+  </main>
+  <dialog id="feature-dialog" aria-labelledby="feature-title">
+    <header class="viewer-header"><p id="breadcrumb"></p><button id="close-viewer" aria-label="关闭截图浏览"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>返回脑图</button></header>
+    <div class="viewer-content">
+      <div class="feature-heading"><h2 id="feature-title"></h2><p id="feature-value"></p></div>
+      <p class="operation"><strong>怎么打开</strong><span id="feature-path"></span></p>
+      <div class="shot-tabs" id="shot-tabs" role="group" aria-label="此功能的截图"></div>
+      <figure><div class="shot-meta"><figcaption id="shot-caption"></figcaption><a id="original-link" download>保存原图<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></svg></a></div><div class="shot-viewport" tabindex="0" role="region" aria-label="原尺寸产品截图，可横向和纵向滚动"><img id="product-image" alt=""></div></figure>
+      <div class="feature-notes"><p id="feature-case"></p><ul id="feature-points"></ul><p class="limit" id="feature-limit" hidden></p></div>
+    </div>
+    <footer class="viewer-footer"><button id="previous-feature">上一功能</button><span id="tour-position" role="status"></span><button class="primary" id="next-feature">下一功能<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button></footer>
+  </dialog>
+  <noscript>需要启用 JavaScript 才能展开脑图和浏览截图。所有资源都在本地，无需联网。</noscript>
+  <script src="data.js"></script>
+  <script src="map.js"></script>
+</body>
+</html>

@@ -12,6 +12,9 @@ export interface Note {
   entries: Entry[];
   createdAt: string;
   updatedAt: string;
+  reviewIntervalMonths?: number;
+  reviewTestMinute?: boolean;
+  lastReviewedAt?: string | null;
   source?: string | null;
 }
 export interface Template {
@@ -41,7 +44,7 @@ export interface ActivityEvent {
   noteId: string;
   title: string;
   at: string;
-  kind: "created" | "modified";
+  kind: "created" | "modified" | "reviewed";
 }
 export interface Vault {
   path: string;
@@ -70,11 +73,53 @@ export const newNote = (t?: Template, records: RecordNote[] = []): Note => {
     entries: [],
     createdAt: now,
     updatedAt: now,
+    reviewIntervalMonths: 3,
+    lastReviewedAt: null,
     source: t?.id,
   };
 };
 export const contentKey = (n: Note) =>
-  JSON.stringify([n.title, n.description, n.tags, n.ranked, n.entries]);
+  JSON.stringify([
+    n.title, n.description, n.tags, n.ranked, n.entries,
+    n.reviewIntervalMonths ?? 3,
+    n.reviewTestMinute ?? false,
+  ]);
+export function reviewDueAt(note: Note): Date | null {
+  const months = note.reviewIntervalMonths ?? 3;
+  if (!Number.isInteger(months) || months < 1 || months > 1200) return null;
+  const times = [note.createdAt, note.updatedAt, note.lastReviewedAt]
+    .filter((value): value is string => !!value)
+    .map(Date.parse)
+    .filter(Number.isFinite);
+  if (!times.length) return null;
+  if (note.reviewTestMinute) return new Date(Math.max(...times) + 60_000);
+  const due = new Date(Math.max(...times));
+  const day = due.getDate();
+  due.setDate(1);
+  due.setMonth(due.getMonth() + months);
+  const lastDay = new Date(due.getFullYear(), due.getMonth() + 1, 0).getDate();
+  due.setDate(Math.min(day, lastDay));
+  return due;
+}
+export const needsReview = (note: Note, now = Date.now()) => {
+  const due = reviewDueAt(note);
+  return !!due && due.getTime() <= now;
+};
+export function reviewTimeLabel(at: number, now: number, overdue = false): string {
+  if (!Number.isFinite(at) || !Number.isFinite(now)) return "日期未知";
+  const elapsed = now - at;
+  const distance = Math.abs(elapsed);
+  if (distance < 1000) return overdue ? "刚到期" : elapsed >= 0 ? "刚刚" : "即将到期";
+  if (!overdue && elapsed >= 0 && distance < 60_000) return "刚刚";
+  const units: [number, string][] = [
+    [365 * 86_400_000, "年"], [30 * 86_400_000, "个月"],
+    [86_400_000, "天"], [3_600_000, "小时"], [60_000, "分钟"], [1000, "秒"],
+  ];
+  const [size, unit] = units.find(([size]) => distance >= size)!;
+  const amount = unit === "个月" ? Math.round(distance / size) : Math.floor(distance / size);
+  const duration = `${amount}${unit}`;
+  return overdue ? `已过${duration}` : `${duration}${elapsed >= 0 ? "前" : "后"}`;
+}
 export const validTitle = (n: Note) =>
   !!n.title.trim() && !/^未命名笔记(?:（[1-9]\d*）)?$/.test(n.title.trim());
 export const validEntries = (n: Note) => n.entries.filter((e) => e.name.trim());
@@ -195,22 +240,23 @@ export const matches = (
     .join("\n")
     .toLocaleLowerCase()
     .includes(query.trim().toLocaleLowerCase());
-export function coveredTemplates(templates: Template[], records: RecordNote[]) {
-  const sources = new Set<string>();
-  const titles = new Set<string>();
-  for (const { note } of records) {
-    if (!validTitle(note) || !validEntries(note).length) continue;
-    if (note.source) sources.add(note.source);
-    titles.add(noteTitle(note.title));
+export function notesByTemplate(templates: Template[], records: RecordNote[]) {
+  const populated = records
+    .filter(({ note }) => validTitle(note) && validEntries(note).length)
+    .sort((a, b) => b.note.updatedAt.localeCompare(a.note.updatedAt));
+  const linked = new Map<string, RecordNote>();
+  for (const template of templates) {
+    const record = populated.find(
+      ({ note }) =>
+        note.source === template.id ||
+        noteTitle(note.title) === noteTitle(template.title),
+    );
+    if (record) linked.set(template.id, record);
   }
-  return new Set(
-    templates
-      .filter(
-        (template) =>
-          sources.has(template.id) || titles.has(noteTitle(template.title)),
-      )
-      .map((template) => template.id),
-  );
+  return linked;
+}
+export function coveredTemplates(templates: Template[], records: RecordNote[]) {
+  return new Set(notesByTemplate(templates, records).keys());
 }
 export function asTemplate(n: Note): Template {
   return {
@@ -236,6 +282,11 @@ export function diffNotes(a: Note, b: Note): string[] {
     );
   if (a.ranked !== b.ranked)
     changes.push(`列表模式：${b.ranked ? "有排名" : "无排名"}`);
+  if ((a.reviewIntervalMonths ?? 3) !== (b.reviewIntervalMonths ?? 3)
+    || !!a.reviewTestMinute !== !!b.reviewTestMinute) {
+    const cycle = (n: Note) => n.reviewTestMinute ? "1 分钟（测试）" : `${n.reviewIntervalMonths ?? 3} 个月`;
+    changes.push(`回顾周期：${cycle(a)} → ${cycle(b)}`);
+  }
   const before = new Map(a.entries.map((e, i) => [e.id, { e, i }]));
   const after = new Map(b.entries.map((e, i) => [e.id, { e, i }]));
   a.entries.forEach((e) => {

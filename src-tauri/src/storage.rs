@@ -46,6 +46,12 @@ pub struct Note {
     pub entries: Vec<Entry>,
     pub created_at: String,
     pub updated_at: String,
+    #[serde(default = "default_review_months")]
+    pub review_interval_months: u32,
+    #[serde(default)]
+    pub review_test_minute: bool,
+    #[serde(default)]
+    pub last_reviewed_at: Option<String>,
     pub source: Option<String>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -101,9 +107,18 @@ struct Meta {
     ranked: bool,
     created_at: String,
     updated_at: String,
+    #[serde(default = "default_review_months")]
+    review_interval_months: u32,
+    #[serde(default)]
+    review_test_minute: bool,
+    #[serde(default)]
+    last_reviewed_at: Option<String>,
     source: Option<String>,
 }
 
+fn default_review_months() -> u32 {
+    3
+}
 pub fn clean_tags(tags: &mut Vec<String>) {
     let mut seen = HashSet::new();
     *tags = tags
@@ -114,6 +129,12 @@ pub fn clean_tags(tags: &mut Vec<String>) {
 }
 fn validate(n: &Note) -> Result<()> {
     valid_id(&n.id)?;
+    if !(1..=1200).contains(&n.review_interval_months) {
+        return Err("回顾周期需为 1 至 1200 个月".into());
+    }
+    if let Some(at) = &n.last_reviewed_at {
+        chrono::DateTime::parse_from_rfc3339(at).map_err(|_| "回顾时间无法读取".to_string())?;
+    }
     if n.title.contains(['\n', '\r']) {
         return Err("主题不能包含换行".into());
     }
@@ -135,6 +156,8 @@ pub fn same_content(a: &Note, b: &Note) -> bool {
         && a.tags == b.tags
         && a.ranked == b.ranked
         && a.entries == b.entries
+        && a.review_interval_months == b.review_interval_months
+        && a.review_test_minute == b.review_test_minute
 }
 fn note_title(title: &str) -> &str {
     let title = title.trim();
@@ -166,6 +189,9 @@ pub fn markdown(n: &Note) -> Result<String> {
         ranked: n.ranked,
         created_at: n.created_at.clone(),
         updated_at: n.updated_at.clone(),
+        review_interval_months: n.review_interval_months,
+        review_test_minute: n.review_test_minute,
+        last_reviewed_at: n.last_reviewed_at.clone(),
         source: n.source.clone(),
     };
     let mut out = format!(
@@ -292,6 +318,9 @@ pub fn parse(raw: &str) -> Result<(Note, bool)> {
         entries,
         created_at: m.created_at,
         updated_at: m.updated_at,
+        review_interval_months: m.review_interval_months,
+        review_test_minute: m.review_test_minute,
+        last_reviewed_at: m.last_reviewed_at,
         source: m.source,
     };
     clean_tags(&mut n.tags);
@@ -745,6 +774,9 @@ impl Store {
             ));
             let mut previous: Option<Note> = None;
             for version in self.versions(&record.note.id)? {
+                if version.kind == "review" {
+                    events.push(event(&version.note, version.at.clone(), "reviewed"));
+                }
                 let local_day = |at: &str| {
                     chrono::DateTime::parse_from_rfc3339(at)
                         .ok()
@@ -796,6 +828,69 @@ impl Store {
         out.sort_by(|a, b| a.at.cmp(&b.at).then(a.id.cmp(&b.id)));
         Ok(out)
     }
+    pub fn cancel_edit(&self, note: Note, expected: &str, group: &str) -> Result<Record> {
+        validate(&note)?;
+        let source = self.locate(&note.id, false)?;
+        let current = self.read_at(&source, false)?;
+        if current.revision != expected {
+            return Err("CONFLICT:取消编辑前检测到外部修改，请先处理冲突".into());
+        }
+        self.ensure_unique_title(&note)?;
+        let folder = self.group_folder(group)?;
+        if !folder.is_dir() {
+            return Err("原分组不存在，请先恢复分组或继续编辑".into());
+        }
+        let target = folder.join(source.file_name().ok_or("笔记路径无效")?);
+        no_links(&target)?;
+        let content = markdown(&note)?;
+        if source != target {
+            if target.exists() {
+                return Err("原位置已有文件，取消编辑已停止".into());
+            }
+            fs::rename(&source, &target).map_err(io)?;
+        }
+        if let Err(error) = atomic_write(&target, content.as_bytes()) {
+            if source != target && (source.exists() || fs::rename(&target, &source).is_err()) {
+                return Err(format!(
+                    "{error}；当前内容保留在 {}，请检查文件夹。",
+                    target.display()
+                ));
+            }
+            return Err(error);
+        }
+        self.read_at(&target, false)
+    }
+    pub fn review_note(&self, note_id: &str, expected: &str) -> Result<Record> {
+        let path = self.locate(note_id, false)?;
+        let mut record = self.read_at(&path, false)?;
+        if record.revision != expected {
+            return Err("CONFLICT:回顾确认前检测到外部修改，请先刷新笔记".into());
+        }
+        self.versions(note_id)?;
+        let original = fs::read(&path).map_err(io)?;
+        if hash(&original) != expected {
+            return Err("CONFLICT:回顾确认前检测到外部修改，请先刷新笔记".into());
+        }
+        record.note.last_reviewed_at = Some(now());
+        let reviewed = markdown(&record.note)?;
+        atomic_write(&path, reviewed.as_bytes())?;
+        if let Err(error) = self.snapshot(note_id, "review", "", true) {
+            if hash(&fs::read(&path).map_err(io)?) != hash(reviewed.as_bytes()) {
+                return Err("CONFLICT:回顾历史未写入，检测到外部修改；请先刷新笔记".into());
+            }
+            atomic_write(&path, &original)
+                .map_err(|e| format!("回顾历史未写入，恢复原回顾时间失败：{error}；{e}"))?;
+            return Err(error);
+        }
+        self.read_at(&path, false)
+    }
+    pub fn commit_edit(&self, note_id: &str, expected: &str, label: &str) -> Result<()> {
+        let label = label.trim();
+        if self.get(note_id, false)?.revision != expected {
+            return Err("CONFLICT:提交前检测到外部修改，请先处理冲突".into());
+        }
+        self.snapshot(note_id, "edit", label, true)
+    }
     pub fn snapshot(&self, note_id: &str, kind: &str, label: &str, force: bool) -> Result<()> {
         let record = self.get(note_id, false)?;
         let versions = self.versions(note_id)?;
@@ -806,7 +901,11 @@ impl Store {
         {
             return Ok(());
         }
-        if versions.is_empty() && is_untitled(&record.note.title) && record.note.entries.is_empty()
+        if kind != "edit"
+            && kind != "review"
+            && versions.is_empty()
+            && is_untitled(&record.note.title)
+            && record.note.entries.is_empty()
         {
             return Ok(());
         }
@@ -846,12 +945,15 @@ impl Store {
             .into_iter()
             .find(|v| v.id == version_id)
             .ok_or("版本不存在")?;
-        if self.get(note_id, false)?.revision != expected {
+        let current = self.get(note_id, false)?;
+        if current.revision != expected {
             return Err("CONFLICT:恢复前检测到外部修改，请先刷新笔记".into());
         }
-        self.ensure_unique_title(&old.note)?;
+        let mut restored = old.note;
+        restored.last_reviewed_at = current.note.last_reviewed_at;
+        self.ensure_unique_title(&restored)?;
         self.snapshot(note_id, "auto", "恢复前", false)?;
-        let r = self.save(old.note, Some(expected))?;
+        let r = self.save(restored, Some(expected))?;
         self.snapshot(note_id, "restore", "恢复历史版本", true)?;
         Ok(r)
     }
@@ -987,8 +1089,244 @@ mod tests {
             }],
             created_at: now(),
             updated_at: now(),
+            review_interval_months: 3,
+            review_test_minute: false,
+            last_reviewed_at: None,
             source: None,
         }
+    }
+    #[test]
+    fn cancel_edit_restores_autosaved_content_folder_and_timestamps_without_submitting() {
+        let d = tempfile::tempdir().unwrap();
+        let s = Store::open(d.path()).unwrap();
+        s.create_group("原分组").unwrap();
+        s.create_group("新分组").unwrap();
+        let mut n = note();
+        n.review_interval_months = 6;
+        n.last_reviewed_at = Some("2026-01-01T00:00:00Z".into());
+        let original = s.save_in(n, None, Some("原分组")).unwrap();
+        let mut changed = original.note.clone();
+        changed.title = "本次更新".into();
+        changed.entries[0].reason = "新的理由".into();
+        changed.review_interval_months = 12;
+        let changed = s.save(changed, Some(&original.revision)).unwrap();
+        let changed = s
+            .move_note(&changed.note.id, "新分组", &changed.revision)
+            .unwrap();
+        s.snapshot(&changed.note.id, "auto", "", false).unwrap();
+        let history = s.versions(&changed.note.id).unwrap();
+        #[cfg(windows)]
+        {
+            let path = s.locate(&changed.note.id, false).unwrap();
+            let original_permissions = fs::metadata(&path).unwrap().permissions();
+            let mut readonly = original_permissions.clone();
+            readonly.set_readonly(true);
+            fs::set_permissions(&path, readonly).unwrap();
+            let result = s.cancel_edit(original.note.clone(), &changed.revision, "原分组");
+            let preserved = s.locate(&changed.note.id, false).unwrap();
+            fs::set_permissions(&preserved, original_permissions).unwrap();
+            assert!(result.is_err());
+            assert_eq!(s.get(&changed.note.id, false).unwrap().group, "新分组");
+            assert_eq!(
+                s.get(&changed.note.id, false).unwrap().revision,
+                changed.revision
+            );
+        }
+        let restored = s
+            .cancel_edit(original.note.clone(), &changed.revision, "原分组")
+            .unwrap();
+        assert_eq!(restored.note, original.note);
+        assert_eq!(restored.group, "原分组");
+        assert_eq!(s.versions(&changed.note.id).unwrap().len(), history.len());
+        assert!(history.iter().all(|v| v.kind != "edit"));
+        let bytes = fs::read(s.locate(&restored.note.id, false).unwrap()).unwrap();
+        assert!(s
+            .cancel_edit(original.note.clone(), &changed.revision, "原分组")
+            .unwrap_err()
+            .starts_with("CONFLICT:"));
+        assert_eq!(
+            fs::read(s.locate(&restored.note.id, false).unwrap()).unwrap(),
+            bytes
+        );
+        let mut renamed = restored.note.clone();
+        renamed.title = "腾出原名称".into();
+        let renamed = s.save(renamed, Some(&restored.revision)).unwrap();
+        let mut other = note();
+        other.title = original.note.title.clone();
+        s.save(other, None).unwrap();
+        assert!(s
+            .cancel_edit(original.note, &renamed.revision, "原分组")
+            .unwrap_err()
+            .starts_with("DUPLICATE_TITLE:"));
+        assert_eq!(
+            s.get(&renamed.note.id, false).unwrap().revision,
+            renamed.revision
+        );
+    }
+    #[test]
+    fn one_minute_review_test_option_roundtrips_without_changing_monthly_cycle() {
+        let mut n = note();
+        n.review_test_minute = true;
+        let parsed = parse(&markdown(&n).unwrap()).unwrap().0;
+        assert!(parsed.review_test_minute);
+        assert_eq!(parsed.review_interval_months, 3);
+        let version_note: Note = serde_json::from_value(serde_json::to_value(&n).unwrap()).unwrap();
+        assert!(version_note.review_test_minute);
+        n.review_test_minute = false;
+        assert!(!same_content(&n, &parsed));
+    }
+    #[test]
+    fn review_metadata_survives_markdown_reopen_and_restore_without_content_activity() {
+        let d = tempfile::tempdir().unwrap();
+        let s = Store::open(d.path()).unwrap();
+        s.create_group("回顾").unwrap();
+        let mut n = note();
+        n.review_interval_months = 6;
+        let original = s.save_in(n, None, Some("回顾")).unwrap();
+        let first_version = s.versions(&original.note.id).unwrap()[0].id.clone();
+        let events = s.activity().unwrap().len();
+        let reviewed = s
+            .review_note(&original.note.id, &original.revision)
+            .unwrap();
+        assert!(reviewed.note.last_reviewed_at.is_some());
+        assert_eq!(reviewed.note.updated_at, original.note.updated_at);
+        assert_eq!(reviewed.group, "回顾");
+        assert_eq!(reviewed.note.review_interval_months, 6);
+        assert!(same_content(&reviewed.note, &original.note));
+        let activity = s.activity().unwrap();
+        assert_eq!(activity.len(), events + 1);
+        assert_eq!(activity.iter().filter(|e| e.kind == "reviewed").count(), 1);
+        assert_eq!(activity.iter().filter(|e| e.kind == "modified").count(), 0);
+        let versions = s.versions(&original.note.id).unwrap();
+        assert_eq!(versions.len(), 2);
+        assert_eq!(versions[1].kind, "review");
+        assert_eq!(
+            versions[1].note.last_reviewed_at,
+            reviewed.note.last_reviewed_at
+        );
+        let reviewed = s
+            .review_note(&original.note.id, &reviewed.revision)
+            .unwrap();
+        let versions = s.versions(&original.note.id).unwrap();
+        assert_eq!(versions.iter().filter(|v| v.kind == "review").count(), 2);
+        assert_eq!(
+            s.activity()
+                .unwrap()
+                .iter()
+                .filter(|e| e.kind == "reviewed")
+                .count(),
+            2
+        );
+        let path = s.locate(&original.note.id, false).unwrap();
+        let bytes = fs::read(&path).unwrap();
+        assert!(s
+            .review_note(&original.note.id, &original.revision)
+            .unwrap_err()
+            .starts_with("CONFLICT:"));
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        let restored = s
+            .restore_version(&original.note.id, &first_version, &reviewed.revision)
+            .unwrap();
+        assert_eq!(
+            restored.note.last_reviewed_at,
+            reviewed.note.last_reviewed_at
+        );
+        drop(s);
+        let s = Store::open(d.path()).unwrap();
+        assert_eq!(
+            s.get(&original.note.id, false)
+                .unwrap()
+                .note
+                .last_reviewed_at,
+            reviewed.note.last_reviewed_at
+        );
+        let raw = markdown(&original.note).unwrap();
+        let (_, body) = raw
+            .strip_prefix("---\n")
+            .unwrap()
+            .split_once("\n---\n")
+            .unwrap();
+        let mut meta = serde_json::to_value(&original.note).unwrap();
+        meta["schema"] = serde_json::json!(1);
+        meta.as_object_mut().unwrap().remove("reviewIntervalMonths");
+        meta.as_object_mut().unwrap().remove("lastReviewedAt");
+        let legacy = format!("---\n{}\n---\n{}", meta, body);
+        let parsed = parse(&legacy).unwrap().0;
+        assert_eq!(parsed.review_interval_months, 3);
+        assert_eq!(parsed.last_reviewed_at, None);
+        let mut invalid = original.note;
+        invalid.review_interval_months = 0;
+        assert!(s.save(invalid, Some(&restored.revision)).is_err());
+        assert_eq!(
+            s.get(&restored.note.id, false).unwrap().revision,
+            restored.revision
+        );
+    }
+    #[test]
+    fn corrupt_review_history_does_not_change_confirmation_time_or_note_bytes() {
+        let d = tempfile::tempdir().unwrap();
+        let s = Store::open(d.path()).unwrap();
+        let record = s.save(note(), None).unwrap();
+        let path = s.locate(&record.note.id, false).unwrap();
+        let bytes = fs::read(&path).unwrap();
+        fs::write(
+            s.root
+                .join(".tistnote/history")
+                .join(&record.note.id)
+                .join("broken.json"),
+            b"broken",
+        )
+        .unwrap();
+        assert!(s.review_note(&record.note.id, &record.revision).is_err());
+        assert_eq!(fs::read(path).unwrap(), bytes);
+    }
+    #[test]
+    fn edit_commits_keep_optional_logs_after_autosave_and_reject_stale_submissions() {
+        let d = tempfile::tempdir().unwrap();
+        let s = Store::open(d.path()).unwrap();
+        let first = s.save(note(), None).unwrap();
+        let mut revised = first.note.clone();
+        revised.entries[0].reason = "重看后改变了想法".into();
+        let revised = s.save(revised, Some(&first.revision)).unwrap();
+        s.snapshot(&revised.note.id, "auto", "", false).unwrap();
+        let before = s.versions(&revised.note.id).unwrap().len();
+        let bytes = fs::read(s.locate(&revised.note.id, false).unwrap()).unwrap();
+        s.commit_edit(
+            &revised.note.id,
+            &revised.revision,
+            "  调整排名\n补充理由  ",
+        )
+        .unwrap();
+        s.commit_edit(&revised.note.id, &revised.revision, "复核当前选择")
+            .unwrap();
+        s.commit_edit(&revised.note.id, &revised.revision, " \n ")
+            .unwrap();
+        s.commit_edit(&revised.note.id, &revised.revision, "")
+            .unwrap();
+        assert!(s
+            .commit_edit(&revised.note.id, &first.revision, "过期提交")
+            .unwrap_err()
+            .starts_with("CONFLICT:"));
+        assert_eq!(
+            fs::read(s.locate(&revised.note.id, false).unwrap()).unwrap(),
+            bytes
+        );
+        drop(s);
+        let s = Store::open(d.path()).unwrap();
+        let versions = s.versions(&revised.note.id).unwrap();
+        assert_eq!(versions.len(), before + 4);
+        assert_eq!(versions[before + 2].label, "");
+        assert_eq!(versions[before + 3].label, "");
+        assert_eq!(versions[before].kind, "edit");
+        assert_eq!(versions[before].label, "调整排名\n补充理由");
+        assert_eq!(versions[before].note.entries[0].reason, "重看后改变了想法");
+        let mut blank = note();
+        blank.title = "未命名笔记".into();
+        blank.entries.clear();
+        let blank = s.save(blank, None).unwrap();
+        s.commit_edit(&blank.note.id, &blank.revision, "留待下次填写")
+            .unwrap();
+        assert_eq!(s.versions(&blank.note.id).unwrap().len(), 1);
     }
     #[test]
     fn usage_activity_tracks_content_versions_including_trash_without_writing_notes() {

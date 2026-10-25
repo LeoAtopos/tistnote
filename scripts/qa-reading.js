@@ -23,7 +23,15 @@ async page => {
   await card('电影清单').click();
   const reader = page.getByRole('article',{name:'笔记内容',exact:true});
   const edit = () => page.getByRole('button',{name:'编辑',exact:true}).click();
-  const done = () => page.getByRole('button',{name:'完成编辑',exact:true}).click();
+  const done = async () => {
+    await page.getByRole('button',{name:'完成编辑',exact:true}).click();
+    await page.getByRole('dialog',{name:/^(更新日志|标题重复)$/}).waitFor();
+    const dialog = page.getByRole('dialog',{name:'更新日志',exact:true});
+    if(await dialog.isVisible()) {
+      await dialog.getByRole('textbox',{name:'更新日志（可选）',exact:true}).fill('阅读模式验证');
+      await dialog.getByRole('button',{name:'提交更新',exact:true}).click();
+    }
+  };
   await reader.waitFor();
   check(await page.locator('.editor input,.editor textarea,.editor select,[contenteditable="true"]').count() === 0, 'Browse mode contains editable fields');
   check(await page.locator('.editor .entry-actions,.editor .add-entry,.editor .editor-footer,.editor .rank-handle,.editor .save-state').count() === 0, 'Browse mode exposes edit controls');

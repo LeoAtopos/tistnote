@@ -55,13 +55,16 @@ export function ActivityPage({
   );
   const yearEvents = entries.flatMap(([, items]) => items);
   const created = yearEvents.filter((event) => event.kind === "created").length;
-  const modified = yearEvents.length - created;
+  const modified = yearEvents.filter((event) => event.kind === "modified").length;
+  const reviewed = yearEvents.filter((event) => event.kind === "reviewed").length;
   const dayEvents = days.get(selected) ?? [];
   const active = new Set(notes.map((r) => r.note.id));
   const summary = (key: string) => {
     const events = days.get(key) ?? [];
     const created = events.filter((event) => event.kind === "created").length;
-    return `新增 ${created} 篇，修改 ${events.length - created} 篇`;
+    const modified = events.filter((event) => event.kind === "modified").length;
+    const reviewed = events.filter((event) => event.kind === "reviewed").length;
+    return `新增 ${created} 篇，修改 ${modified} 篇，回顾 ${reviewed} 篇`;
   };
   useEffect(() => {
     const container = graph.current;
@@ -167,6 +170,7 @@ export function ActivityPage({
       <p className="activity-summary">
         记录了 <strong>{entries.length}</strong> 天 · 新增{" "}
         <strong>{created}</strong> 篇 · 修改 <strong>{modified}</strong> 篇次
+        {" "}· 回顾 <strong>{reviewed}</strong> 篇次
       </p>
       <div className="activity-calendar">
         <div
@@ -273,7 +277,7 @@ export function ActivityPage({
               onClick={() => onOpen(event.noteId)}
             >
               <span className={`activity-kind ${event.kind}`}>
-                {event.kind === "created" ? "新增" : "修改"}
+                {event.kind === "created" ? "新增" : event.kind === "reviewed" ? "回顾" : "修改"}
               </span>
               <span className="activity-record-title">{event.title}</span>
               <span className="activity-record-time">
@@ -287,11 +291,11 @@ export function ActivityPage({
             </button>
           ))
         ) : (
-          <p className="activity-empty">这一天还没有新增或修改笔记。</p>
+          <p className="activity-empty">这一天还没有新增、修改或回顾笔记。</p>
         )}
       </div>
       <p className="activity-source">
-        按本地日期汇总；同一天同一篇笔记的多次修改计为一次。历史以现有笔记及保留的版本为准，包含回收站中的笔记。
+        按本地日期汇总；同一天同一篇笔记的多次修改或回顾分别计为一次。历史以现有笔记及保留的版本为准，包含回收站中的笔记。
       </p>
       {invalid > 0 && (
         <p className="error" role="alert">

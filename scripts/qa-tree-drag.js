@@ -87,6 +87,8 @@ async page => {
   await page.getByRole('textbox',{name:'条目 1 理由',exact:true}).fill('文件夹移动后继续保存');
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('tistnote-development-preview-v1')).vault.notes.find(r=>r.note.title==='藏片').note.entries[0].reason==='文件夹移动后继续保存');
   await page.getByRole('button',{name:'完成编辑',exact:true}).click();
+  await page.getByRole('textbox',{name:'更新日志（可选）',exact:true}).fill('拖拽验证');
+  await page.getByRole('button',{name:'提交更新',exact:true}).click();
   await page.screenshot({path:'output/playwright/tree-drag-desktop.png',fullPage:true});
   const audit=()=>page.evaluate(()=>{
     const nodes=[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden'&&([...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||el.matches('input,textarea,select')));

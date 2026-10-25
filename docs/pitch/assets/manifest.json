@@ -1,0 +1,144 @@
+{
+  "created": "2026-10-25",
+  "fictional": true,
+  "assets": [
+    {
+      "file": "room.png",
+      "type": "AI-generated fictional scene",
+      "generator": "OpenAI ImageGen",
+      "prompt": "Create a single photographic editorial image, landscape 3:2 ratio, for a thoughtful Chinese personal writing product pitch. A fictional 23-year-old Chinese woman in a modest, believable 15-square-metre rented bedroom in Beijing, early autumn blue hour, sitting side-on at a real wooden desk beside a window, pausing thoughtfully over a laptop and an open notebook. She wears a simple moss-green cardigan over an off-white T-shirt, naturally tied-back black hair, ordinary relatable appearance, shown in medium-wide three-quarter profile, not looking at camera. Warm practical desk lamp against soft cool dusk outside, a few used books, a glass of water, a houseplant and a lived-in bed edge in the background. Include her whole desk, hands naturally resting near notebook, candid documentary composition with the person on the right third and quiet room context. The emotion is agency and contemplation, not sadness or luxury. Rich forest-green shadows, amber light, natural skin tones, subtle film grain, magazine-quality photographic realism, sophisticated restrained lighting, no dramatic artificial glow, no oversaturated orange. No readable text, no UI text, no logos, no watermark, no collage, no decorative typography. This is a fictional lifestyle illustration, not a real customer endorsement."
+    },
+    {
+      "file": "friends.png",
+      "type": "AI-generated fictional scene",
+      "generator": "OpenAI ImageGen",
+      "prompt": "Create a single candid editorial photograph, landscape 3:2 ratio, of two fictional Chinese female friends aged 23 and 24 spending an unhurried Sunday afternoon at a modest Beijing neighborhood cafe. One woman with tied-back dark hair and a simple moss green cardigan, another with shoulder-length dark hair and a muted plum shirt. They are at a wooden table, seen from a slightly elevated medium-wide side angle, both faces visible naturally, one speaking softly while the other listens with genuine curiosity, small natural expressions, neither posing nor looking at the camera. On the table two off-white A5 handwritten lists, two ceramic cups, a pencil, a closed laptop to the side. Paper has only faint handwritten strokes, no readable text. No phones in their hands. Soft daylight from large window, green trees beyond, warm quiet interior, no luxury, no branded coffee cups, believable ordinary contemporary young adults. The image should convey that sharing small personal reasons can create understanding. Magazine-quality photographic realism, muted botanical greens, plum and warm wood, detailed hands without exaggerated gestures, tasteful natural film grain. No logos, no overlaid text, no watermark, no collage, no typography. Fictional illustrative scene, not real users or endorsements."
+    },
+    {
+      "file": "product-note.png",
+      "viewport": [
+        1100,
+        820
+      ],
+      "selector": ".editor",
+      "width": 600,
+      "height": 780,
+      "minFont": 20,
+      "note": "我最喜欢的电影",
+      "type": "Application screenshot",
+      "source": "Current application React UI at http://127.0.0.1:1420/?preview",
+      "sample": "虚构范例1",
+      "captureScale": "css",
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-note-narrow.png",
+      "viewport": [
+        390,
+        844
+      ],
+      "selector": ".editor",
+      "width": 390,
+      "height": 624,
+      "minFont": 20,
+      "note": "我最喜欢的电影",
+      "type": "Application screenshot",
+      "source": "Current application React UI at http://127.0.0.1:1420/?preview",
+      "sample": "虚构范例1",
+      "captureScale": "css",
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-history.png",
+      "viewport": [
+        1192,
+        840
+      ],
+      "selector": "dialog[open]",
+      "width": 1160,
+      "height": 800,
+      "minFont": 18,
+      "note": "我认同的生活观念",
+      "type": "Application screenshot",
+      "source": "Current application React UI at http://127.0.0.1:1420/?preview",
+      "sample": "虚构范例1",
+      "captureScale": "css",
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-history-narrow.png",
+      "viewport": [
+        390,
+        2100
+      ],
+      "selector": ".diff-list",
+      "width": 336,
+      "height": 882,
+      "minFont": 20,
+      "note": "我认同的生活观念",
+      "type": "Application screenshot",
+      "source": "Current application React UI at http://127.0.0.1:1420/?preview",
+      "sample": "虚构范例1",
+      "captureScale": "css",
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-invitation-dialog.png",
+      "viewport": [
+        1250,
+        1200
+      ],
+      "selector": "dialog[open]",
+      "width": 1218,
+      "height": 734,
+      "minFont": 20,
+      "minimumCanvasFont": 23.128,
+      "note": "和乔乔交换答案：我们怎样算过得好",
+      "invitation": true,
+      "type": "Application screenshot",
+      "source": "Current application React UI at http://127.0.0.1:1420/?preview",
+      "sample": "虚构范例1",
+      "captureScale": "css",
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-sharing-dialog.png",
+      "viewport": [
+        1250,
+        1200
+      ],
+      "selector": "dialog[open]",
+      "width": 1218,
+      "height": 1062,
+      "minFont": 20,
+      "minimumCanvasFont": 23.128,
+      "note": "和乔乔交换答案：我们怎样算过得好",
+      "selectedEntries": 1,
+      "type": "Application screenshot",
+      "source": "Current application React UI at http://127.0.0.1:1420/?preview",
+      "sample": "虚构范例1",
+      "captureScale": "css",
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-invitation-export.png",
+      "invitation": true,
+      "type": "Application-generated PNG",
+      "source": "Saved through the application 保存全部图片 action",
+      "sample": "虚构范例1",
+      "width": 1000,
+      "minFont": 28,
+      "pixelsEdited": false
+    },
+    {
+      "file": "product-sharing-export.png",
+      "selectedEntries": 1,
+      "type": "Application-generated PNG",
+      "source": "Saved through the application 保存全部图片 action",
+      "sample": "虚构范例1",
+      "width": 1000,
+      "minFont": 28,
+      "pixelsEdited": false
+    }
+  ]
+}

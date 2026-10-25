@@ -34,6 +34,8 @@ async page => {
   const reason=page.getByPlaceholder('感受与理由（可选）',{exact:true});
   await reason.fill('让我觉得不被尊重。');
   await page.getByRole('button',{name:'完成编辑',exact:true}).click();
+  await page.getByRole('textbox',{name:'更新日志（可选）',exact:true}).fill('产品文案验证');
+  await page.getByRole('button',{name:'提交更新',exact:true}).click();
   const reader=page.getByRole('article',{name:'笔记内容',exact:true});
   await reader.waitFor();
   check((await reader.innerText()).includes('被随意打断')&&(await reader.innerText()).includes('不被尊重'),'Negative preference content changed or lost');

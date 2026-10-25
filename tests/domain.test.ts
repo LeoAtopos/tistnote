@@ -6,6 +6,7 @@ import {
   assertUniqueTitle,
   copyTitle,
   coveredTemplates,
+  notesByTemplate,
   groupName,
   groupMovePath,
   inGroup,
@@ -153,6 +154,34 @@ test("template coverage counts populated active notes by source or exact trimmed
     coveredTemplates([personal], [populated(personal.title)]).size,
     1,
   );
+});
+
+test("covered templates open the latest populated matching note without changing record order", () => {
+  const template = builtinTemplates[0];
+  const record = (title: string, source: string | undefined, updatedAt: string) => ({
+    note: {
+      ...newNote(),
+      title,
+      source,
+      updatedAt,
+      entries: [{ id: uid(), name: "有效条目", reason: "" }],
+    },
+    revision: uid(),
+  });
+  const older = record("改过标题的旧笔记", template.id, "2026-10-20T00:00:00Z");
+  const latest = record("改过标题的新笔记", template.id, "2026-10-24T00:00:00Z");
+  const empty = record(template.title, template.id, "2026-10-25T00:00:00Z");
+  empty.note.entries[0].name = " ";
+  const untitled = record("未命名笔记（1）", template.id, "2026-10-26T00:00:00Z");
+  const records = [older, latest, empty, untitled];
+  assert.equal(notesByTemplate([template], records).get(template.id), latest);
+  assert.deepEqual(records, [older, latest, empty, untitled]);
+  const legacy = record(` ${template.title} `, undefined, "2026-10-27T00:00:00Z");
+  assert.equal(
+    notesByTemplate([template], [...records, legacy]).get(template.id),
+    legacy,
+  );
+  assert.equal(notesByTemplate([template], [empty, untitled]).size, 0);
 });
 
 test("groups validate Windows paths, include descendants, and never scope title uniqueness", () => {

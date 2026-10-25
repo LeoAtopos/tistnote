@@ -57,11 +57,13 @@ function snapshot(id: string, kind: string, label = "") {
   if (
     kind !== "milestone" &&
     kind !== "restore" &&
+    kind !== "edit" &&
+    kind !== "review" &&
     h.length &&
     contentKey(h.at(-1)!.note) === contentKey(n)
   )
     return;
-  if (!h.length && !validTitle(n) && !n.entries.length) return;
+  if (!h.length && !validTitle(n) && !n.entries.length && kind !== "edit" && kind !== "review") return;
   h.push({
     id: uid(),
     at: new Date().toISOString(),
@@ -69,7 +71,12 @@ function snapshot(id: string, kind: string, label = "") {
     label,
     note: structuredClone(n),
   });
-  commit();
+  try {
+    commit();
+  } catch (e) {
+    h.pop();
+    throw e;
+  }
 }
 async function mock(
   type: string,
@@ -88,6 +95,9 @@ async function mock(
       return structuredClone(s.vault);
     case "save": {
       const note = structuredClone(data.note as Note);
+      const months = note.reviewIntervalMonths ?? 3;
+      if (!Number.isInteger(months) || months < 1 || months > 1200)
+        throw Error("回顾周期需为 1 至 1200 个月");
       const i = s.vault.notes.findIndex((r) => r.note.id === note.id);
       if (i >= 0 && s.vault.notes[i].revision !== data.expected)
         throw Error("CONFLICT:笔记已变化");
@@ -112,13 +122,64 @@ async function mock(
     case "snapshot":
       snapshot(id, data.kind as string, data.label as string);
       return null;
+    case "commit_edit": {
+      const label = String(data.label ?? "").trim();
+      const record = s.vault.notes.find((r) => r.note.id === id);
+      if (!record) throw Error("笔记不存在");
+      if (record.revision !== data.expected)
+        throw Error("CONFLICT:提交前检测到外部修改，请先处理冲突");
+      snapshot(id, "edit", label);
+      return null;
+    }
+    case "cancel_edit": {
+      const baseline = structuredClone(data.note as Note);
+      const index = s.vault.notes.findIndex((r) => r.note.id === baseline.id);
+      if (index < 0) throw Error("笔记不存在");
+      const current = s.vault.notes[index];
+      if (current.revision !== data.expected)
+        throw Error("CONFLICT:取消编辑前检测到外部修改，请先处理冲突");
+      assertUniqueTitle(baseline, s.vault.notes);
+      const group = String(data.group ?? "");
+      if (group && !s.vault.groups.includes(group)) throw Error("原分组不存在，请先恢复分组或继续编辑");
+      const record = { note: baseline, revision: uid(), group };
+      s.vault.notes[index] = record;
+      try {
+        commit();
+      } catch (e) {
+        s.vault.notes[index] = current;
+        throw e;
+      }
+      return structuredClone(record);
+    }
+    case "review_note": {
+      const index = s.vault.notes.findIndex((r) => r.note.id === id);
+      if (index < 0) throw Error("笔记不存在");
+      const original = s.vault.notes[index];
+      if (original.revision !== data.expected)
+        throw Error("CONFLICT:回顾确认前检测到外部修改，请先刷新笔记");
+      const record = structuredClone(original);
+      record.note.lastReviewedAt = new Date().toISOString();
+      record.revision = uid();
+      s.vault.notes[index] = record;
+      try {
+        snapshot(id, "review");
+      } catch (e) {
+        s.vault.notes[index] = original;
+        throw e;
+      }
+      return structuredClone(record);
+    }
     case "versions":
       return structuredClone(s.history[id] ?? []);
     case "restore": {
       const v = s.history[id].find((v) => v.id === data.version)!;
       assertUniqueTitle(v.note, s.vault.notes);
       snapshot(id, "auto");
-      const r = await mock("save", { note: v.note, expected: data.expected });
+      const restored = {
+        ...v.note,
+        lastReviewedAt: s.vault.notes.find((r) => r.note.id === id)?.note.lastReviewedAt,
+      };
+      const r = await mock("save", { note: restored, expected: data.expected });
       snapshot(id, "restore", "恢复历史版本");
       return r;
     }

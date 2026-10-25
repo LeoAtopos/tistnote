@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25",
+  "title": "Design System: 品记功能全景图",
+  "extensions": {
+    "colorMeta": {
+      "green": {
+        "role": "primary",
+        "displayName": "品记深绿",
+        "tonalRamp": [
+          "oklch(15% 0.0178 163.12)",
+          "oklch(26% 0.0257 163.12)",
+          "oklch(38% 0.0316 163.12)",
+          "oklch(50% 0.0336 163.12)",
+          "oklch(62% 0.0316 163.12)",
+          "oklch(74% 0.0257 163.12)",
+          "oklch(86% 0.0170 163.12)",
+          "oklch(95% 0.0079 163.12)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "深绿悬停",
+        "tonalRamp": [
+          "oklch(15% 0.0188 157.84)",
+          "oklch(26% 0.0272 157.84)",
+          "oklch(38% 0.0335 157.84)",
+          "oklch(50% 0.0356 157.84)",
+          "oklch(62% 0.0335 157.84)",
+          "oklch(74% 0.0272 157.84)",
+          "oklch(86% 0.0180 157.84)",
+          "oklch(95% 0.0084 157.84)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "墨绿正文",
+        "tonalRamp": [
+          "oklch(15% 0.0078 151.91)",
+          "oklch(26% 0.0113 151.91)",
+          "oklch(38% 0.0139 151.91)",
+          "oklch(50% 0.0148 151.91)",
+          "oklch(62% 0.0139 151.91)",
+          "oklch(74% 0.0113 151.91)",
+          "oklch(86% 0.0075 151.91)",
+          "oklch(95% 0.0035 151.91)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "辅助文字",
+        "tonalRamp": [
+          "oklch(15% 0.0116 138.99)",
+          "oklch(26% 0.0168 138.99)",
+          "oklch(38% 0.0206 138.99)",
+          "oklch(50% 0.0219 138.99)",
+          "oklch(62% 0.0206 138.99)",
+          "oklch(74% 0.0168 138.99)",
+          "oklch(86% 0.0111 138.99)",
+          "oklch(95% 0.0052 138.99)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "暖白底纸",
+        "tonalRamp": [
+          "oklch(15% 0.0018 106.47)",
+          "oklch(26% 0.0026 106.47)",
+          "oklch(38% 0.0032 106.47)",
+          "oklch(50% 0.0034 106.47)",
+          "oklch(62% 0.0032 106.47)",
+          "oklch(74% 0.0026 106.47)",
+          "oklch(86% 0.0017 106.47)",
+          "oklch(95% 0.0008 106.47)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "输入底色",
+        "tonalRamp": [
+          "oklch(15% 0.0018 91.45)",
+          "oklch(26% 0.0027 91.45)",
+          "oklch(38% 0.0033 91.45)",
+          "oklch(50% 0.0035 91.45)",
+          "oklch(62% 0.0033 91.45)",
+          "oklch(74% 0.0027 91.45)",
+          "oklch(86% 0.0018 91.45)",
+          "oklch(95% 0.0008 91.45)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "区域分隔线",
+        "tonalRamp": [
+          "oklch(15% 0.0104 134.96)",
+          "oklch(26% 0.0150 134.96)",
+          "oklch(38% 0.0185 134.96)",
+          "oklch(50% 0.0196 134.96)",
+          "oklch(62% 0.0185 134.96)",
+          "oklch(74% 0.0150 134.96)",
+          "oklch(86% 0.0099 134.96)",
+          "oklch(95% 0.0046 134.96)"
+        ]
+      },
+      "structure": {
+        "role": "neutral",
+        "displayName": "结构边界",
+        "tonalRamp": [
+          "oklch(15% 0.0167 138.58)",
+          "oklch(26% 0.0242 138.58)",
+          "oklch(38% 0.0298 138.58)",
+          "oklch(50% 0.0316 138.58)",
+          "oklch(62% 0.0298 138.58)",
+          "oklch(74% 0.0242 138.58)",
+          "oklch(86% 0.0160 138.58)",
+          "oklch(95% 0.0074 138.58)"
+        ]
+      },
+      "connector": {
+        "role": "neutral",
+        "displayName": "脑图连接线",
+        "tonalRamp": [
+          "oklch(15% 0.0196 136.37)",
+          "oklch(26% 0.0284 136.37)",
+          "oklch(38% 0.0349 136.37)",
+          "oklch(50% 0.0371 136.37)",
+          "oklch(62% 0.0349 136.37)",
+          "oklch(74% 0.0284 136.37)",
+          "oklch(86% 0.0188 136.37)",
+          "oklch(95% 0.0087 136.37)"
+        ]
+      },
+      "tint": {
+        "role": "neutral",
+        "displayName": "浅绿选中面",
+        "tonalRamp": [
+          "oklch(15% 0.0059 130.78)",
+          "oklch(26% 0.0085 130.78)",
+          "oklch(38% 0.0105 130.78)",
+          "oklch(50% 0.0111 130.78)",
+          "oklch(62% 0.0105 130.78)",
+          "oklch(74% 0.0085 130.78)",
+          "oklch(86% 0.0056 130.78)",
+          "oklch(95% 0.0026 130.78)"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "焦点赭色",
+        "tonalRamp": [
+          "oklch(15% 0.0568 48.87)",
+          "oklch(26% 0.0820 48.87)",
+          "oklch(38% 0.1009 48.87)",
+          "oklch(50% 0.1072 48.87)",
+          "oklch(62% 0.1009 48.87)",
+          "oklch(74% 0.0820 48.87)",
+          "oklch(86% 0.0542 48.87)",
+          "oklch(95% 0.0252 48.87)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "页面标题",
+        "purpose": "宽屏40px，1150px以下36px，700px以下32px。"
+      },
+      "headline": {
+        "displayName": "功能标题",
+        "purpose": "查看器34px，窄屏28px。"
+      },
+      "title": {
+        "displayName": "分支标题",
+        "purpose": "24px、600字重。"
+      },
+      "body": {
+        "displayName": "阅读正文",
+        "purpose": "根字号20px，正文和补充说明20–22px。"
+      },
+      "label": {
+        "displayName": "主要操作",
+        "purpose": "默认22px，局部查看器与工具区20px。"
+      },
+      "caption": {
+        "displayName": "图注与来源",
+        "purpose": "18px下限，不通过缩放规避。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "viewer",
+        "value": "0 24px 90px #15281a40",
+        "purpose": "原尺寸截图查看器的柔和浮层。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "branch-chevron",
+        "value": "rotate .18s ease-out",
+        "purpose": "分支展开箭头，减少动效时禁用。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-branches",
+        "value": "1660px"
+      },
+      {
+        "name": "compact-map",
+        "value": "1150px"
+      },
+      {
+        "name": "vertical-tree",
+        "value": "700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "主要操作",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "开始顺序浏览与下一功能。",
+      "html": "<button class=\"ds-primary\">按顺序浏览 <svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 12h15m-6-6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-primary{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:22px;line-height:1.5;min-height:48px;padding:9px 17px;border-radius:5px;border:1px solid var(--line,#cbd5c6);cursor:pointer;display:inline-flex;align-items:center;gap:12px;background:var(--green,#344f42);border-color:var(--green,#344f42);color:var(--paper,#fafaf7)}.ds-primary svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.ds-primary:hover{background:#233d2e}.ds-primary:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}.ds-primary:disabled{cursor:default;opacity:.45}"
+    },
+    {
+      "name": "普通操作",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "展开、收起与前一个功能。",
+      "html": "<button class=\"ds-secondary\">展开全部</button>",
+      "css": ".ds-secondary{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:22px;line-height:1.5;min-height:48px;padding:9px 17px;border-radius:5px;border:1px solid var(--line,#cbd5c6);cursor:pointer;background:transparent;color:var(--ink,#2b342d)}.ds-secondary:hover{background:var(--tint,#e9eee5)}.ds-secondary:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}.ds-secondary:disabled{cursor:default;opacity:.45}"
+    },
+    {
+      "name": "功能查找",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "搜索功能和相关说明，焦点落在整个输入区域。",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m16 16 5 5\"/></svg><input type=\"search\" aria-label=\"查找功能\" placeholder=\"查找功能，如：回顾、分享、分组\"></label>",
+      "css": ".ds-search{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;display:flex;align-items:center;gap:12px;border:1px solid #8b9c86;border-radius:5px;padding:10px 15px;max-width:470px;background:#fffefb;color:var(--ink,#2b342d)}.ds-search svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}.ds-search input{font:inherit;font-size:20px;width:100%;min-width:0;border:0;background:transparent;color:inherit;outline:0;caret-color:var(--green,#344f42)}.ds-search input::placeholder{color:var(--muted,#596456);opacity:1}.ds-search:focus-within{outline:3px solid var(--focus,#a75420);outline-offset:3px}"
+    },
+    {
+      "name": "脑图分支",
+      "kind": "nav",
+      "description": "原生展开项，显示分支名称与功能数。",
+      "html": "<details class=\"ds-branch\" open><summary>阅读与整理<span>6 个功能 <svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m9 5 7 7-7 7\"/></svg></span></summary><p>认识主界面</p></details>",
+      "css": ".ds-branch{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;color:var(--ink,#2b342d);width:240px}.ds-branch summary{list-style:none;cursor:pointer;font-size:24px;font-weight:600;line-height:1.45;padding:12px 9px;border-block:1px solid #8b9c86;background:var(--paper,#fafaf7)}.ds-branch summary::-webkit-details-marker{display:none}.ds-branch summary:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}.ds-branch summary span{display:flex;align-items:center;gap:8px;font-weight:400;font-size:18px;color:var(--muted,#596456);margin-top:5px}.ds-branch svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;transition:rotate .18s ease-out}.ds-branch[open] svg{rotate:90deg}.ds-branch p{font-size:22px;margin:15px 0 0;padding:9px 12px}@media(prefers-reduced-motion:reduce){.ds-branch svg{transition:none}}"
+    },
+    {
+      "name": "功能节点",
+      "kind": "nav",
+      "refersTo": "feature-node",
+      "description": "打开功能截图；当前项以浅绿底和字重表达。",
+      "html": "<button class=\"ds-feature\" aria-haspopup=\"dialog\" aria-current=\"true\">搜索与标签筛选</button>",
+      "css": ".ds-feature{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:22px;line-height:1.4;min-height:49px;padding:9px 12px;text-align:left;border:0;border-radius:4px;background:var(--paper,#fafaf7);color:var(--ink,#2b342d);cursor:pointer}.ds-feature:hover{background:var(--tint,#e9eee5)}.ds-feature[aria-current=\"true\"]{background:var(--tint,#e9eee5);color:var(--green,#344f42);font-weight:600}.ds-feature:after{content:\"\";display:inline-block;width:7px;height:7px;border-top:1.5px solid currentColor;border-right:1.5px solid currentColor;rotate:45deg;margin-left:9px;vertical-align:3px;opacity:.6}.ds-feature:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}"
+    },
+    {
+      "name": "截图切换",
+      "kind": "nav",
+      "refersTo": "shot-tab",
+      "description": "同一功能内的多张截图，以aria-pressed标记当前图片。",
+      "html": "<div class=\"ds-tabs\" role=\"group\" aria-label=\"此功能的截图\"><button aria-pressed=\"true\">版本与变化明细</button><button aria-pressed=\"false\">展开所选版本全文</button></div>",
+      "css": ".ds-tabs{display:flex;gap:9px;flex-wrap:wrap}.ds-tabs button{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:22px;line-height:1.5;min-height:48px;padding:9px 17px;border-radius:5px;border:1px solid var(--line,#cbd5c6);cursor:pointer;font-size:20px;padding:9px 16px;color:var(--ink,#2b342d);background:transparent}.ds-tabs button:hover{background:var(--tint,#e9eee5)}.ds-tabs button[aria-pressed=\"true\"]{background:var(--green,#344f42);color:var(--paper,#fafaf7);border-color:var(--green,#344f42)}.ds-tabs button:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}"
+    },
+    {
+      "name": "原图保存链接",
+      "kind": "custom",
+      "description": "保存当前真实PNG，不把截图导航到外部服务。",
+      "html": "<a class=\"ds-download\" href=\"#\" download>保存原图 <svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4\"/></svg></a>",
+      "css": ".ds-download{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:18px;display:inline-flex;align-items:center;gap:7px;color:var(--green,#344f42);text-underline-offset:5px}.ds-download svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.ds-download:hover{text-decoration-thickness:2px}.ds-download:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}"
+    },
+    {
+      "name": "来源展开区",
+      "kind": "custom",
+      "description": "主动打开虚构资料和截图验证范围说明。",
+      "html": "<details class=\"ds-source\"><summary>关于范例与截图</summary><p>人物、经历和笔记均为虚构。界面取自当前代码的显式开发预览。</p></details>",
+      "css": ".ds-source{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:18px;line-height:1.65;color:var(--muted,#596456);border-top:1px solid var(--line,#cbd5c6);padding-top:22px}.ds-source summary{cursor:pointer;width:fit-content}.ds-source summary:hover{color:var(--green,#344f42)}.ds-source summary:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:4px}.ds-source p{max-width:75ch;margin:15px 0 0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "品记的纸页",
+    "overview": "延续现有品记提案的深绿、暖白和中文阅读层级。真实应用截图承担功能证据，细线表达脑图的父子关系；页面本身只提供查找、展开和连续浏览。\n\n本文件仅约束 `docs/product-map`。实际样式与行为以 `map.css`、`map.js`、`index.html` 为准；不修改正式应用或既有提案的设计系统。功能与截图对应由 `features.json`、`assets/manifest.json` 保存，单文件 HTML 由打包脚本生成。",
+    "keyCharacteristics": [
+      "功能节点用短句，截图配操作路径、具体范例和简短说明。",
+      "图片保持自然尺寸，超出窗口时局部滚动，不缩小界面文字。",
+      "宽屏使用双侧脑图，窄屏保留同一层级的纵向树。",
+      "开发预览、虚构资料和仅展示入口的桌面能力明确说明。"
+    ],
+    "rules": [
+      {
+        "name": "The Readable Chinese Rule",
+        "body": "所有可读文字至少 18 CSS px；图内文字也按实际显示尺寸检查。产品截图宽度等于图片自然宽度，不能用缩放适应窗口。",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do 保留现有品记图标、深绿和暖白，只扩展本功能文档。",
+      "Do 保持至少 18px 的实际文字尺寸，包括原尺寸截图中的文字。",
+      "Do 用真实捕获的界面与实际导出图说明功能，保留来源和验证边界。",
+      "Do 修改源文件后重新打包，使单文件 HTML 与源文件一致。"
+    ],
+    "donts": [
+      "Don't 缩小整张截图来适应栏宽，或用重绘界面代替截图。",
+      "Don't 把范例人物和开发预览包装成真实用户与正式桌面运行证据。",
+      "Don't 引入在线字体、远程脚本、图片、账号或追踪依赖。",
+      "Don't 将本页面的脑图与查看器布局推广为正式应用界面的规则。"
+    ]
+  }
+}

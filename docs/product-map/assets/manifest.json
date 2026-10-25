@@ -1,0 +1,419 @@
+{
+  "captureDate": "2026-10-25",
+  "source": "Current application, isolated explicit ?preview; original example vault unchanged",
+  "sample": {
+    "persona": "林知夏，23岁，北京",
+    "notes": 53,
+    "nonTemplateNotes": 26,
+    "builtinCovered": 27,
+    "builtinTemplates": 45,
+    "coverage": "60%"
+  },
+  "notes": [
+    "部分状态为范例的临时操作演示。",
+    "备份、恢复、Markdown导入只展示入口，未拍摄系统文件对话框。",
+    "截图原像素展示，不缩小。"
+  ],
+  "assets": {
+    "activity-day": {
+      "src": "assets/activity-day.png",
+      "file": "activity-day.png",
+      "width": 1124,
+      "height": 222,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "activity": {
+      "src": "assets/activity.png",
+      "file": "activity.png",
+      "width": 1440,
+      "height": 1000,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "cancel-edit": {
+      "src": "assets/cancel-edit.png",
+      "file": "cancel-edit.png",
+      "width": 700,
+      "height": 280,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "commit": {
+      "src": "assets/commit.png",
+      "file": "commit.png",
+      "width": 700,
+      "height": 430,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "conflict": {
+      "src": "assets/conflict.png",
+      "file": "conflict.png",
+      "width": 1440,
+      "height": 1000,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "delete-confirm": {
+      "src": "assets/delete-confirm.png",
+      "file": "delete-confirm.png",
+      "width": 700,
+      "height": 318,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "duplicate-title": {
+      "src": "assets/duplicate-title.png",
+      "file": "duplicate-title.png",
+      "width": 700,
+      "height": 280,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "editor-tools": {
+      "src": "assets/editor-tools.png",
+      "file": "editor-tools.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "editor": {
+      "src": "assets/editor.png",
+      "file": "editor.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "entry-order": {
+      "src": "assets/entry-order.png",
+      "file": "entry-order.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "groups": {
+      "src": "assets/groups.png",
+      "file": "groups.png",
+      "width": 700,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "help": {
+      "src": "assets/help.png",
+      "file": "help.png",
+      "width": 700,
+      "height": 870,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "history": {
+      "src": "assets/history.png",
+      "file": "history.png",
+      "width": 1240,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "invite-export": {
+      "src": "assets/invite-export.png",
+      "file": "invite-export.png",
+      "width": 1000,
+      "height": 620,
+      "minimumSourceFont": 28,
+      "source": "应用实际导出 PNG",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "invite": {
+      "src": "assets/invite.png",
+      "file": "invite.png",
+      "width": 1240,
+      "height": 748,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "list-detail": {
+      "src": "assets/list-detail.png",
+      "file": "list-detail.png",
+      "width": 360,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "list-options": {
+      "src": "assets/list-options.png",
+      "file": "list-options.png",
+      "width": 360,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "milestone": {
+      "src": "assets/milestone.png",
+      "file": "milestone.png",
+      "width": 700,
+      "height": 326,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "new-note": {
+      "src": "assets/new-note.png",
+      "file": "new-note.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "note-actions": {
+      "src": "assets/note-actions.png",
+      "file": "note-actions.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "random": {
+      "src": "assets/random.png",
+      "file": "random.png",
+      "width": 1205,
+      "height": 1277,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "reader-ranked": {
+      "src": "assets/reader-ranked.png",
+      "file": "reader-ranked.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "reader-unranked": {
+      "src": "assets/reader-unranked.png",
+      "file": "reader-unranked.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "review": {
+      "src": "assets/review.png",
+      "file": "review.png",
+      "width": 860,
+      "height": 905,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "search": {
+      "src": "assets/search.png",
+      "file": "search.png",
+      "width": 1440,
+      "height": 1000,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "settings": {
+      "src": "assets/settings.png",
+      "file": "settings.png",
+      "width": 700,
+      "height": 660,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "share-export": {
+      "src": "assets/share-export.png",
+      "file": "share-export.png",
+      "width": 1000,
+      "height": 620,
+      "minimumSourceFont": 28,
+      "source": "应用实际导出 PNG",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "share-page2": {
+      "src": "assets/share-page2.png",
+      "file": "share-page2.png",
+      "width": 1240,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "share-selection": {
+      "src": "assets/share-selection.png",
+      "file": "share-selection.png",
+      "width": 1240,
+      "height": 1012,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "share": {
+      "src": "assets/share.png",
+      "file": "share.png",
+      "width": 1240,
+      "height": 1012,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "template-covered": {
+      "src": "assets/template-covered.png",
+      "file": "template-covered.png",
+      "width": 1440,
+      "height": 1000,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "template-editor": {
+      "src": "assets/template-editor.png",
+      "file": "template-editor.png",
+      "width": 701,
+      "height": 904,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "template-extract": {
+      "src": "assets/template-extract.png",
+      "file": "template-extract.png",
+      "width": 700,
+      "height": 904,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "template-filter": {
+      "src": "assets/template-filter.png",
+      "file": "template-filter.png",
+      "width": 1205,
+      "height": 981,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "template-start": {
+      "src": "assets/template-start.png",
+      "file": "template-start.png",
+      "width": 860,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "templates": {
+      "src": "assets/templates.png",
+      "file": "templates.png",
+      "width": 1425,
+      "height": 4869,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "trash": {
+      "src": "assets/trash.png",
+      "file": "trash.png",
+      "width": 1440,
+      "height": 1000,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "version-full": {
+      "src": "assets/version-full.png",
+      "file": "version-full.png",
+      "width": 1240,
+      "height": 960,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "welcome": {
+      "src": "assets/welcome.png",
+      "file": "welcome.png",
+      "width": 1425,
+      "height": 1040,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    },
+    "workspace": {
+      "src": "assets/workspace.png",
+      "file": "workspace.png",
+      "width": 1440,
+      "height": 1000,
+      "minimumSourceFont": 18,
+      "source": "当前 React 应用的显式开发预览",
+      "sample": "范例1（虚构）",
+      "date": "2026-10-25"
+    }
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25",
+  "title": "Design System: 品记项目提案",
+  "extensions": {
+    "colorMeta": {
+      "green": {
+        "role": "primary",
+        "displayName": "森林绿",
+        "tonalRamp": [
+          "oklch(15% 0.0210 163.12)",
+          "oklch(26% 0.0307 163.12)",
+          "oklch(38% 0.0373 163.12)",
+          "oklch(50% 0.0395 163.12)",
+          "oklch(62% 0.0373 163.12)",
+          "oklch(74% 0.0307 163.12)",
+          "oklch(86% 0.0200 163.12)",
+          "oklch(95% 0.0090 163.12)"
+        ]
+      },
+      "deep": {
+        "role": "primary",
+        "displayName": "深林绿",
+        "tonalRamp": [
+          "oklch(15% 0.0191 164.02)",
+          "oklch(26% 0.0278 164.02)",
+          "oklch(38% 0.0338 164.02)",
+          "oklch(50% 0.0358 164.02)",
+          "oklch(62% 0.0338 164.02)",
+          "oklch(74% 0.0278 164.02)",
+          "oklch(86% 0.0181 164.02)",
+          "oklch(95% 0.0081 164.02)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "墨绿文字",
+        "tonalRamp": [
+          "oklch(15% 0.0093 151.91)",
+          "oklch(26% 0.0135 151.91)",
+          "oklch(38% 0.0164 151.91)",
+          "oklch(50% 0.0174 151.91)",
+          "oklch(62% 0.0164 151.91)",
+          "oklch(74% 0.0135 151.91)",
+          "oklch(86% 0.0088 151.91)",
+          "oklch(95% 0.0039 151.91)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "沉静辅助字",
+        "tonalRamp": [
+          "oklch(15% 0.0137 138.99)",
+          "oklch(26% 0.0200 138.99)",
+          "oklch(38% 0.0243 138.99)",
+          "oklch(50% 0.0258 138.99)",
+          "oklch(62% 0.0243 138.99)",
+          "oklch(74% 0.0200 138.99)",
+          "oklch(86% 0.0130 138.99)",
+          "oklch(95% 0.0058 138.99)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "暖白底纸",
+        "tonalRamp": [
+          "oklch(15% 0.0021 106.47)",
+          "oklch(26% 0.0031 106.47)",
+          "oklch(38% 0.0037 106.47)",
+          "oklch(50% 0.0040 106.47)",
+          "oklch(62% 0.0037 106.47)",
+          "oklch(74% 0.0031 106.47)",
+          "oklch(86% 0.0020 106.47)",
+          "oklch(95% 0.0009 106.47)"
+        ]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "米色修订底",
+        "tonalRamp": [
+          "oklch(15% 0.0071 97.45)",
+          "oklch(26% 0.0104 97.45)",
+          "oklch(38% 0.0127 97.45)",
+          "oklch(50% 0.0134 97.45)",
+          "oklch(62% 0.0127 97.45)",
+          "oklch(74% 0.0104 97.45)",
+          "oklch(86% 0.0068 97.45)",
+          "oklch(95% 0.0030 97.45)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "灰绿分隔线",
+        "tonalRamp": [
+          "oklch(15% 0.0095 131.89)",
+          "oklch(26% 0.0139 131.89)",
+          "oklch(38% 0.0169 131.89)",
+          "oklch(50% 0.0179 131.89)",
+          "oklch(62% 0.0169 131.89)",
+          "oklch(74% 0.0139 131.89)",
+          "oklch(86% 0.0090 131.89)",
+          "oklch(95% 0.0041 131.89)"
+        ]
+      },
+      "tint": {
+        "role": "neutral",
+        "displayName": "浅绿侧栏",
+        "tonalRamp": [
+          "oklch(15% 0.0070 130.78)",
+          "oklch(26% 0.0102 130.78)",
+          "oklch(38% 0.0123 130.78)",
+          "oklch(50% 0.0131 130.78)",
+          "oklch(62% 0.0123 130.78)",
+          "oklch(74% 0.0102 130.78)",
+          "oklch(86% 0.0066 130.78)",
+          "oklch(95% 0.0030 130.78)"
+        ]
+      },
+      "plum": {
+        "role": "secondary",
+        "displayName": "李子紫回应",
+        "tonalRamp": [
+          "oklch(15% 0.0256 330.50)",
+          "oklch(26% 0.0374 330.50)",
+          "oklch(38% 0.0454 330.50)",
+          "oklch(50% 0.0481 330.50)",
+          "oklch(62% 0.0454 330.50)",
+          "oklch(74% 0.0374 330.50)",
+          "oklch(86% 0.0243 330.50)",
+          "oklch(95% 0.0109 330.50)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "品单纸白",
+        "tonalRamp": [
+          "oklch(15% 0.0022 91.45)",
+          "oklch(26% 0.0032 91.45)",
+          "oklch(38% 0.0039 91.45)",
+          "oklch(50% 0.0041 91.45)",
+          "oklch(62% 0.0039 91.45)",
+          "oklch(74% 0.0032 91.45)",
+          "oklch(86% 0.0021 91.45)",
+          "oklch(95% 0.0009 91.45)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "主要操作悬停",
+        "tonalRamp": [
+          "oklch(15% 0.0223 157.84)",
+          "oklch(26% 0.0325 157.84)",
+          "oklch(38% 0.0395 157.84)",
+          "oklch(50% 0.0419 157.84)",
+          "oklch(62% 0.0395 157.84)",
+          "oklch(74% 0.0325 157.84)",
+          "oklch(86% 0.0211 157.84)",
+          "oklch(95% 0.0095 157.84)"
+        ]
+      },
+      "focus": {
+        "role": "utility",
+        "displayName": "赭色焦点",
+        "tonalRamp": [
+          "oklch(15% 0.0671 48.87)",
+          "oklch(26% 0.0980 48.87)",
+          "oklch(38% 0.1190 48.87)",
+          "oklch(50% 0.1262 48.87)",
+          "oklch(62% 0.1190 48.87)",
+          "oklch(74% 0.0980 48.87)",
+          "oklch(86% 0.0637 48.87)",
+          "oklch(95% 0.0286 48.87)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "封面标题",
+        "purpose": "宋体三个短句；62px，1200/900/680px 断点分别为 54/46/44px。"
+      },
+      "headline": {
+        "displayName": "章节标题",
+        "purpose": "宋体章节层级；44px，1200/680px 断点分别为 40/34px。"
+      },
+      "title": {
+        "displayName": "条目标题",
+        "purpose": "无衬线半粗标题；常规 26px，截图查看器标题 24px，窄屏为 22px。"
+      },
+      "body": {
+        "displayName": "正文",
+        "purpose": "正文 22px、次要正文 20px，行距 1.85。截图按来源字号与显示比例核对。"
+      },
+      "label": {
+        "displayName": "主要操作",
+        "purpose": "主要阅读入口、分享截图切换与查看器关闭。"
+      },
+      "caption": {
+        "displayName": "辅助说明",
+        "purpose": "18px 字号下限；图注、日期与来源说明。"
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "anchor-scroll",
+        "value": "smooth",
+        "purpose": "页内锚点；减少动效偏好时为 auto。内容切换没有标题动画或状态过渡。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-max",
+        "value": "1200px"
+      },
+      {
+        "name": "screenshot-stack-max",
+        "value": "1100px"
+      },
+      {
+        "name": "type-medium-max",
+        "value": "900px"
+      },
+      {
+        "name": "narrow-max",
+        "value": "680px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "主要阅读入口",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "暖白页面上的深绿阅读入口；直接跳到价值列表。",
+      "html": "<a class=\"ds-primary\" href=\"#story\">它能帮我做什么<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></a>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:18px;font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:22px;line-height:1.6;padding:15px 23px;min-height:62px;text-decoration:none;border-radius:4px;background:var(--green,#344f42);color:var(--paper,#fafaf7)}.ds-primary:hover{background:#233d2e}.ds-primary:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:5px}.ds-primary svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}"
+    },
+    {
+      "name": "章节导航",
+      "kind": "nav",
+      "description": "三项阅读锚点；680px 以下在品牌后独立一行。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"文档章节\"><a href=\"#self\">怎么写</a><a href=\"#time\">怎么看变化</a><a href=\"#together\">怎么交流</a></nav>",
+      "css": ".ds-nav{display:flex;gap:28px;font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;color:var(--ink,#2b342d)}.ds-nav a{font-size:20px;padding-block:10px;text-decoration:none;color:inherit;text-underline-offset:6px}.ds-nav a:hover{text-decoration:underline}.ds-nav a:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:5px}@media(max-width:680px){.ds-nav{width:100%;gap:0;justify-content:space-between;border-top:1px solid var(--line,#d4dbcf);padding-top:8px}.ds-nav a{font-size:18px}}"
+    },
+    {
+      "name": "分享模式切换",
+      "kind": "button",
+      "refersTo": "share-switch",
+      "description": "切换邀请与答案分享的真实截图，以 aria-pressed 与底色表达状态。",
+      "html": "<div class=\"ds-sharing-switch\" role=\"group\" aria-label=\"选择分享示意\"><button type=\"button\" aria-pressed=\"true\">只发问题</button><button type=\"button\" aria-pressed=\"false\">分享答案</button></div>",
+      "css": ".ds-sharing-switch{display:flex;flex-wrap:wrap;gap:12px;margin-block:23px 14px}.ds-sharing-switch button{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;background:transparent;color:var(--ink,#2b342d);border:1px solid #a7b69d;padding:11px 18px;font-size:22px;line-height:1.6;border-radius:4px;cursor:pointer}.ds-sharing-switch button:hover{background:#d9e2d0}.ds-sharing-switch button[aria-pressed=\"true\"]{background:var(--green,#344f42);border-color:var(--green,#344f42);color:var(--paper,#fafaf7)}.ds-sharing-switch button:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:5px}@media(max-width:680px){.ds-sharing-switch button{padding-inline:16px}}"
+    },
+    {
+      "name": "依据展开区",
+      "kind": "custom",
+      "description": "原生 details 按需显示产品依据与虚构说明。",
+      "html": "<details class=\"ds-sources\"><summary>产品依据与范例说明</summary><div><p>案例经节选、缩写，不是用户证言；图片为 AI 场景创作。交互内容为提案示意，非应用截图。</p></div></details>",
+      "css": ".ds-sources{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;color:var(--ink,#2b342d);border-top:1px solid var(--line,#d4dbcf);padding-top:20px;margin-top:25px}.ds-sources summary{font-size:18px;line-height:1.8;cursor:pointer}.ds-sources>div{padding-top:18px}.ds-sources p{font-size:18px;line-height:1.85;margin:0}.ds-sources summary:focus-visible{outline:3px solid var(--focus,#a75420);outline-offset:5px}"
+    },
+    {
+      "name": "截图展开按钮",
+      "kind": "button",
+      "refersTo": "shot-action",
+      "description": "在图片外提供原尺寸查看入口。",
+      "html": "<button class=\"ds-shot-action\">展开截图</button>",
+      "css": ".ds-shot-action{font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;font-size:20px;line-height:1.6;padding:8px 14px;background:transparent;color:var(--green,#344f42);border:1px solid #a7b69d;border-radius:4px;cursor:pointer}.ds-shot-action:hover{background:var(--tint,#e9eee5)}.ds-shot-action:focus-visible{outline:3px solid #a75420;outline-offset:5px}"
+    },
+    {
+      "name": "截图查看器工具栏",
+      "kind": "custom",
+      "description": "显示当前截图名称，提供关闭操作。",
+      "html": "<div class=\"ds-shot-toolbar\"><h2>笔记阅读界面</h2><button>关闭</button></div>",
+      "css": ".ds-shot-toolbar{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:15px 22px;background:var(--paper,#fafaf7);color:var(--ink,#2b342d);border-bottom:1px solid #d4dbcf;font-family:\"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif}.ds-shot-toolbar h2{font:600 24px/1.45 \"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;margin:0}.ds-shot-toolbar button{font:400 22px/1.6 \"Microsoft YaHei\",\"PingFang SC\",system-ui,sans-serif;padding:9px 18px;border:1px solid #a7b69d;border-radius:4px;background:#fafaf7;color:#2b342d;cursor:pointer}"
+    }
+  ],
+  "narrative": {
+    "northStar": "品记的纸页",
+    "overview": "沿用品记的深绿、暖白和清晰中文。短句说明产品，真实应用截图呈现笔记、版本与分享；两幅生活场景插图只承担情境。\n\n本文件仅约束 docs/pitch 的产品截图版。应用界面取自当前代码的显式开发预览，载入虚构范例1；分享图片由应用实际导出。当前像素、样式与行为以 index.html、pitch.css、pitch.js 和 assets/manifest.json 为准。应用本身的设计系统未改动。",
+    "keyCharacteristics": [
+      "先给产品定义与价值，再用真实画面说明操作。",
+      "截图保留可读字号，宽图局部滚动，不缩成微型文字。",
+      "当前截图可原像素展开，分享模式切换真实图片。",
+      "开发预览、虚构范例与 AI 场景图各自明确标注。"
+    ],
+    "dos": [
+      "Do 延用品记图标、深绿与暖白，只更新提案本身。",
+      "Do 核对文字的实际显示尺寸，包括截图中的文字。",
+      "Do 保留截图来源、区域、虚构数据及 AI 图注。",
+      "Do 修改源文件后重新打包，保持单文件与源文件一致。"
+    ],
+    "donts": [
+      "Don't 用重绘 DOM 冒充应用截图。",
+      "Don't 为适应栏宽将截图文字缩到 18px 以下。",
+      "Don't 加入在线字体、远程图片、账号或追踪依赖。",
+      "Don't 把开发预览或虚构资料库包装成真实用户反馈。"
+    ],
+    "rules": [
+      {
+        "name": "Readable Chinese",
+        "section": "typography",
+        "body": "所有可读文字至少 18 CSS px；截图按来源字号与显示比例核对，不用缩字适应空间。"
+      }
+    ]
+  }
+}

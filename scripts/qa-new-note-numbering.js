@@ -32,6 +32,8 @@ async page => {
   check(state.vault.notes.find(r=>r.note.title==='未命名笔记（5）').group === '分组测试', 'Selected group was lost');
   check(Object.values(state.history).every(versions=>versions.length === 0), 'Blank numbered notes created content history');
   await page.getByRole('button',{name:'完成编辑',exact:true}).click();
+  await page.getByRole('textbox',{name:'更新日志（可选）',exact:true}).fill('新建笔记验证');
+  await page.getByRole('button',{name:'提交更新',exact:true}).click();
   await page.screenshot({path:'output/playwright/new-note-numbering-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:/^笔记/}).first().click();

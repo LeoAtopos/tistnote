@@ -25,6 +25,20 @@ enum Request {
     Versions {
         id: String,
     },
+    CommitEdit {
+        id: String,
+        expected: String,
+        label: String,
+    },
+    ReviewNote {
+        id: String,
+        expected: String,
+    },
+    CancelEdit {
+        note: Note,
+        expected: String,
+        group: String,
+    },
     Snapshot {
         id: String,
         kind: String,
@@ -97,6 +111,20 @@ fn vault_command(request: Request, state: State<AppState>) -> Result<Value> {
             expected,
         } => json!(s.move_note(&id, &group, &expected)?),
         Request::Versions { id } => json!(s.versions(&id)?),
+        Request::ReviewNote { id, expected } => json!(s.review_note(&id, &expected)?),
+        Request::CancelEdit {
+            note,
+            expected,
+            group,
+        } => json!(s.cancel_edit(note, &expected, &group)?),
+        Request::CommitEdit {
+            id,
+            expected,
+            label,
+        } => {
+            s.commit_edit(&id, &expected, &label)?;
+            json!(null)
+        }
         Request::Snapshot { id, kind, label } => {
             if !["auto", "milestone", "external", "recovery"].contains(&kind.as_str()) {
                 return Err("未知的版本类型".into());

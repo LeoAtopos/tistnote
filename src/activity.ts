@@ -13,6 +13,8 @@ export function noteActivity(note: Note, versions: Version[]): ActivityEvent[] {
   for (const version of [...versions].sort(
     (a, b) => Date.parse(a.at) - Date.parse(b.at),
   )) {
+    if (version.kind === "review")
+      events.push({ noteId: note.id, title: version.note.title, at: version.at, kind: "reviewed" });
     if (
       previous
         ? contentKey(previous) !== contentKey(version.note)

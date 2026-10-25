@@ -12,6 +12,9 @@ import {
   diffNotes,
   uid,
   validEntries,
+  reviewDueAt,
+  reviewTimeLabel,
+  needsReview,
   type Note,
   type Template,
   type Version,
@@ -68,8 +71,9 @@ export function Icon({
     </svg>
   );
 }
-export function NoteReader({ note }: { note: Note }) {
+export function NoteReader({ note, now = Date.now() }: { note: Note; now?: number }) {
   const List = note.ranked ? "ol" : "ul";
+  const due = reviewDueAt(note);
   return (
     <article className="editor-page note-reading" aria-label="笔记内容">
       <h1 className="reading-title">{note.title}</h1>
@@ -90,6 +94,22 @@ export function NoteReader({ note }: { note: Note }) {
       ) : (
         <p className="reading-empty">还没有填写条目</p>
       )}
+      <div className="review-summary" aria-label="回顾状态">
+        <span>
+          {needsReview(note, now) ? "需要回顾" : "下次回顾"} · {due ? (
+            <time dateTime={due.toISOString()} title={due.toLocaleString("zh-CN")}>
+              {reviewTimeLabel(due.getTime(), now, needsReview(note, now))}
+            </time>
+          ) : "日期未知"}
+        </span>
+        <span>
+          上次回顾 · {note.lastReviewedAt ? (
+            <time dateTime={note.lastReviewedAt} title={new Date(note.lastReviewedAt).toLocaleString("zh-CN")}>
+              {reviewTimeLabel(Date.parse(note.lastReviewedAt), now)}
+            </time>
+          ) : "尚未确认"}
+        </span>
+      </div>
     </article>
   );
 }
@@ -298,6 +318,8 @@ export const versionName = (v: Version) =>
   ({
     initial: "初始版本",
     auto: "自动版本",
+    edit: "笔记更新",
+    review: "回顾确认",
     milestone: "审美里程碑",
     external: "外部修改",
     recovery: "重新打开时留存",
@@ -340,7 +362,7 @@ export function History({
                 <strong>{versionName(v)}</strong>
                 <span>{dateTime(v.at)}</span>
                 <span>
-                  {i === 0
+                  {v.kind === "review" ? "确认当前品单" : i === 0
                     ? "从这里开始"
                     : differences.length
                       ? differences.slice(0, 2).join("；")
@@ -380,13 +402,19 @@ export function History({
                   </select>
                 </label>
               </div>
+              {b.kind === "edit" && b.label && (
+                <section className="change-log" aria-label="更新日志">
+                  <h3>更新日志</h3>
+                  <p className="preserve">{b.label}</p>
+                </section>
+              )}
               <div className="diff-list">
                 {diffNotes(a.note, b.note).length ? (
                   diffNotes(a.note, b.note).map((change, i) => (
                     <p key={i}>{change}</p>
                   ))
                 ) : (
-                  <p className="muted">两个版本的内容相同。</p>
+                  <p className="muted">{b.kind === "review" ? "已回顾确认当前品单，内容未更新。" : "两个版本的内容相同。"}</p>
                 )}
               </div>
               <details>

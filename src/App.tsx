@@ -12,12 +12,13 @@ import {
   cleanTags,
   contentKey,
   copyTitle,
-  coveredTemplates,
+  notesByTemplate,
   groupName,
   groupMovePath,
   inGroup,
   matches,
   newNote,
+  needsReview,
   randomTemplate,
   uid,
   validEntries,
@@ -51,6 +52,7 @@ type Dialog =
   | "share"
   | "invite"
   | "history"
+  | "commit"
   | "milestone"
   | "help"
   | "groups"
@@ -76,6 +78,8 @@ export default function App() {
     [picked, setPicked] = useState<Template | null>(null),
     [versions, setVersions] = useState<Version[]>([]),
     [milestone, setMilestone] = useState("");
+  const [changeLog, setChangeLog] = useState(""),
+    [changeLogError, setChangeLogError] = useState("");
   const [more, setMore] = useState(false),
     [editing, setEditing] = useState(false),
     [compact, setCompact] = useState(true),
@@ -85,6 +89,12 @@ export default function App() {
     [revisionTick, setRevisionTick] = useState(0);
   const [closedGroups, setClosedGroups] = useState<Set<string>>(new Set());
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [reviewNow, setReviewNow] = useState(Date.now());
+  const minuteReviewEnabled = vault?.notes.some((r) => r.note.reviewTestMinute) ?? false;
+  useEffect(() => {
+    const timer = setInterval(() => setReviewNow(Date.now()), minuteReviewEnabled ? 1000 : 60_000);
+    return () => clearInterval(timer);
+  }, [minuteReviewEnabled]);
   const [listPanel, setListPanel] = useState<"search" | "options" | null>(null);
   const listTools = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -112,10 +122,15 @@ export default function App() {
   useEffect(() => setListPanel(null), [view, dialog]);
   const [confirmation, setConfirmation] = useState<{
     text: string;
+    title?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
     resolve: (answer: boolean) => void;
   } | null>(null);
   const doc = useRef<Note | null>(null),
     saved = useRef<RecordNote | null>(null),
+    editStart = useRef<RecordNote | null>(null),
+    cancelPending = useRef(false),
     chain = useRef<Promise<unknown>>(Promise.resolve()),
     undo = useRef<Note[]>([]),
     redo = useRef<Note[]>([]),
@@ -123,8 +138,10 @@ export default function App() {
     conflictRef = useRef(false);
   const latest = useRef({ close: async () => {}, focus: async () => {} });
   const busyRef = useRef(false);
-  const confirm = (text: string) =>
-    new Promise<boolean>((resolve) => setConfirmation({ text, resolve }));
+  const confirm = (
+    text: string,
+    labels: { title?: string; confirmLabel?: string; cancelLabel?: string } = {},
+  ) => new Promise<boolean>((resolve) => setConfirmation({ text, resolve, ...labels }));
   const fail = (e: unknown) => {
     const message = String(e).replace(/^Error: /, "");
     if (message.startsWith("DUPLICATE_TITLE:")) {
@@ -160,6 +177,9 @@ export default function App() {
     doc.current = r ? structuredClone(r.note) : null;
     setNote(doc.current);
     setEditing(editMode);
+    editStart.current = editMode ? structuredClone(r) : null;
+    setChangeLog("");
+    setChangeLogError("");
     setTagText(r?.note.tags.join("，") ?? "");
     undo.current = [];
     redo.current = [];
@@ -212,9 +232,11 @@ export default function App() {
     setRevisionTick((n) => n + 1);
   }
   async function save() {
+    if (cancelPending.current) return;
     const work = chain.current
       .catch(() => {})
       .then(async () => {
+        if (cancelPending.current) return;
         if (!doc.current || !saved.current) return;
         if (conflictRef.current) throw Error("CONFLICT:请先处理外部修改冲突");
         if (contentKey(doc.current) === contentKey(saved.current.note)) {
@@ -258,13 +280,47 @@ export default function App() {
     return work;
   }
   async function checkpoint() {
+    if (cancelPending.current) return;
     await save();
+    if (cancelPending.current) return;
     if (doc.current)
       await api.command("snapshot", {
         id: doc.current.id,
         kind: "auto",
         label: "",
       });
+  }
+  async function cancelEditing() {
+    const start = editStart.current;
+    if (!start || !doc.current) return;
+    cancelPending.current = true;
+    try {
+      await chain.current.catch(() => {});
+      const changed = contentKey(doc.current) !== contentKey(start.note)
+        || (saved.current?.group ?? "") !== (start.group ?? "");
+      if (changed && !await confirm(
+        "本次编辑已发生更新，退出编辑将丢失本次更新。是否放弃更新？",
+        { title: "取消编辑", confirmLabel: "放弃更新", cancelLabel: "继续编辑" },
+      )) return;
+      const current = saved.current!;
+      const record = JSON.stringify(current.note) !== JSON.stringify(start.note)
+        || (current.group ?? "") !== (start.group ?? "")
+        ? await api.command<RecordNote>("cancel_edit", {
+            note: start.note,
+            group: start.group ?? "",
+            expected: current.revision,
+          })
+        : current;
+      select(record);
+      setGroup(record.group ?? "");
+      setNotice("");
+      setVault((v) => v ? {
+        ...v, notes: v.notes.map((r) => r.note.id === record.note.id ? record : r),
+      } : v);
+    } finally {
+      cancelPending.current = false;
+      setRevisionTick((n) => n + 1);
+    }
   }
   async function reload() {
     const v = await api.command<Vault>("list");
@@ -366,7 +422,8 @@ export default function App() {
       }
     },
     focus: async () => {
-      if (!busyRef.current) await externalRefresh();
+      setReviewNow(Date.now());
+      if (!busyRef.current && dialog !== "commit") await externalRefresh();
     },
   };
   useEffect(() => {
@@ -439,7 +496,7 @@ export default function App() {
     [vault?.templates],
   );
   const covered = useMemo(
-    () => coveredTemplates(templates, vault?.notes ?? []),
+    () => notesByTemplate(templates, vault?.notes ?? []),
     [templates, vault?.notes],
   );
   const coveragePercent = templates.length
@@ -465,6 +522,14 @@ export default function App() {
             : b.note.updatedAt.localeCompare(a.note.updatedAt),
       ) ?? [];
   const templateList = templates.filter((t) => matches(t, query, filter));
+  async function openTemplate(t: Template) {
+    const existing = covered.get(t.id);
+    if (!existing) return create(t);
+    await openNote(existing.note.id);
+    setQuery("");
+    setFilter([]);
+    setPicked(null);
+  }
   const move = (from: number, to: number) =>
     edit((n) => {
       if (to < 0 || to >= n.entries.length) return;
@@ -611,7 +676,10 @@ export default function App() {
     run(task, (e) => setGroupError(String(e).replace(/^Error: /, "")));
 
   return (
-    <div className="app" onKeyDown={keyboard}>
+    <div
+      className={`app ${vault && view === "notes" ? "notes-view" : ""}`}
+      onKeyDown={keyboard}
+    >
       <aside className="rail">
         <div className="brand">
           <img src="/app-icon.svg" alt="" />
@@ -884,6 +952,7 @@ export default function App() {
                 currentId={note?.id}
                 currentGroup={group}
                 compact={compact}
+                now={reviewNow}
                 busy={busy}
                 query={query}
                 tags={filter}
@@ -944,10 +1013,13 @@ export default function App() {
                         onClick={() =>
                           void run(async () => {
                             if (editing) {
-                              await checkpoint();
-                              setEditing(false);
+                              await save();
+                              setChangeLogError("");
+                              setDialog("commit");
                             } else {
                               await externalRefresh();
+                              editStart.current = structuredClone(saved.current);
+                              setChangeLog("");
                               setEditing(true);
                             }
                             setMore(false);
@@ -958,6 +1030,12 @@ export default function App() {
                       </button>
                       {editing && (
                         <>
+                          <button
+                            disabled={busy}
+                            onClick={() => void run(cancelEditing)}
+                          >
+                            取消编辑
+                          </button>
                           <button
                             onClick={() =>
                               void run(() => openDialog("history"))
@@ -971,6 +1049,30 @@ export default function App() {
                             求分享
                           </button>
                         </>
+                      )}
+                      {!editing && (
+                        <button
+                          title={needsReview(note, reviewNow) ? "需要回顾" : undefined}
+                          disabled={busy || conflict}
+                          onClick={() => void run(async () => {
+                            const record = await api.command<RecordNote>(
+                              "review_note",
+                              { id: doc.current!.id, expected: saved.current!.revision },
+                            );
+                            select(record);
+                            setVault((v) => v ? {
+                              ...v,
+                              notes: v.notes.map((r) => r.note.id === record.note.id ? record : r),
+                            } : v);
+                            setReviewNow(Date.now());
+                            setNotice("已回顾确认");
+                          })}
+                        >
+                          回顾确认
+                          {needsReview(note, reviewNow) && (
+                            <span className="review-dot" aria-hidden="true" />
+                          )}
+                        </button>
                       )}
                       <button
                         onClick={() => void run(() => openDialog("share"))}
@@ -1039,6 +1141,7 @@ export default function App() {
                                         vault.notes,
                                       );
                                       n.createdAt = new Date().toISOString();
+                                      n.lastReviewedAt = null;
                                       n.entries = n.entries.map((e) => ({
                                         ...e,
                                         id: uid(),
@@ -1084,155 +1187,136 @@ export default function App() {
                       </div>
                     </div>
                   </header>
-                  {editing ? (
-                    <fieldset
-                      className="editor-page"
-                      disabled={busy || conflict}
-                    >
-                      <input
-                        className="note-title"
-                        aria-label="笔记主题"
-                        value={note.title}
-                        onChange={(e) =>
-                          edit((n) => {
-                            n.title = e.target.value;
-                          })
-                        }
-                      />
-                      <AutoTextarea
-                        className="description"
-                        aria-label="主题说明"
-                        placeholder="为这份列表加一句说明（可选）"
-                        rows={Math.max(
-                          1,
-                          Math.min(5, note.description.split("\n").length),
-                        )}
-                        value={note.description}
-                        onChange={(e) =>
-                          edit((n) => {
-                            n.description = e.target.value;
-                          })
-                        }
-                      />
-                      <div className="note-properties">
-                        <label className="group-input">
-                          <span>分组</span>
-                          <select
-                            aria-label="笔记所在分组"
-                            value={
-                              vault.notes.find((r) => r.note.id === note.id)
-                                ?.group ?? ""
-                            }
-                            onChange={(e) =>
-                              void run(() => moveToGroup(e.target.value))
-                            }
-                          >
-                            <option value="">未分组</option>
-                            {groups.map((g) => (
-                              <option key={g} value={g}>
-                                {g.replaceAll("/", " / ")}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="tag-input">
-                          <span>标签</span>
-                          <input
-                            aria-label="笔记标签"
-                            placeholder="添加标签，用逗号分隔"
-                            value={tagText}
-                            onChange={(e) => {
-                              setTagText(e.target.value);
-                              edit((n) => {
-                                n.tags = cleanTags(e.target.value);
-                              });
-                            }}
-                            onBlur={() =>
-                              setTagText(doc.current?.tags.join("，") ?? "")
-                            }
-                          />
-                        </label>
-                        <select
-                          aria-label="列表模式"
-                          value={String(note.ranked)}
+                  <div className="note-content">
+                    {editing ? (
+                      <fieldset
+                        className="editor-page"
+                        disabled={busy || conflict}
+                      >
+                        <input
+                          className="note-title"
+                          aria-label="笔记主题"
+                          value={note.title}
                           onChange={(e) =>
                             edit((n) => {
-                              n.ranked = e.target.value === "true";
+                              n.title = e.target.value;
                             })
                           }
-                        >
-                          <option value="true">有排名</option>
-                          <option value="false">无排名</option>
-                        </select>
-                      </div>
-                      <div className="entries">
-                        {note.entries.map((entry, index) => (
-                          <article
-                            className="entry"
-                            key={entry.id}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              const from = note.entries.findIndex(
-                                (x) => x.id === drag.current,
-                              );
-                              if (from >= 0) move(from, index);
-                              drag.current = null;
-                            }}
-                          >
-                            <button
-                              className="rank-handle"
-                              draggable
-                              aria-label={`拖动条目 ${index + 1}`}
-                              title="拖动调整顺序；Alt + 上下方向键也可移动"
-                              onDragStart={(e) => {
-                                drag.current = entry.id;
-                                e.dataTransfer.setData("text/plain", entry.id);
-                                e.dataTransfer.effectAllowed = "move";
+                        />
+                        <AutoTextarea
+                          className="description"
+                          aria-label="主题说明"
+                          placeholder="为这份列表加一句说明（可选）"
+                          rows={Math.max(
+                            1,
+                            Math.min(5, note.description.split("\n").length),
+                          )}
+                          value={note.description}
+                          onChange={(e) =>
+                            edit((n) => {
+                              n.description = e.target.value;
+                            })
+                          }
+                        />
+                        <div className="note-properties">
+                          <label className="group-input">
+                            <span>分组</span>
+                            <select
+                              aria-label="笔记所在分组"
+                              value={
+                                vault.notes.find((r) => r.note.id === note.id)
+                                  ?.group ?? ""
+                              }
+                              onChange={(e) =>
+                                void run(() => moveToGroup(e.target.value))
+                              }
+                            >
+                              <option value="">未分组</option>
+                              {groups.map((g) => (
+                                <option key={g} value={g}>
+                                  {g.replaceAll("/", " / ")}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="tag-input">
+                            <span>标签</span>
+                            <input
+                              aria-label="笔记标签"
+                              placeholder="添加标签，用逗号分隔"
+                              value={tagText}
+                              onChange={(e) => {
+                                setTagText(e.target.value);
+                                edit((n) => {
+                                  n.tags = cleanTags(e.target.value);
+                                });
                               }}
-                              onDragEnd={() => {
+                              onBlur={() =>
+                                setTagText(doc.current?.tags.join("，") ?? "")
+                              }
+                            />
+                          </label>
+                          <select
+                            aria-label="列表模式"
+                            value={String(note.ranked)}
+                            onChange={(e) =>
+                              edit((n) => {
+                                n.ranked = e.target.value === "true";
+                              })
+                            }
+                          >
+                            <option value="true">有排名</option>
+                            <option value="false">无排名</option>
+                          </select>
+                          <label className="review-settings">
+                            <span>回顾周期</span>
+                            <select
+                              aria-label="回顾周期"
+                              value={note.reviewTestMinute ? "test-minute" : note.reviewIntervalMonths ?? 3}
+                              onChange={(e) => edit((n) => {
+                                n.reviewTestMinute = e.target.value === "test-minute";
+                                if (!n.reviewTestMinute) n.reviewIntervalMonths = Number(e.target.value);
+                              })}
+                            >
+                              <option value="test-minute">1 分钟（测试）</option>
+                              {[...new Set([1, 2, 3, 6, 12, 24, note.reviewIntervalMonths ?? 3])].sort((a, b) => a - b).map((months) => (
+                                <option key={months} value={months}>{months} 个月</option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                        <div className="entries">
+                          {note.entries.map((entry, index) => (
+                            <article
+                              className="entry"
+                              key={entry.id}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const from = note.entries.findIndex(
+                                  (x) => x.id === drag.current,
+                                );
+                                if (from >= 0) move(from, index);
                                 drag.current = null;
                               }}
-                              onKeyDown={(e) => {
-                                if (
-                                  e.altKey &&
-                                  (e.key === "ArrowUp" || e.key === "ArrowDown")
-                                ) {
-                                  e.preventDefault();
-                                  move(
-                                    index,
-                                    index + (e.key === "ArrowUp" ? -1 : 1),
-                                  );
-                                }
-                              }}
                             >
-                              {note.ranked
-                                ? String(index + 1).padStart(2, "0")
-                                : "·"}
-                            </button>
-                            <div className="entry-body">
-                              <input
-                                id={`entry-${entry.id}`}
-                                aria-label={`条目 ${index + 1} 名称`}
-                                placeholder="写下你的选择"
-                                value={entry.name}
-                                onChange={(e) =>
-                                  edit((n) => {
-                                    n.entries[index].name = e.target.value;
-                                  })
-                                }
+                              <button
+                                className="rank-handle"
+                                draggable
+                                aria-label={`拖动条目 ${index + 1}`}
+                                title="拖动调整顺序；Alt + 上下方向键也可移动"
+                                onDragStart={(e) => {
+                                  drag.current = entry.id;
+                                  e.dataTransfer.setData("text/plain", entry.id);
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onDragEnd={() => {
+                                  drag.current = null;
+                                }}
                                 onKeyDown={(e) => {
                                   if (
-                                    e.key === "Enter" &&
-                                    !e.nativeEvent.isComposing
-                                  ) {
-                                    e.preventDefault();
-                                    addEntry(index);
-                                  }
-                                  if (
                                     e.altKey &&
-                                    (e.key === "ArrowUp" ||
-                                      e.key === "ArrowDown")
+                                    (e.key === "ArrowUp" || e.key === "ArrowDown")
                                   ) {
                                     e.preventDefault();
                                     move(
@@ -1241,82 +1325,119 @@ export default function App() {
                                     );
                                   }
                                 }}
-                              />
-                              <AutoTextarea
-                                aria-label={`条目 ${index + 1} 理由`}
-                                placeholder="感受与理由（可选）"
-                                rows={Math.max(
-                                  1,
-                                  Math.min(10, entry.reason.split("\n").length),
-                                )}
-                                value={entry.reason}
-                                onChange={(e) =>
-                                  edit((n) => {
-                                    n.entries[index].reason = e.target.value;
-                                  })
-                                }
-                              />
-                              <div className="entry-actions">
-                                <button
-                                  disabled={index === 0}
-                                  aria-label={`上移条目 ${index + 1}`}
-                                  onClick={() => move(index, index - 1)}
-                                >
-                                  上移
-                                </button>
-                                <button
-                                  disabled={index === note.entries.length - 1}
-                                  aria-label={`下移条目 ${index + 1}`}
-                                  onClick={() => move(index, index + 1)}
-                                >
-                                  下移
-                                </button>
-                                <button
-                                  aria-label={`删除条目 ${index + 1}`}
-                                  onClick={() =>
+                              >
+                                {note.ranked
+                                  ? String(index + 1).padStart(2, "0")
+                                  : "·"}
+                              </button>
+                              <div className="entry-body">
+                                <input
+                                  id={`entry-${entry.id}`}
+                                  aria-label={`条目 ${index + 1} 名称`}
+                                  placeholder="写下你的选择"
+                                  value={entry.name}
+                                  onChange={(e) =>
                                     edit((n) => {
-                                      n.entries.splice(index, 1);
+                                      n.entries[index].name = e.target.value;
                                     })
                                   }
-                                >
-                                  删除
-                                </button>
+                                  onKeyDown={(e) => {
+                                    if (
+                                      e.key === "Enter" &&
+                                      !e.nativeEvent.isComposing
+                                    ) {
+                                      e.preventDefault();
+                                      addEntry(index);
+                                    }
+                                    if (
+                                      e.altKey &&
+                                      (e.key === "ArrowUp" ||
+                                        e.key === "ArrowDown")
+                                    ) {
+                                      e.preventDefault();
+                                      move(
+                                        index,
+                                        index + (e.key === "ArrowUp" ? -1 : 1),
+                                      );
+                                    }
+                                  }}
+                                />
+                                <AutoTextarea
+                                  aria-label={`条目 ${index + 1} 理由`}
+                                  placeholder="感受与理由（可选）"
+                                  rows={Math.max(
+                                    1,
+                                    Math.min(10, entry.reason.split("\n").length),
+                                  )}
+                                  value={entry.reason}
+                                  onChange={(e) =>
+                                    edit((n) => {
+                                      n.entries[index].reason = e.target.value;
+                                    })
+                                  }
+                                />
+                                <div className="entry-actions">
+                                  <button
+                                    disabled={index === 0}
+                                    aria-label={`上移条目 ${index + 1}`}
+                                    onClick={() => move(index, index - 1)}
+                                  >
+                                    上移
+                                  </button>
+                                  <button
+                                    disabled={index === note.entries.length - 1}
+                                    aria-label={`下移条目 ${index + 1}`}
+                                    onClick={() => move(index, index + 1)}
+                                  >
+                                    下移
+                                  </button>
+                                  <button
+                                    aria-label={`删除条目 ${index + 1}`}
+                                    onClick={() =>
+                                      edit((n) => {
+                                        n.entries.splice(index, 1);
+                                      })
+                                    }
+                                  >
+                                    删除
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                      <button
-                        className="add-entry"
-                        onClick={() => addEntry()}
-                        disabled={conflict}
-                      >
-                        <Icon name="plus" />
-                        添加一个选择
-                      </button>
-                      <footer className="editor-footer">
-                        <span>{validEntries(note).length} 个选择</span>
-                        <div>
-                          <button
-                            className="text-button"
-                            disabled={!undo.current.length}
-                            onClick={() => travel(true)}
-                          >
-                            撤销
-                          </button>
-                          <button
-                            className="text-button"
-                            disabled={!redo.current.length}
-                            onClick={() => travel(false)}
-                          >
-                            重做
-                          </button>
+                            </article>
+                          ))}
                         </div>
-                      </footer>
-                    </fieldset>
-                  ) : (
-                    <NoteReader note={note} />
-                  )}
+                        <button
+                          className="add-entry"
+                          onClick={() => addEntry()}
+                          disabled={conflict}
+                        >
+                          <Icon name="plus" />
+                          添加一个选择
+                        </button>
+                        <footer className="editor-footer">
+                          <span>{validEntries(note).length} 个选择</span>
+                          <div>
+                            <button
+                              className="text-button"
+                              disabled={!undo.current.length}
+                              onClick={() => travel(true)}
+                            >
+                              撤销
+                            </button>
+                            <button
+                              className="text-button"
+                              disabled={!redo.current.length}
+                              onClick={() => travel(false)}
+                            >
+                              重做
+                            </button>
+                          </div>
+                        </footer>
+                      </fieldset>
+                    ) : (
+                      <NoteReader note={note} now={reviewNow} />
+                    )}
+                  </div>
                 </>
               ) : (
                 <div className="empty-editor">
@@ -1398,9 +1519,26 @@ export default function App() {
               <div className="random-card">
                 <span className="muted">这次，聊聊这个</span>
                 <div className="template-title-heading">
-                  <h2>{picked.title}</h2>
+                  <h2>
+                    {covered.has(picked.id) ? (
+                      <button
+                        className="template-note-title"
+                        disabled={busy}
+                        onClick={() => void run(() => openTemplate(picked))}
+                      >
+                        {picked.title}
+                      </button>
+                    ) : picked.title}
+                  </h2>
                   {covered.has(picked.id) && (
-                    <span className="template-covered">有品</span>
+                    <button
+                      className="template-covered"
+                      disabled={busy}
+                      aria-label={`查看“${picked.title}”的笔记`}
+                      onClick={() => void run(() => openTemplate(picked))}
+                    >
+                      有品
+                    </button>
                   )}
                 </div>
                 <p>{picked.hint}</p>
@@ -1408,9 +1546,9 @@ export default function App() {
                   <button
                     className="primary"
                     disabled={busy}
-                    onClick={() => void run(() => create(picked))}
+                    onClick={() => void run(() => openTemplate(picked))}
                   >
-                    开始填写
+                    {covered.has(picked.id) ? "查看笔记" : "开始填写"}
                   </button>
                   <button
                     onClick={() =>
@@ -1430,9 +1568,26 @@ export default function App() {
                     {!t.builtin && <span>个人模板</span>}
                   </div>
                   <div className="template-title-heading">
-                    <h2>{t.title}</h2>
+                    <h2>
+                      {covered.has(t.id) ? (
+                        <button
+                          className="template-note-title"
+                          disabled={busy}
+                          onClick={() => void run(() => openTemplate(t))}
+                        >
+                          {t.title}
+                        </button>
+                      ) : t.title}
+                    </h2>
                     {covered.has(t.id) && (
-                      <span className="template-covered">有品</span>
+                      <button
+                        className="template-covered"
+                        disabled={busy}
+                        aria-label={`查看“${t.title}”的笔记`}
+                        onClick={() => void run(() => openTemplate(t))}
+                      >
+                        有品
+                      </button>
                     )}
                   </div>
                   <p>
@@ -1444,15 +1599,24 @@ export default function App() {
                     <button
                       className="text-button"
                       disabled={busy}
-                      onClick={() => void run(() => create(t))}
+                      onClick={() => void run(() => openTemplate(t))}
                     >
-                      开始填写 <Icon name="arrow" />
+                      {covered.has(t.id) ? "查看笔记" : "开始填写"}{" "}
+                      <Icon name="arrow" />
                     </button>
                     <details>
                       <summary aria-label={`${t.title}的模板操作`}>
                         更多
                       </summary>
                       <div>
+                        {covered.has(t.id) && (
+                          <button
+                            disabled={busy}
+                            onClick={() => void run(() => create(t))}
+                          >
+                            另写一份
+                          </button>
+                        )}
                         <button
                           onClick={() =>
                             setTemplate({ ...t, id: uid(), builtin: false })
@@ -1740,6 +1904,70 @@ export default function App() {
           }}
         />
       )}
+      {dialog === "commit" && (
+        <Modal
+          title="更新日志"
+          onClose={() => {
+            if (!busyRef.current) setDialog(null);
+          }}
+        >
+          <form
+            className="form-stack"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setChangeLogError("");
+              void run(
+                async () => {
+                  await save();
+                  await api.command("commit_edit", {
+                    id: doc.current!.id,
+                    expected: saved.current!.revision,
+                    label: changeLog.trim(),
+                  });
+                  setDialog(null);
+                  setEditing(false);
+                  editStart.current = null;
+                  setChangeLog("");
+                },
+                (e) => {
+                  setChangeLogError(String(e).replace(/^Error: /, ""));
+                  fail(e);
+                },
+              );
+            }}
+          >
+            <label>
+              更新日志（可选）
+              <textarea
+                autoFocus
+                rows={4}
+                placeholder="例如：调整了电影排名，补充重看后的感受。"
+                value={changeLog}
+                disabled={busy}
+                onChange={(e) => setChangeLog(e.target.value)}
+              />
+            </label>
+            {changeLogError && (
+              <p className="error" role="alert">{changeLogError}</p>
+            )}
+            <div className="modal-actions">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setDialog(null)}
+              >
+                继续编辑
+              </button>
+              <button
+                className="primary"
+                disabled={busy || conflict}
+              >
+                提交更新
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
       {dialog === "milestone" && (
         <Modal title="为此刻留个标记" onClose={() => setDialog(null)}>
           <form
@@ -1913,7 +2141,7 @@ export default function App() {
       )}
       {confirmation && (
         <Modal
-          title="确认操作"
+          title={confirmation.title ?? "确认操作"}
           onClose={() => {
             confirmation.resolve(false);
             setConfirmation(null);
@@ -1928,7 +2156,7 @@ export default function App() {
                   setConfirmation(null);
                 }}
               >
-                取消
+                {confirmation.cancelLabel ?? "取消"}
               </button>
               <button
                 className="danger"
@@ -1937,7 +2165,7 @@ export default function App() {
                   setConfirmation(null);
                 }}
               >
-                确认删除
+                {confirmation.confirmLabel ?? "确认删除"}
               </button>
             </div>
           </div>

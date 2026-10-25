@@ -27,7 +27,8 @@ async page => {
   await page.getByRole('textbox',{name:'搜索',exact:true}).fill('讨厌');
   check(await percent()==='2.2%' && (await page.locator('.template-coverage-summary').innerText()).includes('1 / 45'),'Filter changed global denominator');
   await page.getByRole('button',{name:'清除',exact:true}).click();
-  await card('我最喜欢的电影').getByRole('button',{name:'开始填写',exact:true}).click();
+  await card('我最喜欢的电影').getByLabel('我最喜欢的电影的模板操作',{exact:true}).click();
+  await card('我最喜欢的电影').getByRole('button',{name:'另写一份',exact:true}).click();
   await page.getByRole('button',{name:'添加一个选择',exact:true}).click();
   await page.locator('.entry-body input').fill('重复填写同一模板');
   await templates();
@@ -65,6 +66,8 @@ async page => {
   await page.getByRole('button',{name:'编辑',exact:true}).click();
   await page.getByRole('textbox',{name:'笔记主题',exact:true}).fill('改名后的电影品记');
   await page.getByRole('button',{name:'完成编辑',exact:true}).click();
+  await page.getByRole('textbox',{name:'更新日志（可选）',exact:true}).fill('模板覆盖率验证');
+  await page.getByRole('button',{name:'提交更新',exact:true}).click();
   await templates();
   check(await percent()==='4.4%','Renaming broke source association');
   await nav.getByRole('button',{name:/^笔记/}).click();

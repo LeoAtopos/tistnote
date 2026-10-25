@@ -1,0 +1,20 @@
+{
+  "notes": 53,
+  "templateNotes": 27,
+  "nonTemplateNotes": 26,
+  "templates": 45,
+  "coverage": "60.0%",
+  "groups": 35,
+  "entries": 239,
+  "contentCharacters": 20964,
+  "versions": 65,
+  "revisedNotes": 12,
+  "demonstratedDiffs": [
+    "新增",
+    "顺序",
+    "理由",
+    "改名",
+    "移除"
+  ],
+  "warnings": []
+}
