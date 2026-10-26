@@ -34,8 +34,19 @@ async page => {
       await intro.waitFor();
       await intro.getByRole('button',{name:'Close dialog',exact:true}).click();
       await intro.waitFor({state:'hidden'});
+      await tab.getByRole('button',{name:'Settings',exact:true}).click();
+      const settings=tab.getByRole('dialog',{name:'Local library',exact:true});
+      check(await settings.getByRole('button',{name:'Introduction',exact:true}).evaluate(button=>parseFloat(getComputedStyle(button).fontSize))>=22,'Settings guide text too small');
+      await settings.screenshot({path:`output/playwright/settings-guide-${width}.png`});
+      await settings.getByRole('button',{name:'Introduction',exact:true}).click();
+      await settings.waitFor({state:'hidden'});
+      await intro.waitFor();
+      check(await intro.locator('.intro-slide[aria-hidden="false"]').getAttribute('data-intro-page')==='1','Settings guide did not start at first page');
+      check(await tab.getByRole('dialog').count()===1,'Guide stacked over Settings');
+      await intro.getByRole('button',{name:'Close dialog',exact:true}).click();
+      await intro.waitFor({state:'hidden'});
       check(!errors.length,errors.join('\n'));
-      results.push({width,firstVisit:true,sixPages:true,remembered:true,manualReopen:true});
+      results.push({width,firstVisit:true,sixPages:true,remembered:true,manualReopen:true,settingsEntry:true});
     }finally{await context.close();}
   }
   return results;

@@ -2180,6 +2180,7 @@ export default function App() {
                 }
               >{tr("导入品记 Markdown")}</button>
               <button onClick={() => setDialog("help")}>{tr("使用帮助")}</button>
+              <button disabled={busy} onClick={() => { setDialog(null); setIntroductionOpen(true); }}>{tr("引导页")}</button>
               <button
                 disabled={!vault || busy}
                 onClick={() =>
