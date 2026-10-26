@@ -1218,6 +1218,15 @@ svg {
   margin-top: 30px;
 }
 .template-library { max-width: none; padding: 28px 32px; }
+.notes-layout.canvas-overview, .notes-layout.canvas-note-detail { display: block; }
+.notes-view .notes-layout.canvas-overview .note-browser { display: flex; border-right: 0; }
+.notes-layout.canvas-overview .editor, .notes-layout.canvas-note-detail .note-browser { display: none; }
+.notes-layout.canvas-note-detail .editor { display: flex; height: 100%; }
+.notes-layout.canvas-note-detail .back-button { display: inline-flex; }
+.canvas-overview .note-search-panel { max-height: min(260px, 32dvh); overflow-y: auto; }
+.canvas-overview .section-heading { flex-wrap: wrap; }
+.canvas-overview .note-canvas { flex: 1; min-height: 240px; height: auto; margin-top: 0; }
+.note-canvas .graph-legend { flex-wrap: wrap; gap: 10px 16px; right: 12px; pointer-events: none; }
 .template-library .library-header { gap: 18px; margin-bottom: 22px; }
 .template-library .library-header p { margin-top: 8px; }
 .template-filters { display: flex; flex-direction: column; gap: 16px; }
@@ -1266,6 +1275,8 @@ svg {
 .graph-node:hover, .graph-node:focus-visible { background: transparent; z-index: 3; }
 .graph-node.selected { z-index: 2; }
 .graph-dot { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--secondary-ink); border-radius: 50%; background: var(--paper); flex-shrink: 0; }
+.graph-dot { position: relative; }
+.graph-review-dot { position: absolute; right: -8px; top: -8px; width: 9px; height: 9px; border-radius: 50%; background: var(--review-green, #39874b); outline: 3px solid var(--paper); }
 .graph-node.covered .graph-dot, .graph-dot.covered { background: var(--review-green, #39874b); border-color: var(--review-green, #39874b); }
 .graph-node:hover .graph-dot, .graph-node:focus-visible .graph-dot, .graph-node.selected .graph-dot { outline: 2px solid var(--green); outline-offset: 5px; }
 .graph-tooltip {

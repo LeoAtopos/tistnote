@@ -23,6 +23,7 @@ In the app, open **Settings → Install a local version** for Windows and Androi
 
 - Ranked or unranked lists, descriptions, tags, and optional reasons for each choice.
 - Compact note trees, nested groups backed by real folders, drag-and-drop moves, and context menus.
+- Optional note canvas under **My notes → More → Canvas view**, with groups and subgroups branching from Tistnote. Hollow circles mark empty notes, filled green circles mark populated notes, and a small extra dot marks reviews due. Lists remain the default.
 - Search, filtering, and sorting. Titles are unique across the library; new untitled notes receive unique numbered titles.
 - 45 built-in themes covering positive, negative, and mixed feelings; personal templates and template coverage. The default template canvas branches by tag, supports panning and zooming, and marks recorded themes with filled green circles. Open a circle for template actions, or switch to cards.
 - Separate reading and editing modes, autosaved drafts, optional update logs, and cancel editing.

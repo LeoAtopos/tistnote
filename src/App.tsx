@@ -39,6 +39,7 @@ import { localizedBuiltinTemplates } from "./templates";
 import { NoteTree } from "./NoteTree";
 import { ActivityPage } from "./ActivityPage";
 import { TemplateCanvas } from "./TemplateCanvas";
+import { NoteCanvas } from "./NoteCanvas";
 import { Introduction, introductionSeenKey } from "./Introduction";
 import {
   AutoTextarea,
@@ -115,6 +116,7 @@ export default function App() {
     [changeLogError, setChangeLogError] = useState("");
   const [introductionOpen, setIntroductionOpen] = useState(false);
   const [templateView, setTemplateView] = useState<"canvas" | "cards">("canvas");
+  const [noteView, setNoteView] = useState<"list" | "canvas">("list");
   const [templateTools, setTemplateTools] = useState(false);
   const introductionSeen = useRef(false);
   function introduceIfNeeded() {
@@ -959,7 +961,7 @@ export default function App() {
         </nav>
         <div className="rail-bottom">
           <span className="local-status">
-            <i />{tr("完全本地")}</span>
+            <i />{tr("数据完全本地")}</span>
           <button
             className="nav-item"
             disabled={busy}
@@ -1034,7 +1036,7 @@ export default function App() {
           </section>
         ) : view === "notes" ? (
           <div
-            className={`notes-layout ${listVisible && vault.notes.length > 0 ? "show-list" : "show-editor"}`}
+            className={`notes-layout ${listVisible && vault.notes.length > 0 ? "show-list" : "show-editor"} ${noteView === "canvas" ? listVisible ? "canvas-overview" : "canvas-note-detail" : ""}`}
           >
             <section className="note-browser" tabIndex={-1} onContextMenu={(event) => {
               event.preventDefault();
@@ -1054,6 +1056,7 @@ export default function App() {
                 <div className="section-heading note-list-heading">
                   <h1>{tr("我的笔记")}</h1>
                   <div className="actions">
+                    {noteView === "canvas" && <button onClick={() => { setNoteView("list"); setListPanel(null); }}>{tr("列表视图")}</button>}
                     <button
                       className={`icon-button list-search-button ${query || filter.length ? "active" : ""}`}
                       aria-label={tr("搜索与标签筛选")}
@@ -1124,6 +1127,11 @@ export default function App() {
                     aria-label={tr("笔记列表选项")}
                   >
                     <p className="muted">{formatCount(list.length, "notes")}</p>
+                    <button onClick={() => {
+                      setNoteView(noteView === "list" ? "canvas" : "list");
+                      setListVisible(true);
+                      setListPanel(null);
+                    }}>{tr(noteView === "list" ? "画布视图" : "列表视图")}</button>
                     <label>{tr("排序")}<select
                         aria-label={tr("笔记排序")}
                         value={sort}
@@ -1183,7 +1191,10 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <NoteTree
+              {noteView === "canvas" ? <NoteCanvas
+                groups={groups} records={list} now={reviewNow} filtered={!!(query.trim() || filter.length)}
+                currentId={note?.id} busy={busy} onOpen={id => void run(() => openNote(id))}
+              /> : <NoteTree
                 groups={groups}
                 records={list}
                 closed={closedGroups}
@@ -1200,8 +1211,8 @@ export default function App() {
                 onMove={(item, target) =>
                   void run(() => moveTreeItem(item, target))
                 }
-              />
-              {!list.length && (
+              />}
+              {!list.length && noteView === "list" && (
                 <div className="small-empty">
                   <p>
                     {query || filter.length
@@ -1226,7 +1237,7 @@ export default function App() {
                     <button
                       className="back-button"
                       onClick={() => setListVisible(true)}
-                    >{tr("‹ 笔记")}</button>
+                    >{tr(noteView === "canvas" ? "‹ 返回画布" : "‹ 笔记")}</button>
                     {editing && (
                       <>
                         <span

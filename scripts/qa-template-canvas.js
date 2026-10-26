@@ -19,7 +19,7 @@ async page => {
   check(await canvas.locator('.graph-tag').count()===11,'Missing tag branches');
   const zoom=()=>canvas.locator('output').innerText();
   await tab.screenshot({path:'output/playwright/template-canvas-desktop-dark.png',fullPage:true});
-  const node=canvas.locator('[data-template-node="builtin-1"]');
+  const node=canvas.locator('[data-canvas-node="builtin-1"]');
   await node.focus();await node.hover();
   await node.locator('.graph-tooltip').waitFor();
   await node.click();
