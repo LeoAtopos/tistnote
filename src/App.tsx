@@ -1,5 +1,6 @@
 import { tr, formatCount } from "./i18n";
-import { language, setPreferences, usePreferences } from "./preferences";
+import { language, theme, setPreferences, usePreferences } from "./preferences";
+import { androidRequest } from "./android-bridge";
 import {
   useEffect,
   useLayoutEffect,
@@ -61,11 +62,16 @@ type Dialog =
   | "help"
   | "groups"
   | "new-folder"
+  | "install"
   | null;
 export default function App() {
   const preferences = usePreferences();
   const uiLanguage = language();
   const [preferenceError, setPreferenceError] = useState("");
+  const resolvedTheme = theme();
+  useEffect(() => {
+    if (api.android) void androidRequest("theme", { dark: resolvedTheme === "dark" }).catch(error => setPreferenceError(String(error)));
+  }, [resolvedTheme]);
   useEffect(() => {
     if (!api.desktop) return;
     const window = getCurrentWindow();
@@ -542,7 +548,7 @@ export default function App() {
   };
   useEffect(() => {
     let live = true;
-    if (api.web) introduceIfNeeded();
+    if (api.web || api.android) introduceIfNeeded();
     api
       .startup()
       .then((v) => {
@@ -553,6 +559,17 @@ export default function App() {
       });
     return () => {
       live = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (!api.android) return;
+    const close = () => void latest.current.close().then(() => androidRequest("finish")).catch(fail);
+    const pause = () => { if (!busyRef.current) void latest.current.close().catch(fail); };
+    window.addEventListener("tistnote-android-close", close);
+    window.addEventListener("tistnote-android-pause", pause);
+    return () => {
+      window.removeEventListener("tistnote-android-close", close);
+      window.removeEventListener("tistnote-android-pause", pause);
     };
   }, []);
   useEffect(() => {
@@ -859,7 +876,7 @@ export default function App() {
         )}
         {api.web && <div className="preview-banner">{tr(api.localFiles
           ? "网页版 · 仅访问你授权的文件夹；同一资料库请勿同时在桌面版和网页版中编辑。"
-          : "请使用最新版桌面 Chrome 或 Edge，或下载 Windows 版。")}</div>}
+          : "请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。")}</div>}
         {error && (
           <div className="alert error" role="alert">
             <span>{tr(error).replace("CONFLICT:", "")}</span>
@@ -905,12 +922,7 @@ export default function App() {
               }
             >{tr("创建或打开本地资料库")}<Icon name="arrow" />
             </button>
-            <p className="welcome-foot">{tr("笔记保存在你的文件夹中，随时带走。")}</p>
-            {api.web && (
-              <a className="windows-download" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer">
-                {tr("安装 Windows 版本")}
-              </a>
-            )}
+            <p className="welcome-foot">{tr(api.android ? "笔记保存在此设备的应用资料库中。" : "笔记保存在你的文件夹中，随时带走。")}</p>
           </section>
         ) : view === "notes" ? (
           <div
@@ -2136,14 +2148,14 @@ export default function App() {
                   })
                 }
               >{tr("创建 / 切换资料库")}</button>
-              <button
+              {!api.android && <button
                 disabled={!vault || !api.desktop}
                 onClick={() =>
                   void run(async () => {
                     await api.command("reveal");
                   })
                 }
-              >{tr("在文件管理器中打开")}</button>
+              >{tr("在文件管理器中打开")}</button>}
               <button
                 disabled={!vault || !api.localFiles || busy}
                 onClick={() =>
@@ -2186,6 +2198,7 @@ export default function App() {
               >{tr("导入品记 Markdown")}</button>
               <button onClick={() => setDialog("help")}>{tr("使用帮助")}</button>
               <button disabled={busy} onClick={() => { setDialog(null); setIntroductionOpen(true); }}>{tr("引导页")}</button>
+              <button disabled={busy} onClick={() => setDialog("install")}>{tr("安装本地版本")}</button>
               <button
                 disabled={!vault || busy}
                 onClick={() =>
@@ -2198,7 +2211,22 @@ export default function App() {
                 <Icon name="trash" />{tr("回收站")}</button>
             </div>
             <p className="muted">{tr("笔记、历史与模板都在此文件夹内。完整复制文件夹即可迁移。资料库未加密。")}</p>
+            {api.android && <p className="muted">{tr("安卓资料库保存在应用私有目录。卸载应用前请导出完整备份，避免丢失数据。")}</p>}
             <p className="muted">{tr(api.web ? "品记网页版 · 网页资源联网加载，笔记只保存在本地资料库。" : "品记 0.2.0 · 不联网，不上传。")}</p>
+          </div>
+        </Modal>
+      )}
+      {dialog === "install" && (
+        <Modal title={tr("安装本地版本")} onClose={() => setDialog(null)}>
+          <div className="form-stack">
+            {!api.desktop && <a className="native-install" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer">
+              <strong>{tr("安装 Windows 版本")}</strong>
+              <span>{tr("Windows 10/11 · x64 · 完整离线安装包")}</span>
+            </a>}
+            {!api.android && <a className="native-install" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk" target="_blank" rel="noopener noreferrer">
+              <strong>{tr("安装安卓版本")}</strong>
+              <span>{tr("Android 8.0 及以上 · 通用 APK")}</span>
+            </a>}
           </div>
         </Modal>
       )}

@@ -1,0 +1,36 @@
+async page=>{
+ const errors=[];page.on('pageerror',error=>errors.push(String(error)));
+ await page.getByRole('button',{name:'Write a new note',exact:true}).click();
+ await page.getByRole('textbox',{name:'Note title',exact:true}).fill('安卓上的品记');
+ await page.getByRole('textbox',{name:'Description',exact:true}).fill('离线保存，持续建设自我。');
+ await page.getByRole('button',{name:'Add a choice',exact:true}).click();
+ await page.getByRole('textbox',{name:'Entry 1 name',exact:true}).fill('大山与河流');
+ await page.getByRole('textbox',{name:'Entry 1 reason',exact:true}).fill('喜欢安静，也记下不喜欢的部分。');
+ await page.getByRole('button',{name:'Finish editing',exact:true}).click();
+ const update=page.getByRole('dialog',{name:'Update log',exact:true});
+ await update.getByRole('textbox',{name:'Update log (optional)',exact:true}).fill('Android native save');
+ await update.getByRole('button',{name:'Submit update',exact:true}).click();
+ await update.waitFor({state:'hidden'});
+ await page.getByRole('heading',{name:'安卓上的品记',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Confirm review',exact:true}).click();
+ await page.getByRole('status').filter({hasText:'Review confirmed'}).waitFor();
+ await page.screenshot({path:'output/playwright/android-reading.png'});
+ await page.getByRole('button',{name:'Settings',exact:true}).click();
+ const settings=page.getByRole('dialog',{name:'Local library · My Tistnote',exact:true});
+ await settings.getByText('Android libraries are stored in the app\'s private directory.',{exact:false}).waitFor();
+ await settings.getByRole('button',{name:'Install a local version',exact:true}).click();
+ const install=page.getByRole('dialog',{name:'Install a local version',exact:true});
+ if(await install.getByRole('link',{name:'Install for Android',exact:false}).count())throw Error('Installed Android version should not offer itself');
+ await install.getByRole('link',{name:'Install for Windows',exact:false}).waitFor();
+ await install.getByRole('button',{name:'Close dialog',exact:true}).click();
+ await page.getByRole('button',{name:'Exchange',exact:true}).click();
+ await page.getByRole('button',{name:'Share picks',exact:true}).click();
+ const share=page.getByRole('dialog',{name:'Share picks',exact:true});
+ await share.locator('.share-image').evaluate(image=>image.decode());
+ await share.getByRole('button',{name:'Copy to clipboard',exact:true}).click();
+ await share.getByText('Copied to clipboard',{exact:true}).waitFor();
+ await share.getByRole('button',{name:'Close dialog',exact:true}).click();
+ const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,minFont:Math.min(...[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>parseFloat(getComputedStyle(el).fontSize)))}));
+ if(layout.scroll>layout.width||layout.minFont<18||errors.length)throw Error(JSON.stringify({layout,errors}));
+ return {nativeAndroid:await page.evaluate(()=>!!window.TistnoteAndroid),unicodeNote:true,review:true,clipboard:true,...layout};
+}

@@ -8,6 +8,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "build:pages": "tsc -b && vite build --mode pages --base=/tistnote/ --outDir dist-pages",
+    "build:android": "tsc -b && vite build --mode android --base=./ --outDir dist-android",
+    "package:android": "pwsh -NoProfile -File scripts/package-android.ps1",
     "test": "tsx --test tests/*.test.ts",
     "tauri": "tauri",
     "desktop": "tauri dev",

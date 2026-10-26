@@ -1,6 +1,14 @@
 node_modules/
 dist/
 dist-pages/
+dist-android/
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/app/build/
+android/build/
+*.jks
+*.keystore
 src-tauri/target/
 src-tauri/gen/
 output/

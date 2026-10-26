@@ -1,6 +1,7 @@
 import { tr } from "./i18n";
 import { language } from "./preferences";
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { androidRequest, isAndroid } from "./android-bridge";
 import { noteActivity } from "./activity";
 import {
   contentKey,
@@ -17,13 +18,16 @@ import {
   type Version,
 } from "./model";
 export const desktop = isTauri();
+export const android = isAndroid;
 export const preview =
   !desktop &&
+  !android &&
   import.meta.env.DEV &&
   new URLSearchParams(location.search).has("preview");
-export const web = !desktop && !preview;
-export const localFiles = desktop || (web && typeof window.showDirectoryPicker === "function");
+export const web = !desktop && !android && !preview;
+export const localFiles = desktop || android || (web && typeof window.showDirectoryPicker === "function");
 const browserVault = () => import("./browser-vault");
+const androidVault = () => import("./android-vault");
 interface PreviewState {
   vault: Vault;
   history: Record<string, Version[]>;
@@ -305,12 +309,14 @@ export async function command<T>(
 ): Promise<T> {
   if (desktop)
     return invoke<T>("vault_command", { request: { type, ...data } });
+  if (android) return (await androidVault()).command<T>(type,data);
   if (preview) return mock(type, data) as Promise<T>;
   if (web) return (await browserVault()).command<T>(type,data);
   throw Error(tr("请使用品记 Windows 桌面版打开本地资料库。"));
 }
 export async function startup(): Promise<Vault | null> {
   if (desktop) return invoke("startup");
+  if (android) return (await androidVault()).startup();
   if (preview && localStorage.getItem(key))
     return command("list", { recover: true });
   if (web) return (await browserVault()).startup();
@@ -318,6 +324,7 @@ export async function startup(): Promise<Vault | null> {
 }
 export async function pickVault(restore = false): Promise<Vault | null> {
   if (desktop) return invoke("pick_vault", { restore, language: language() });
+  if (android) return (await androidVault()).pickVault(restore);
   if (preview) {
     read();
     commit();
@@ -326,10 +333,11 @@ export async function pickVault(restore = false): Promise<Vault | null> {
   if (web) return (await browserVault()).pickVault(restore);
   throw Error(tr("请使用 Windows 桌面版选择资料库。"));
 }
-export const backupVault = async () => desktop ? invoke<string | null>("backup_vault", { language: language() }) : (await browserVault()).backupVault();
-export const importNote = async () => desktop ? invoke<RecordNote | null>("import_note", { language: language() }) : (await browserVault()).importNote();
+export const backupVault = async () => desktop ? invoke<string | null>("backup_vault", { language: language() }) : android ? (await androidVault()).backupVault() : (await browserVault()).backupVault();
+export const importNote = async () => desktop ? invoke<RecordNote | null>("import_note", { language: language() }) : android ? (await androidVault()).importNote() : (await browserVault()).importNote();
 export async function exportPngs(pages: string[]): Promise<string | null> {
   if (desktop) return invoke("export_pngs", { pages, language: language() });
+  if (android) return androidRequest<string | null>("exportImages", { pages });
   for (let i = 0; i < pages.length; i++) {
     const a = document.createElement("a");
     a.href = pages[i];
@@ -340,6 +348,7 @@ export async function exportPngs(pages: string[]): Promise<string | null> {
 }
 export async function copyPng(data: string) {
   if (desktop) return invoke("copy_png", { data });
+  if (android) return androidRequest<void>("copyImage", { data });
   const blob = await (await fetch(data)).blob();
   await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
 }

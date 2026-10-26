@@ -125,7 +125,7 @@ export async function startup(): Promise<Vault | null> {
   return startupTask;
 }
 export async function pickVault(restore = false): Promise<Vault | null> {
-  if (!supported()) throw Error(tr("请使用最新版桌面 Chrome 或 Edge，或下载 Windows 版。"));
+  if (!supported()) throw Error(tr("请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。"));
   try {
     const directory = await host().showDirectoryPicker!({mode:"readwrite",id:restore ? "tistnote-backup" : "tistnote-library"});
     if (!restore) return await open(directory);

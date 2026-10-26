@@ -4,7 +4,7 @@
 
 **品察世间，记录好恶。**
 
-品记是一款以本地文件保存数据的列表笔记应用，提供 Windows 版和 GitHub Pages 网页版，用来记录个人审美与偏好，品察世间万物与人生百态。
+品记是一款以本地文件保存数据的列表笔记应用，提供 Windows 版、安卓版本和 GitHub Pages 网页版，用来记录个人审美与偏好，品察世间万物与人生百态。
 
 喜欢与讨厌、认同与反感，以及复杂和尚未说清的感受，都可以成为一份记录。写下自己的感受与缘由，回看审美与偏好的变化，也通过分享增进彼此理解。
 
@@ -22,6 +22,16 @@
 Release 同时提供使用说明、构建信息及 `SHA256SUMS.txt` 校验文件。仓库已公开，下载和应用使用均无需账号。
 
 Windows 安装包下载链接保持不变，现有地址对应完整离线安装包。Windows 应用中不显示网页上的“安装 Windows 版本”入口。
+
+## 下载安卓版本
+
+[下载签名 APK](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk)。支持 Android 8.0 及以上、已启用并更新系统 WebView 的设备；通用 APK，不限 ARM 或 x86 架构。应用不申请联网权限，界面、插图和图片生成均在本机运行。
+
+安装入口统一放在 **设置 → 安装本地版本** 中，提供 Windows 和安卓下载；当前已安装的平台不显示自身安装入口。
+
+安卓资料库保存在应用私有目录，笔记、分组、历史、模板与回收站均为真实本地文件。通过系统文件选择器导出完整 ZIP 备份、恢复备份、导入 Markdown 和保存 PNG，也支持复制图片到安卓剪贴板。**卸载前务必导出完整备份，卸载会删除应用内资料库。**
+
+安卓 ZIP 备份解压后，选择包含 `notes/` 和 `.tistnote/` 的文件夹，即可在 Windows 或网页版打开；Windows / 网页资料库也可完整压缩后导入安卓，必须保留 `.tistnote/`。恢复会新建资料库，不覆盖当前资料库。安卓 ZIP 恢复限制为压缩和解压后均不超过 256 MB，单文件不超过 64 MB。详细说明见[安卓版本文档](docs/ANDROID.md)。
 
 ## 使用网页版
 
@@ -121,6 +131,8 @@ npm run package
 开发依赖和打包工具的首次下载需要网络，正式应用的核心功能不需要网络。目标平台为 Windows 10/11 x64；当前程序尚未代码签名，正式分发前应完成干净系统的安装与卸载验收。
 
 ## 验证
+
+安卓构建需要 JDK 17+、Gradle 8.11.1、Android SDK platform/build-tools 35；设置 `JAVA_HOME`、`GRADLE_HOME`、`ANDROID_HOME` 后，在 Windows 上运行 `npm run package:android`。构建会执行安卓文件测试和 release lint，生成签名 APK。签名密钥及凭据保存在仓库外的 `%LOCALAPPDATA%/TistnoteBuild/signing/`，请妥善备份，以便后续版本保持签名一致，不要上传密钥或凭据。
 
 ```powershell
 npm test
