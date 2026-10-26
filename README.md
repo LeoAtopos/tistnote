@@ -24,7 +24,7 @@ In the app, open **Settings → Install a local version** for Windows and Androi
 - Ranked or unranked lists, descriptions, tags, and optional reasons for each choice.
 - Compact note trees, nested groups backed by real folders, drag-and-drop moves, and context menus.
 - Search, filtering, and sorting. Titles are unique across the library; new untitled notes receive unique numbered titles.
-- 45 built-in themes covering positive, negative, and mixed feelings; personal templates and template coverage.
+- 45 built-in themes covering positive, negative, and mixed feelings; personal templates and template coverage. The default template canvas branches by tag, supports panning and zooming, and marks recorded themes with filled green circles. Open a circle for template actions, or switch to cards.
 - Separate reading and editing modes, autosaved drafts, optional update logs, and cancel editing.
 - Version comparison and restoration, milestones, and a yearly activity graph of creation, updates, and reviews.
 - Configurable review intervals, green reminders, and review confirmation recorded in history.

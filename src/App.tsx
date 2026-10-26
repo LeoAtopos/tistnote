@@ -38,6 +38,7 @@ import {
 import { localizedBuiltinTemplates } from "./templates";
 import { NoteTree } from "./NoteTree";
 import { ActivityPage } from "./ActivityPage";
+import { TemplateCanvas } from "./TemplateCanvas";
 import { Introduction, introductionSeenKey } from "./Introduction";
 import {
   AutoTextarea,
@@ -113,6 +114,8 @@ export default function App() {
   const [changeLog, setChangeLog] = useState(""),
     [changeLogError, setChangeLogError] = useState("");
   const [introductionOpen, setIntroductionOpen] = useState(false);
+  const [templateView, setTemplateView] = useState<"canvas" | "cards">("canvas");
+  const [templateTools, setTemplateTools] = useState(false);
   const introductionSeen = useRef(false);
   function introduceIfNeeded() {
     if (introductionSeen.current) return;
@@ -721,6 +724,7 @@ export default function App() {
   const saveTemplate = async (t: Template) => {
     await api.command("template_put", { template: t });
     await reload();
+    setPicked(null);
     setNotice(tr("模板已保存"));
   };
   async function resolveConflict(copy: boolean) {
@@ -817,6 +821,90 @@ export default function App() {
   }
   const runGroup = (task: () => Promise<void>) =>
     run(task, (e) => setGroupError(String(e).replace(/^Error: /, "")));
+
+  const renderTemplateCard = (t: Template) => (
+    <article className="template-card" key={t.id}>
+      <div className="template-tags">
+        {t.tags.join(" · ") || tr("未分类")}
+        {!t.builtin && <span>{tr("个人模板")}</span>}
+      </div>
+      <div className="template-title-heading">
+        <h2>
+          {covered.has(t.id) ? (
+            <button
+              className="template-note-title"
+              disabled={busy}
+              onClick={() => void run(() => openTemplate(t))}
+            >
+              {t.title}
+            </button>
+          ) : t.title}
+        </h2>
+        {covered.has(t.id) && (
+          <button
+            className="template-covered"
+            disabled={busy}
+            aria-label={tr("查看“{0}”的笔记", t.title)}
+            onClick={() => void run(() => openTemplate(t))}
+          >{tr("有品")}</button>
+        )}
+      </div>
+      <p>
+        {t.hint ||
+          t.description ||
+          tr("从 {0} 个选择开始，数量由你决定。", t.suggestedCount)}
+      </p>
+      <div className="template-actions">
+        <button
+          className="text-button"
+          disabled={busy}
+          onClick={() => void run(() => openTemplate(t))}
+        >
+          {covered.has(t.id) ? tr("查看笔记") : tr("开始填写")}{" "}
+          <Icon name="arrow" />
+        </button>
+        <details>
+          <summary aria-label={tr("{0}的模板操作", t.title)}>{tr("更多")}</summary>
+          <div>
+            {covered.has(t.id) && (
+              <button
+                disabled={busy}
+                onClick={() => void run(() => create(t))}
+              >{tr("另写一份")}</button>
+            )}
+            <button
+              onClick={() =>
+                setTemplate({ ...t, id: uid(), builtin: false })
+              }
+            >{tr("复制编辑")}</button>
+            {!t.builtin && (
+              <>
+                <button onClick={() => setTemplate(t)}>{tr("编辑")}</button>
+                <button
+                  className="danger"
+                  onClick={() =>
+                    void run(async () => {
+                      if (
+                        await confirm(
+                          tr("删除个人模板“{0}”？已有笔记不受影响。", t.title),
+                        )
+                      ) {
+                        await api.command("template_delete", {
+                          id: t.id,
+                        });
+                        await reload();
+                        setPicked(null);
+                      }
+                    })
+                  }
+                >{tr("删除")}</button>
+              </>
+            )}
+          </div>
+        </details>
+      </div>
+    </article>
+  );
 
   const vaultName = vault && !api.preview
     ? api.desktop
@@ -1593,16 +1681,17 @@ export default function App() {
             }
           />
         ) : view === "templates" ? (
-          <section className="library">
+          <section className="library template-library">
             <header className="library-header">
               <div>
-                <h1>{tr("世间万事，皆可一品")}</h1>
-                <p className="muted">{tr("喜欢、不喜欢，或说不清的感受，从一个主题开始记录。")}</p>
+                <h1>{tr("模板库")}</h1>
                 <p className="template-coverage-summary" role="status">{tr("有品")} {covered.size} / {templates.length} {tr("· 覆盖率")}{" "}
                   {coveragePercent}%
                 </p>
               </div>
               <div className="actions">
+                <button className="icon-button" aria-label={tr("搜索和标签")} aria-expanded={templateTools} onClick={() => setTemplateTools(v => !v)}><Icon name="search" /></button>
+                <button onClick={() => { setTemplateView(v => v === "canvas" ? "cards" : "canvas"); setPicked(null); }}>{tr(templateView === "canvas" ? "卡片视图" : "画布视图")}</button>
                 <button onClick={() => setTemplate(emptyTemplate())}>{tr("新建模板")}</button>
                 <button
                   className="primary"
@@ -1613,145 +1702,28 @@ export default function App() {
                 >{tr("随机一品 ↗")}</button>
               </div>
             </header>
-            <SearchFilters
-              query={query}
-              setQuery={(v) => {
+            {(templateTools || query || filter.length > 0) && <div className="template-filters">
+              <Search value={query} set={(v) => {
                 setQuery(v);
                 setPicked(null);
-              }}
-              tags={tags}
-              selected={filter}
-              setFilter={(v) => {
+              }} />
+              <TagFilter tags={tags} selected={filter} set={(v) => {
                 setFilter(v);
                 setPicked(null);
-              }}
-            />
-            {picked && (
-              <div className="random-card">
-                <span className="muted">{tr("这次，聊聊这个")}</span>
-                <div className="template-title-heading">
-                  <h2>
-                    {covered.has(picked.id) ? (
-                      <button
-                        className="template-note-title"
-                        disabled={busy}
-                        onClick={() => void run(() => openTemplate(picked))}
-                      >
-                        {picked.title}
-                      </button>
-                    ) : picked.title}
-                  </h2>
-                  {covered.has(picked.id) && (
-                    <button
-                      className="template-covered"
-                      disabled={busy}
-                      aria-label={tr("查看“{0}”的笔记", picked.title)}
-                      onClick={() => void run(() => openTemplate(picked))}
-                    >{tr("有品")}</button>
-                  )}
-                </div>
-                <p>{picked.hint}</p>
-                <div className="actions">
-                  <button
-                    className="primary"
-                    disabled={busy}
-                    onClick={() => void run(() => openTemplate(picked))}
-                  >
-                    {covered.has(picked.id) ? tr("查看笔记") : tr("开始填写")}
-                  </button>
-                  <button
-                    onClick={() =>
-                      setPicked(randomTemplate(templateList, picked.id) ?? null)
-                    }
-                  >{tr("换个主题")}</button>
-                </div>
-              </div>
+              }} />
+            </div>}
+            {templateView === "canvas" ? (
+              <TemplateCanvas templates={templateList} covered={covered} selected={picked} onSelect={setPicked} renderCard={renderTemplateCard} />
+            ) : (
+              <>
+                {picked && <div className="random-card">
+                  <button className="text-button" onClick={() => setPicked(null)}>{tr("收起提示")}</button>
+                  {renderTemplateCard(picked)}
+                </div>}
+                <div className="template-grid">{templateList.map(renderTemplateCard)}</div>
+              </>
             )}
-            <div className="template-grid">
-              {templateList.map((t) => (
-                <article className="template-card" key={t.id}>
-                  <div className="template-tags">
-                    {t.tags.join(" · ") || tr("未分类")}
-                    {!t.builtin && <span>{tr("个人模板")}</span>}
-                  </div>
-                  <div className="template-title-heading">
-                    <h2>
-                      {covered.has(t.id) ? (
-                        <button
-                          className="template-note-title"
-                          disabled={busy}
-                          onClick={() => void run(() => openTemplate(t))}
-                        >
-                          {t.title}
-                        </button>
-                      ) : t.title}
-                    </h2>
-                    {covered.has(t.id) && (
-                      <button
-                        className="template-covered"
-                        disabled={busy}
-                        aria-label={tr("查看“{0}”的笔记", t.title)}
-                        onClick={() => void run(() => openTemplate(t))}
-                      >{tr("有品")}</button>
-                    )}
-                  </div>
-                  <p>
-                    {t.hint ||
-                      t.description ||
-                      tr("从 {0} 个选择开始，数量由你决定。", t.suggestedCount)}
-                  </p>
-                  <div className="template-actions">
-                    <button
-                      className="text-button"
-                      disabled={busy}
-                      onClick={() => void run(() => openTemplate(t))}
-                    >
-                      {covered.has(t.id) ? tr("查看笔记") : tr("开始填写")}{" "}
-                      <Icon name="arrow" />
-                    </button>
-                    <details>
-                      <summary aria-label={tr("{0}的模板操作", t.title)}>{tr("更多")}</summary>
-                      <div>
-                        {covered.has(t.id) && (
-                          <button
-                            disabled={busy}
-                            onClick={() => void run(() => create(t))}
-                          >{tr("另写一份")}</button>
-                        )}
-                        <button
-                          onClick={() =>
-                            setTemplate({ ...t, id: uid(), builtin: false })
-                          }
-                        >{tr("复制编辑")}</button>
-                        {!t.builtin && (
-                          <>
-                            <button onClick={() => setTemplate(t)}>{tr("编辑")}</button>
-                            <button
-                              className="danger"
-                              onClick={() =>
-                                void run(async () => {
-                                  if (
-                                    await confirm(
-                                      tr("删除个人模板“{0}”？已有笔记不受影响。", t.title),
-                                    )
-                                  ) {
-                                    await api.command("template_delete", {
-                                      id: t.id,
-                                    });
-                                    await reload();
-                                  }
-                                })
-                              }
-                            >{tr("删除")}</button>
-                          </>
-                        )}
-                      </div>
-                    </details>
-                  </div>
-                </article>
-              ))}
-            </div>
-            {!templateList.length && (
+            {!templateList.length && templateView === "cards" && (
               <p className="small-empty">{tr("没有匹配的模板，请试试其他关键词或标签。")}</p>
             )}
           </section>

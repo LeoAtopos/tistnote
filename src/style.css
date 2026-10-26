@@ -1217,6 +1217,89 @@ svg {
   gap: 22px;
   margin-top: 30px;
 }
+.template-library { max-width: none; padding: 28px 32px; }
+.template-library .library-header { gap: 18px; margin-bottom: 22px; }
+.template-library .library-header p { margin-top: 8px; }
+.template-filters { display: flex; flex-direction: column; gap: 16px; }
+.template-filters .search { max-width: 600px; }
+.template-canvas {
+  position: relative;
+  height: max(650px, calc(100dvh - 230px));
+  margin-top: 22px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  isolation: isolate;
+}
+.template-canvas.is-dragging { cursor: grabbing; }
+.template-branches { position: absolute; inset: 0; pointer-events: none; }
+.template-branches path { fill: none; stroke: var(--secondary-ink); stroke-width: 1.5; opacity: 0.65; }
+.template-branches g.active > path:first-child, .template-branches path.active { stroke: var(--green); stroke-width: 2.5; opacity: 1; }
+.graph-root, .graph-tag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--paper);
+  text-align: center;
+  padding: 6px 10px;
+  pointer-events: none;
+  line-height: 1.4;
+}
+.graph-root { font-size: 24px; font-weight: 600; white-space: nowrap; }
+.graph-empty { position: absolute; inset: 80px 24px; display: grid; place-items: center; text-align: center; font-size: 20px; color: var(--secondary-ink); pointer-events: none; }
+.graph-tag { font-size: 20px; width: max-content; max-width: 144px; overflow-wrap: anywhere; }
+.graph-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+.graph-node:hover, .graph-node:focus-visible { background: transparent; z-index: 3; }
+.graph-node.selected { z-index: 2; }
+.graph-dot { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--secondary-ink); border-radius: 50%; background: var(--paper); flex-shrink: 0; }
+.graph-node.covered .graph-dot, .graph-dot.covered { background: var(--review-green, #39874b); border-color: var(--review-green, #39874b); }
+.graph-node:hover .graph-dot, .graph-node:focus-visible .graph-dot, .graph-node.selected .graph-dot { outline: 2px solid var(--green); outline-offset: 5px; }
+.graph-tooltip {
+  position: absolute;
+  top: 4px;
+  width: max-content;
+  max-width: min(280px, 65vw);
+  padding: 6px 10px;
+  background: var(--surface-high, #fff);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 20px;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+}
+.graph-legend, .graph-controls { position: absolute; display: flex; align-items: center; gap: 16px; background: var(--paper); z-index: 4; }
+.graph-legend { top: 16px; left: 18px; font-size: 18px; color: var(--secondary-ink); padding: 4px; }
+.graph-legend > span { display: flex; align-items: center; gap: 8px; }
+.graph-controls { bottom: 16px; right: 16px; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 8px; }
+.graph-controls button { border: 0; padding: 8px; min-width: 44px; min-height: 44px; font-size: 22px; background: transparent; }
+.graph-controls output { font-size: 20px; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+.graph-popup { position: absolute; z-index: 5; max-height: calc(100% - 90px); overflow-y: auto; border-radius: 10px; box-shadow: 0 12px 36px var(--menu-shadow, #203a2426); cursor: auto; user-select: text; touch-action: pan-y; }
+.graph-popup .template-card { padding-top: 54px; }
+.graph-popup:focus { outline: 2px solid var(--green); outline-offset: 2px; }
+.graph-popup-close { position: absolute; right: 5px; top: 5px; z-index: 1; border: 0; background: transparent; }
+.graph-popup .template-actions details > div { position: static; margin-top: 8px; }
+@media (max-width: 640px) {
+  .template-library { padding: 24px 16px; }
+  .template-library .library-header .actions { gap: 10px; }
+  .template-library .library-header .actions > button { font-size: 20px; }
+  .template-canvas { height: max(580px, calc(100dvh - 330px)); margin-top: 18px; }
+  .graph-controls { bottom: 12px; right: 12px; }
+}
 .template-card {
   background: var(--surface-high, #fff);
   border: 1px solid var(--line);
