@@ -146,3 +146,7 @@ cargo test --lib --manifest-path src-tauri/Cargo.toml
 | `docs/` | 产品定义与验证记录 |
 
 更多说明见 [产品需求文档](docs/PRD.md) 和 [验证记录](docs/VALIDATION.md)。
+
+## 开源协议
+
+本项目采用 [MIT 开源协议](LICENSE)。Copyright © 2026 LeoAtopos。

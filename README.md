@@ -106,3 +106,7 @@ Publish the contents of `dist-pages/` to the root of `gh-pages`, including `.noj
 | `docs/` | Product requirements and validation records |
 
 See [product requirements](docs/PRD.md) and [validation](docs/VALIDATION.md) for scope and testing boundaries. Dependencies, build outputs, installers, and personal test libraries are excluded from source releases.
+
+## License
+
+Licensed under the [MIT License](LICENSE). Copyright © 2026 LeoAtopos.

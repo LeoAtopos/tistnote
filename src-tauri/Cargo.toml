@@ -3,6 +3,7 @@ name = "tistnote"
 version = "0.2.0"
 description = "品记 — 本地审美列表笔记"
 edition = "2021"
+license = "MIT"
 
 [lib]
 name = "tistnote_lib"
