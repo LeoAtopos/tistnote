@@ -68,7 +68,7 @@ async page => {
     await share.getByRole('button',{name:'Close dialog',exact:true}).click();
   }
   await page.getByRole('button',{name:'Settings',exact:true}).click();
-  const settings=page.getByRole('dialog',{name:'Local library',exact:true});
+  const settings=page.getByRole('dialog',{name:'Local library · qa-library',exact:true});
   await settings.getByRole('button',{name:'Full backup',exact:true}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('[role="status"]')].some(el=>el.textContent.includes('Backup saved:')));
   await settings.getByRole('button',{name:'Close dialog',exact:true}).click();

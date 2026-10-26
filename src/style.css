@@ -1471,9 +1471,12 @@ summary {
 }
 .modal-header h2 {
   font-size: 26px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .modal-header button {
   border: 0;
+  flex-shrink: 0;
 }
 .form-stack {
   display: flex;

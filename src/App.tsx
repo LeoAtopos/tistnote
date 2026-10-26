@@ -791,6 +791,11 @@ export default function App() {
   const runGroup = (task: () => Promise<void>) =>
     run(task, (e) => setGroupError(String(e).replace(/^Error: /, "")));
 
+  const vaultName = vault && !api.preview
+    ? api.desktop
+      ? vault.path.replace(/[\\/]+$/, "").split(/[\\/]/).pop()
+      : vault.path
+    : "";
   return (
     <div
       className={`app ${vault && view === "notes" ? "notes-view" : ""}`}
@@ -2087,7 +2092,7 @@ export default function App() {
         </Modal>
       )}
       {dialog === "settings" && (
-        <Modal title={tr("本地资料库")} onClose={() => setDialog(null)}>
+        <Modal title={vaultName ? tr("本地资料库 · {0}", vaultName) : tr("本地资料库")} onClose={() => setDialog(null)}>
           <div className="form-stack">
             <div className="preference-fields">
               <label>
