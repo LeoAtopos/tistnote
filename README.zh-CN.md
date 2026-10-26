@@ -1,6 +1,6 @@
 # 品记 · tistnote
 
-[English](README.md) · [打开网页版](https://leoatopos.github.io/tistnote/) · [下载 Windows 版](https://github.com/LeoAtopos/tistnote/releases/latest)
+[English](README.md) · [打开网页版](https://leoatopos.github.io/tistnote/) · [下载 Windows 版](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe)
 
 **品察世间，记录好恶。**
 
@@ -16,16 +16,15 @@
 
 ## 下载 Windows 版
 
-在 [GitHub Releases](https://github.com/LeoAtopos/tistnote/releases/latest) 下载最新 Windows 10/11 x64 构建：
+下载 Windows 10/11 x64 直接运行版：
 
 | 文件 | 使用方式 |
 | --- | --- |
-| [tistnote-0.2.0-windows-x64-setup.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe) | 完整离线安装包，包含 WebView2 运行时，适合首次安装 |
 | [tistnote.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe) | 直接运行，需要电脑已有 Microsoft WebView2 |
 
 Release 同时提供使用说明、构建信息及 `SHA256SUMS.txt` 校验文件。仓库已公开，下载和应用使用均无需账号。
 
-Windows 安装包下载链接保持不变，现有地址对应完整离线安装包。Windows 应用中不显示网页上的“安装 Windows 版本”入口。
+应用内所有“安装 Windows 版本”入口均下载直接运行版，需要电脑已有 Microsoft WebView2。缺少 WebView2 时，可在 GitHub Releases 中选择完整离线安装包；历史安装包地址保留。Windows 应用中隐藏自身下载入口。
 
 ## 下载安卓版本
 
@@ -141,13 +140,13 @@ npm run dev
 ## 构建 Windows 版本
 
 ```powershell
-# 完整离线安装包：内置 WebView2 离线运行时
-npm run package
+# 直接运行版：使用电脑已有的 WebView2
+npm run package:portable
 ```
 
 - 可执行程序：`src-tauri/target/release/tistnote.exe`。
 - NSIS 安装包：`src-tauri/target/release/bundle/nsis/`。
-- 默认只构建完整离线安装包，`npm run package:offline` 保留为等效命令。
+- 如需内置 WebView2 的完整离线安装包，运行 `npm run package` 或 `npm run package:offline`。
 
 开发依赖和打包工具的首次下载需要网络，正式应用的核心功能不需要网络。目标平台为 Windows 10/11 x64；当前程序尚未代码签名，正式分发前应完成干净系统的安装与卸载验收。
 

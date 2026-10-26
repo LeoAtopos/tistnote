@@ -1075,7 +1075,7 @@ export default function App() {
             </button>
             <p className="welcome-foot">{tr(api.android ? "笔记保存在此设备的应用资料库中。" : "笔记保存在你的文件夹中，随时带走。")}</p>
             <div className="welcome-downloads">
-              {!api.desktop && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer">{tr("安装 Windows 版本")}</a>}
+              {!api.desktop && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe" target="_blank" rel="noopener noreferrer">{tr("安装 Windows 版本")}</a>}
               {!api.android && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk" target="_blank" rel="noopener noreferrer">{tr("安装安卓版本")}</a>}
             </div>
           </section>
@@ -2274,9 +2274,10 @@ export default function App() {
       {dialog === "install" && (
         <Modal title={tr("安装本地版本")} onClose={() => setDialog(null)}>
           <div className="form-stack">
-            {!api.desktop && <a className="native-install" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer">
+            {!api.desktop && <a className="native-install" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe" target="_blank" rel="noopener noreferrer">
               <strong>{tr("安装 Windows 版本")}</strong>
-              <span>{tr("Windows 10/11 · x64 · 完整离线安装包")}</span>
+              <span>{tr("Windows 10/11 · x64 · 直接运行")}</span>
+              <span>{tr("需要已安装 Microsoft WebView2")}</span>
             </a>}
             {!api.android && <a className="native-install" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk" target="_blank" rel="noopener noreferrer">
               <strong>{tr("安装安卓版本")}</strong>

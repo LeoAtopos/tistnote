@@ -16,12 +16,11 @@ Actual app screenshots with fictional example notes and history. The examples in
 | --- | --- | --- |
 | Web app | [Open Tistnote on GitHub Pages](https://leoatopos.github.io/tistnote/) | Current desktop Chrome or Edge; authorize a local library folder |
 | Android app | [Download the signed APK](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk) | Android 8.0+ with an up-to-date Android System WebView; universal APK |
-| Windows offline installer | [Download 0.2.0](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe) | Windows 10/11 x64; includes the WebView2 offline runtime |
-| Windows portable executable | [Download tistnote.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe) | Microsoft WebView2 installed |
+| Windows portable executable | [Download tistnote.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe) | Windows 10/11 x64; Microsoft WebView2 installed; run directly |
 
 [All releases, checksums, and build information](https://github.com/LeoAtopos/tistnote/releases). Windows builds are currently unsigned.
 
-In the app, open **Settings → Install a local version** for Windows and Android downloads. The installed platform's download is hidden. The existing Windows download URL is unchanged.
+In the app, open **Settings → Install a local version** for Windows and Android downloads. All Windows download buttons open the portable executable; the installed platform's download is hidden. If WebView2 is missing, the full offline installer is available under All releases above.
 
 ## Features
 
@@ -105,10 +104,10 @@ cargo test --lib --manifest-path src-tauri/Cargo.toml
 ### Windows builds
 
 ```powershell
-npm run package
+npm run package:portable
 ```
 
-Executables are in `src-tauri/target/release/`; NSIS installers are in `src-tauri/target/release/bundle/nsis/`. The default build includes the WebView2 offline runtime; `npm run package:offline` remains an equivalent command. The existing Windows download URL is preserved and serves the complete offline installer. Build dependency downloads need a network connection; the Windows app does not. The web-only installation link is hidden in the Windows app.
+The portable executable is `src-tauri/target/release/tistnote.exe`. Run it on Windows 10/11 x64 with Microsoft WebView2 already installed. `npm run package` or `npm run package:offline` additionally creates a complete offline NSIS installer under `src-tauri/target/release/bundle/nsis/`, including the WebView2 runtime. Build dependency downloads need a network connection; the Windows app does not. Windows download buttons are hidden in the Windows app.
 
 ### GitHub Pages builds
 
