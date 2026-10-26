@@ -26,7 +26,7 @@ Tistnote is a local-first list notebook for personal preferences, judgments, and
 - Separate reading and editing modes, autosaved drafts, optional update logs, and cancel editing.
 - Version comparison and restoration, milestones, and a yearly activity graph of creation, updates, and reviews.
 - Configurable review intervals, green reminders, and review confirmation recorded in history.
-- PNG sharing with optional signatures, anonymous attribution, long images or pages. Invitations omit your own answers.
+- PNG sharing with optional signatures, anonymous attribution, long images or pages. Both image types include a QR code for the web app; invitations omit your own answers.
 - Chinese and English; light, dark, or system appearance. Preferences stay on your device.
 - Full library backup and restoration, Tistnote Markdown import, and Trash recovery.
 

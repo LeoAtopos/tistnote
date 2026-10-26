@@ -156,6 +156,9 @@ export async function renderShare(
   o: ShareOptions,
 ): Promise<string[]> {
   await document.fonts.ready;
+  const qr = new Image();
+  qr.src = `${import.meta.env.BASE_URL}share-qr.png`;
+  await qr.decode();
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
@@ -233,15 +236,9 @@ export async function renderShare(
     ctx.font = '400 24px "Microsoft YaHei", sans-serif';
     const qrHint = o.invitation ? tr("扫描二维码，打开品记回复") : tr("来自品记，自我建设");
     ctx.fillText(qrHint, 746 - ctx.measureText(qrHint).width, height - 108);
-    ctx.strokeStyle = "#b9c2b5";
-    ctx.setLineDash([5, 5]);
-    ctx.strokeRect(770, height - 175, 160, 160);
-    ctx.setLineDash([]);
-    ctx.font = '400 28px "Microsoft YaHei", sans-serif';
-    const qrCenter = 850;
-    const qrLabel = tr("下载二维码"), qrPlaceholder = tr("预留");
-    ctx.fillText(qrLabel, qrCenter - ctx.measureText(qrLabel).width / 2, height - 124);
-    ctx.fillText(qrPlaceholder, qrCenter - ctx.measureText(qrPlaceholder).width / 2, height - 82);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(770, height - 175, 160, 160);
+    ctx.drawImage(qr, 776, height - 169, 148, 148);
     const png = canvas.toDataURL("image/png");
     if (png === "data:,") throw Error(tr("图片生成失败，请切换为分页图片后重试。"));
     return png;

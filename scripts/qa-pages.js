@@ -56,6 +56,17 @@ async page => {
   const noteId=JSON.parse(files.text.split('---')[1]).id;
   await page.getByRole('button',{name:'Confirm review',exact:true}).click();
   await page.getByRole('status').filter({hasText:'Review confirmed'}).waitFor();
+  for(const [label,mode]of [['Share picks','share'],['Ask for picks','invite']]){
+    await page.getByRole('button',{name:'Exchange',exact:true}).click();
+    await page.getByRole('button',{name:label,exact:true}).click();
+    const share=page.getByRole('dialog',{name:label,exact:true});
+    await page.waitForFunction(()=>[...document.querySelectorAll('dialog button')].some(button=>/^Save (?:all )?images?$/.test(button.textContent)&&!button.disabled));
+    await share.locator('.share-image').evaluate(image=>image.decode());
+    const download=page.waitForEvent('download');
+    await share.getByRole('button',{name:/^Save (?:all )?images?$/}).click();
+    await(await download).saveAs(`output/playwright/qr-live-${mode}.png`);
+    await share.getByRole('button',{name:'Close dialog',exact:true}).click();
+  }
   await page.getByRole('button',{name:'Settings',exact:true}).click();
   const settings=page.getByRole('dialog',{name:'Local library',exact:true});
   await settings.getByRole('button',{name:'Full backup',exact:true}).click();
