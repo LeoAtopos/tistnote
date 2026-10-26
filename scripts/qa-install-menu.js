@@ -12,7 +12,17 @@ async page=>{
     if(platform==='android')window.TistnoteAndroid={call:(id)=>queueMicrotask(()=>window.dispatchEvent(new CustomEvent('tistnote-android-response',{detail:{id,ok:true,value:null}})))};
    },platform);
    await tab.goto(page.url());
-   if(await tab.locator('.welcome a').count())throw Error('Installation links remain on welcome page');
+   const welcome=tab.locator('.welcome-downloads');
+   const welcomeWindows=welcome.getByRole('link',{name:'安装 Windows 版本',exact:true});
+   const welcomeAndroid=welcome.getByRole('link',{name:'安装安卓版本',exact:true});
+   if(await welcomeWindows.count()!==(platform==='windows'?0:1)||await welcomeAndroid.count()!==(platform==='android'?0:1))throw Error('Wrong welcome download links');
+   for(const link of await welcome.getByRole('link').all()){
+    const href=await link.getAttribute('href');
+    if(!['https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe','https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk'].includes(href))throw Error('Wrong welcome download URL');
+   }
+   const welcomeLayout=await welcome.evaluate(el=>({minFont:Math.min(...[...el.querySelectorAll('a')].map(n=>parseFloat(getComputedStyle(n).fontSize))),overflow:document.documentElement.scrollWidth>innerWidth}));
+   if(welcomeLayout.minFont<18||welcomeLayout.overflow)throw Error(JSON.stringify(welcomeLayout));
+   if(platform==='web')await tab.screenshot({path:`output/playwright/welcome-downloads-${width}.png`,fullPage:true});
    await tab.getByRole('button',{name:'设置',exact:true}).click();
    await tab.getByRole('button',{name:'安装本地版本',exact:true}).click();
    const modal=tab.getByRole('dialog',{name:'安装本地版本',exact:true});

@@ -923,6 +923,10 @@ export default function App() {
             >{tr("创建或打开本地资料库")}<Icon name="arrow" />
             </button>
             <p className="welcome-foot">{tr(api.android ? "笔记保存在此设备的应用资料库中。" : "笔记保存在你的文件夹中，随时带走。")}</p>
+            <div className="welcome-downloads">
+              {!api.desktop && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer">{tr("安装 Windows 版本")}</a>}
+              {!api.android && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk" target="_blank" rel="noopener noreferrer">{tr("安装安卓版本")}</a>}
+            </div>
           </section>
         ) : view === "notes" ? (
           <div
