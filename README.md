@@ -6,6 +6,10 @@
 
 Tistnote is a local-first list notebook for personal preferences, judgments, and aesthetic. Keep what you love, what you dislike, what you value, and what you are still figuring out. Write down your reasons and revisit how your perspective changes.
 
+![Tistnote reading view: a grouped film list with personal reasons and a review reminder](docs/screenshots/reading-en.png)
+
+Actual app screenshots with fictional example notes and history. The examples include likes, dislikes, and undecided feelings; they are not personal user data.
+
 ## Get Tistnote
 
 | Edition | Link | Requirements |
@@ -34,6 +38,20 @@ In the app, open **Settings → Install a local version** for Windows and Androi
 - Full library backup and restoration, Tistnote Markdown import, and Trash recovery.
 
 Tistnote supports thoughtful writing: favorite books, foods you avoid, people you admire, ideas you question, or feelings you have not yet resolved. Take time to compare your choices and understand how they change.
+
+## Explore, reflect, revisit
+
+**See your notes in context.** The optional note canvas follows your groups and subgroups. Hollow circles are empty notes; green circles contain choices; a small extra dot marks a review due.
+
+![Note canvas with nested groups, populated and empty notes, and review reminders](docs/screenshots/notes-canvas-en.png)
+
+**Find a theme worth thinking about.** Explore the template library by tag, open a circle for its template card, and return to themes you have already recorded.
+
+![Template canvas with recorded themes in green and an open Favorite writers card](docs/screenshots/templates-en.png)
+
+**Look back at your changes.** The history view brings together note creation, updates, and review confirmations. Select a day to return to its notes.
+
+![History calendar and the example notes updated on a selected date](docs/screenshots/history-en.png)
 
 ## Local files and privacy
 
