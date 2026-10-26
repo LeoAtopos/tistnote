@@ -542,6 +542,7 @@ export default function App() {
   };
   useEffect(() => {
     let live = true;
+    if (api.web) introduceIfNeeded();
     api
       .startup()
       .then((v) => {
