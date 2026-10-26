@@ -1,5 +1,18 @@
 # 品记验证记录
 
+## 2026-10-27 iPhone / iPad 浏览器内部资料库
+
+- 54 项 TypeScript 测试及 Pages 生产构建通过。新增 iPhone / iPad / 桌面身份 iPad 检测、ZIP Unicode / 二进制 / 空分组往返、外层目录兼容、锁文件排除、路径穿越、文件目录碰撞、大小写冲突、损坏清单 / CRC、符号链接、加密、超大和虚报解压大小检查。压缩库 fflate 0.8.3 随程序打包，npm 官方审计无漏洞。
+- `qa-ios-local.js` 在 Chromium 和 WebKit 26.6 中使用 iPhone 用户代理及真实 IndexedDB，验证创建、连续输入、提交、刷新恢复、提示关闭偏好、多标签独占锁、模拟空间不足时原 Markdown 字节保留、取消编辑、实际 ZIP 下载与恢复、新库不覆盖旧库、损坏备份不切换、新建 / 切换资料库及 Markdown 导入新标识。
+- `qa-indexed-files.js` 在 WebKit 中模拟 MacIntel + 5 触点的桌面身份 iPad，验证真实数据库中的全库标题唯一、修订冲突、嵌套分组移动且正文不变、回顾历史、画布布局重开、非空分组与路径碰撞保护、严格 UTF-8，以及暂存恢复遇到损坏 Markdown 时清理新库且保持当前库。桌面授权文件夹的 `qa-pages.js` 回归通过，含备份、恢复、历史与回收站。
+- 已检查 390×844 中文浅色的顶部提示 / 笔记，以及 1024×768 英文深色设置截图，可见文字最低 18px，提示与说明为 20px，无页面横向溢出；设置长说明可滚动。未使用真实 iPhone / iPad，本轮未打包或发布 Windows / Android / Pages。
+
+## 2026-10-27 标题回车接续主题说明
+
+- 标题普通 Enter 聚焦下方主题说明，保留说明内容及条目数量，说明中的 Enter 正常换行；输入法组合状态、兼容 keyCode 229、长按重复及修饰键 Enter 不触发跳转。
+- `scripts/qa-title-enter.js` 在隔离预览验证连续输入、已有内容保留、不新增条目、Tab 顺序及 1440 / 390 宽度下焦点和可见性。组合输入与修饰键通过合成键盘事件验证，未操作系统级输入法；已检查桌面与窄屏截图，说明字号 20px、页面无横向溢出。
+- `npm run build` 通过。本轮未重新打包 Windows / Android 或发布 Pages。
+
 ## 2026-10-27 Windows 直接运行版与下载入口
 
 - 源码 `8fd428f`，通过 `npm run package:portable`（Tauri `--no-bundle`）生成 Windows x64 `tistnote.exe`，8,667,136 字节，约 8.3 MiB；不捆绑 WebView2，需要电脑已有该运行时。未重新生成完整离线安装包，Release 保留的旧包在构建信息中记录各自真实来源。

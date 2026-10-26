@@ -55,7 +55,8 @@ import {
 } from "./components";
 
 type View = "notes" | "templates" | "activity" | "trash";
-const browserTipDismissedKey = "tistnote-browser-tip-dismissed-v1";
+const browserTipDismissedKey = api.browserLocal ? "tistnote-browser-local-tip-dismissed-v1" : "tistnote-browser-tip-dismissed-v1";
+const browserStorageNotice = "iOS/iPadOS · 数据仅存于当前浏览器，不会同步。清除网站数据、卸载浏览器或系统清理可能丢失笔记；请勿用无痕模式，定期在设置中导出完整备份。";
 type Dialog =
   | "settings"
   | "share"
@@ -67,6 +68,7 @@ type Dialog =
   | "groups"
   | "new-folder"
   | "install"
+  | "browser-libraries"
   | null;
 export default function App() {
   const preferences = usePreferences();
@@ -81,6 +83,9 @@ export default function App() {
   }
   const uiLanguage = language();
   const [preferenceError, setPreferenceError] = useState("");
+  const [browserLibraries, setBrowserLibraries] = useState<api.BrowserLibrary[]>([]);
+  const [browserLibraryName, setBrowserLibraryName] = useState("");
+  const [browserLibraryError, setBrowserLibraryError] = useState("");
   const resolvedTheme = theme();
   useEffect(() => {
     if (api.android) void androidRequest("theme", { dark: resolvedTheme === "dark" }).catch(error => setPreferenceError(String(error)));
@@ -1020,7 +1025,7 @@ export default function App() {
           <div className="preview-banner">
             <span>{tr(api.preview
               ? "浏览器开发预览 · 真实 Markdown 资料库请使用桌面版"
-              : api.localFiles
+              : api.browserLocal ? browserStorageNotice : api.localFiles
                 ? "网页版 · 仅访问你授权的文件夹；同一资料库请勿同时在桌面版和网页版中编辑。"
                 : "请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。")}</span>
             <button className="icon-button" aria-label={tr("关闭提示")} title={tr("关闭提示")} onClick={dismissBrowserTip}>
@@ -1071,9 +1076,9 @@ export default function App() {
                   if (v) install(v);
                 })
               }
-            >{tr("创建或打开本地资料库")}<Icon name="arrow" />
+            >{tr(api.browserLocal ? "创建或打开浏览器资料库" : "创建或打开本地资料库")}<Icon name="arrow" />
             </button>
-            <p className="welcome-foot">{tr(api.android ? "笔记保存在此设备的应用资料库中。" : "笔记保存在你的文件夹中，随时带走。")}</p>
+            <p className="welcome-foot">{tr(api.browserLocal ? "笔记保存在当前浏览器中，请定期导出完整备份。" : api.android ? "笔记保存在此设备的应用资料库中。" : "笔记保存在你的文件夹中，随时带走。")}</p>
             <div className="welcome-downloads">
               {!api.desktop && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe" target="_blank" rel="noopener noreferrer">{tr("安装 Windows 版本")}</a>}
               {!api.android && <a href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk" target="_blank" rel="noopener noreferrer">{tr("安装安卓版本")}</a>}
@@ -1485,6 +1490,11 @@ export default function App() {
                           className="note-title"
                           aria-label={tr("笔记主题")}
                           value={note.title}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter" || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+                            e.preventDefault();
+                            e.currentTarget.parentElement?.querySelector<HTMLTextAreaElement>(".description")?.focus();
+                          }}
                           onChange={(e) =>
                             edit((n) => {
                               n.title = e.target.value;
@@ -2195,6 +2205,11 @@ export default function App() {
                 onClick={() =>
                   void run(async () => {
                     await checkpoint();
+                    if (api.browserLocal) {
+                      setBrowserLibraries(await api.listBrowserLibraries());
+                      setBrowserLibraryName(""); setBrowserLibraryError(""); setDialog("browser-libraries");
+                      return;
+                    }
                     const v = await api.pickVault();
                     if (v) {
                       install(v);
@@ -2203,7 +2218,7 @@ export default function App() {
                   })
                 }
               >{tr("创建 / 切换资料库")}</button>
-              {!api.android && <button
+              {!api.android && !api.browserLocal && <button
                 disabled={!vault || !api.desktop}
                 onClick={() =>
                   void run(async () => {
@@ -2217,7 +2232,7 @@ export default function App() {
                   void run(async () => {
                     await checkpoint();
                     const path = await api.backupVault();
-                    if (path) setNotice(tr("备份完成：{0}", path));
+                    if (path) setNotice(tr(api.browserLocal ? "已生成备份，请确认已保存：{0}" : "备份完成：{0}", path));
                   })
                 }
               >{tr("完整备份")}</button>
@@ -2230,7 +2245,7 @@ export default function App() {
                     if (v) {
                       install(v);
                       setDialog(null);
-                      setNotice(tr("备份已恢复到新文件夹"));
+                      setNotice(tr(api.browserLocal ? "备份已恢复到新的浏览器资料库，原资料库仍可在设置中打开。" : "备份已恢复到新文件夹"));
                     }
                   })
                 }
@@ -2265,9 +2280,27 @@ export default function App() {
               >
                 <Icon name="trash" />{tr("回收站")}</button>
             </div>
-            <p className="muted">{tr("笔记、历史与模板都在此文件夹内。完整复制文件夹即可迁移。资料库未加密。")}</p>
+            <p className="muted">{tr(api.browserLocal ? browserStorageNotice : "笔记、历史与模板都在此文件夹内。完整复制文件夹即可迁移。资料库未加密。")}</p>
+            {api.browserLocal && <p className="muted">{tr("资料库保存在浏览器内部，不在“文件”App中，也未加密。不同浏览器、网址和设备不共享数据。请将导出的 ZIP 保存到浏览器以外的安全位置；恢复会新建资料库，不覆盖原资料库。")}</p>}
             {api.android && <p className="muted">{tr("安卓资料库保存在应用私有目录。卸载应用前请导出完整备份，避免丢失数据。")}</p>}
             <p className="muted">{tr(api.web ? "品记网页版 · 网页资源联网加载，笔记只保存在本地资料库。" : "品记 0.2.0 · 不联网，不上传。")}</p>
+          </div>
+        </Modal>
+      )}
+      {dialog === "browser-libraries" && (
+        <Modal title={tr("浏览器资料库")} onClose={() => setDialog(null)}>
+          <div className="form-stack">
+            {browserLibraryError && <p className="error" role="alert">{browserLibraryError}</p>}
+            {browserLibraries.map(library => <button key={library.id} disabled={busy} onClick={() => void run(async () => {
+              const v = await api.selectBrowserLibrary(library.id); install(v); setDialog(null);
+            }, error => setBrowserLibraryError(tr(String(error).replace(/^Error: /,""))))}>{library.name}</button>)}
+            <form className="form-stack" onSubmit={event => {
+              event.preventDefault();
+              void run(async () => { const v = await api.createBrowserLibrary(browserLibraryName); install(v); setDialog(null); }, error => setBrowserLibraryError(tr(String(error).replace(/^Error: /,""))));
+            }}>
+              <label>{tr("资料库名称")}<input aria-label={tr("资料库名称")} maxLength={100} value={browserLibraryName} onChange={event => setBrowserLibraryName(event.target.value)} /></label>
+              <button className="primary" disabled={busy || !browserLibraryName.trim()}>{tr("新建资料库")}</button>
+            </form>
           </div>
         </Modal>
       )}

@@ -4,6 +4,8 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { androidRequest, isAndroid } from "./android-bridge";
 import { noteActivity } from "./activity";
 import { readCanvasState, validateCanvasLayout } from "./canvas-layout";
+import { isIOSBrowser } from "./browser-platform";
+export type { BrowserLibrary } from "./indexed-files";
 import {
   contentKey,
   assertUniqueTitle,
@@ -26,9 +28,13 @@ export const preview =
   import.meta.env.DEV &&
   new URLSearchParams(location.search).has("preview");
 export const web = !desktop && !android && !preview;
-export const localFiles = desktop || android || (web && typeof window.showDirectoryPicker === "function");
+export const browserLocal = web && isIOSBrowser(navigator);
+export const localFiles = desktop || android || (web && (browserLocal ? !!window.indexedDB && !!navigator.locks : typeof window.showDirectoryPicker === "function"));
 const browserVault = () => import("./browser-vault");
 const androidVault = () => import("./android-vault");
+export const listBrowserLibraries = async () => (await browserVault()).listInternalLibraries();
+export const selectBrowserLibrary = async (id: string) => (await browserVault()).selectInternalLibrary(id);
+export const createBrowserLibrary = async (name: string) => (await browserVault()).newInternalLibrary(name);
 interface PreviewState {
   vault: Vault;
   history: Record<string, Version[]>;

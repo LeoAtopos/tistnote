@@ -14,7 +14,7 @@ Actual app screenshots with fictional example notes and history. The examples in
 
 | Edition | Link | Requirements |
 | --- | --- | --- |
-| Web app | [Open Tistnote on GitHub Pages](https://leoatopos.github.io/tistnote/) | Current desktop Chrome or Edge; authorize a local library folder |
+| Web app | [Open Tistnote on GitHub Pages](https://leoatopos.github.io/tistnote/) | Desktop Chrome/Edge: local folder; iPhone/iPad: browser-local library |
 | Android app | [Download the signed APK](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk) | Android 8.0+ with an up-to-date Android System WebView; universal APK |
 | Windows portable executable | [Download tistnote.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe) | Windows 10/11 x64; Microsoft WebView2 installed; run directly |
 
@@ -57,13 +57,17 @@ Tistnote supports thoughtful writing: favorite books, foods you avoid, people yo
 
 **Notes are not uploaded. No account, telemetry, cloud sync, or application server is used.**
 
-The Windows app runs locally, including history, templates, and image generation. The web edition downloads app assets from GitHub Pages, then reads and writes only the folder you explicitly authorize. GitHub serves the website; it does not store your library.
+The Windows app runs locally, including history, templates, and image generation. The web edition downloads app assets from GitHub Pages. Desktop Chrome/Edge reads and writes only the folder you explicitly authorize; iPhone/iPad uses a separate browser-local database. GitHub serves the website; it does not store your library.
 
 The Android app bundles its interface and illustrations, requires no Internet permission, and writes real Markdown libraries in the app's private storage. Create or switch libraries inside the app. Groups, history, reviews, templates, and Trash use the same data format as the other editions. Android's system document picker handles ZIP backups, backup restoration, Markdown import, and PNG export. PNG copying uses the Android clipboard.
 
 **Export a full Android backup before uninstalling: uninstalling removes app-private libraries.** Android ZIP backups contain `notes/` and `.tistnote/`; extract them into a folder to open them on Windows or in the web app. To restore a Windows/web library on Android, ZIP its complete folder including `.tistnote/`, then use Restore backup. Restoring creates a new library and preserves the current one. Android restoration accepts ZIPs up to 256 MB compressed and uncompressed, with a 64 MB per-file limit. More details are in the [Android guide](docs/ANDROID.md).
 
-In the web app, choose an existing Tistnote library or an empty folder. Notes, groups, history, templates, and Trash use the Windows library format. The browser remembers the folder when permitted and may ask you to authorize it again. Unsupported browsers cannot edit local libraries. This edition currently requires desktop Chrome or Edge and is not a mobile client.
+On desktop Chrome/Edge, choose an existing Tistnote library or an empty folder. Notes, groups, history, templates, and Trash use the Windows library format. The browser remembers the folder when permitted and may ask you to authorize it again. Other desktop browsers without folder access remain unsupported.
+
+On **iPhone/iPad**, Tistnote automatically uses IndexedDB inside the current browser, including iPads using a desktop-style browser identity. Notes are not written to the Files app and do not sync between browsers, site addresses, or devices. Clearing site data, removing the browser, or browser/system storage cleanup may delete libraries. Avoid private browsing. The dismissible top notice explains these limits; the warning remains available in Settings.
+
+Use **Settings → Full backup** regularly and confirm the downloaded ZIP is saved somewhere safe outside the browser. ZIP backups contain compatible Markdown, history, templates, Trash, canvas layout, and empty groups. Extract a backup to open its folder on Windows/desktop web, or restore it in Android. iPhone/iPad ZIP restoration creates a new browser library and preserves the original; Settings can create and switch libraries. Browser ZIPs are limited to 64 MiB compressed and uncompressed, 10,000 entries, and 16 MiB per file. Markdown import is also available. Browser-private storage is separate from the disposable development preview.
 
 **Close Windows Tistnote before editing the same library in the web app, and vice versa.** Browser tabs use an exclusive writer lock, but cannot share the desktop app's operating-system lock. Revision checks and recovery journals guard against observed conflicts and interrupted writes; keep full backups. Web group moves expect UTF-8 files and stop on unsupported contents. Full backups preserve binary files too.
 

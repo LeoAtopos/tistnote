@@ -2,6 +2,9 @@ import { tr } from "./i18n";
 import { groupName, uid, type RecordNote, type Vault } from "./model";
 import { parseMarkdown } from "./markdown";
 import { WebStore, type FilePort } from "./web-store";
+import { isIOSBrowser } from "./browser-platform";
+import { activeBrowserLibrary, browserLibraries, createBrowserLibrary, IndexedFiles, openBrowserDatabase, rememberBrowserLibrary, type BrowserLibrary } from "./indexed-files";
+import { archiveLimit, packLibrary, unpackLibrary } from "./library-archive";
 
 type Directory = FileSystemDirectoryHandle & {
   entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
@@ -19,7 +22,8 @@ declare global {
 }
 const host = () => window as FilePickerWindow;
 const notFound = (error: unknown) => error instanceof DOMException && error.name === "NotFoundError";
-export const supported = () => typeof window !== "undefined" && typeof host().showDirectoryPicker === "function" && !!navigator.locks && !!window.indexedDB;
+const internal = isIOSBrowser(navigator);
+export const supported = () => typeof window !== "undefined" && (internal || typeof host().showDirectoryPicker === "function") && !!navigator.locks && !!window.indexedDB;
 export class BrowserFiles implements FilePort {
   constructor(readonly root: FileSystemDirectoryHandle) {}
   private parts(path: string) { groupName(path); return path.split("/"); }
@@ -74,6 +78,9 @@ export class BrowserFiles implements FilePort {
   }
 }
 let current: WebStore | null = null, currentDirectory: Directory | null = null;
+let localLibrary: BrowserLibrary | null = null;
+let dbTask: Promise<IDBDatabase> | null = null;
+const database = () => dbTask ??= openBrowserDatabase().catch(error => { dbTask = null; throw error; });
 let releaseSession: (() => void) | null = null;
 let startupTask: Promise<Vault | null> | null = null;
 async function session() {
@@ -84,6 +91,51 @@ async function session() {
       await new Promise<void>(release => { releaseSession = release; resolve(); });
     }).catch(reject);
   });
+}
+async function openInternal(library: BrowserLibrary, restored = false): Promise<Vault> {
+  await session();
+  const db = await database(), files = new IndexedFiles(db, library.id), store = new WebStore(files, library.name);
+  if (restored && await files.read(".tistnote/manifest.json") === null) throw Error(tr("此文件夹不是完整的品记资料库备份"));
+  await store.initialize();
+  const vault = await store.command("list", {recover:true}) as Vault;
+  if (restored) {
+    if (vault.warnings.length) throw Error(vault.warnings.join("\n"));
+    for (const record of [...vault.notes,...vault.trash]) await store.command("versions", {id:record.note.id});
+    await store.command("canvas_get");
+  }
+  await rememberBrowserLibrary(db, library);
+  current = store; currentDirectory = null; localLibrary = library;
+  try { await navigator.storage?.persist?.(); } catch { /* A persistence request is optional; the UI always explains storage eviction. */ }
+  return vault;
+}
+export async function listInternalLibraries() { return browserLibraries(await database()); }
+export async function selectInternalLibrary(id: string) {
+  const library = (await listInternalLibraries()).find(item => item.id === id);
+  if (!library) throw Error(tr("浏览器资料库记录无法读取，已有数据已保留。"));
+  return openInternal(library);
+}
+export async function newInternalLibrary(name: string, entries?: Parameters<typeof createBrowserLibrary>[2]) {
+  await session();
+  const db = await database(), library = await createBrowserLibrary(db, name, entries);
+  try { return await openInternal(library, !!entries); }
+  catch (error) {
+    try { await new IndexedFiles(db,library.id).discard(); } catch { /* Keep any incomplete new library for recovery; the active library is unchanged. */ }
+    throw error;
+  }
+}
+function pickFile(accept: string): Promise<File | null> {
+  return new Promise((resolve,reject) => {
+    const input=document.createElement("input");input.type="file";input.accept=accept;input.hidden=true;
+    const finish=(file:File|null)=>{input.remove();resolve(file);};
+    input.onchange=()=>finish(input.files?.[0]??null);input.addEventListener("cancel",()=>finish(null),{once:true});
+    document.body.append(input);
+    try{input.click();}catch(error){input.remove();reject(error);}
+  });
+}
+function downloadZip(bytes: Uint8Array, name: string) {
+  const url=URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:"application/zip"}));
+  const link=document.createElement("a");link.href=url;link.download=name;document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60_000);
 }
 async function cacheHandle(write?: Directory): Promise<Directory | null> {
   return new Promise((resolve,reject) => {
@@ -118,6 +170,10 @@ export async function startup(): Promise<Vault | null> {
   if (!supported()) return null;
   if (current) return current.list();
   if (!startupTask) startupTask = (async () => {
+    if (internal) {
+      const library = await activeBrowserLibrary(await database());
+      return library ? openInternal(library) : null;
+    }
     const directory = await cacheHandle();
     if (!directory || await directory.queryPermission({mode:"readwrite"}) !== "granted") return null;
     return open(directory);
@@ -125,8 +181,16 @@ export async function startup(): Promise<Vault | null> {
   return startupTask;
 }
 export async function pickVault(restore = false): Promise<Vault | null> {
-  if (!supported()) throw Error(tr("请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。"));
+  if (!supported()) throw Error(tr(internal ? "无法使用浏览器本地存储，请更新 iOS/iPadOS 并检查网站存储权限。" : "请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。"));
   try {
+    if (internal) {
+      if (!restore) return await startup() ?? await newInternalLibrary(tr("浏览器资料库"));
+      const file=await pickFile(".zip,application/zip,application/x-zip-compressed");
+      if(!file)return null;
+      if(file.size>archiveLimit)throw Error(tr("浏览器备份最多 64 MiB、10000 项，单文件最多 16 MiB。"));
+      const entries=unpackLibrary(new Uint8Array(await file.arrayBuffer()));
+      return await newInternalLibrary(tr("{0}（恢复）",file.name.replace(/\.zip$/i,"").slice(0,80)),entries);
+    }
     const directory = await host().showDirectoryPicker!({mode:"readwrite",id:restore ? "tistnote-backup" : "tistnote-library"});
     if (!restore) return await open(directory);
     const backup = new WebStore(new BrowserFiles(directory),directory.name);
@@ -167,6 +231,13 @@ async function cloneDirectory(source: Directory, parent: Directory, prefix: stri
   return destination;
 }
 export async function backupVault(): Promise<string | null> {
+  if (internal) {
+    if(!current||!localLibrary)throw Error(tr("请先打开本地资料库"));
+    await current.command("list");
+    const name=`Tistnote-backup-${new Date().toISOString().replace(/[:.]/g,"-")}.zip`;
+    downloadZip(packLibrary(await new IndexedFiles(await database(),localLibrary.id).entries()),name);
+    return name;
+  }
   if (!currentDirectory || !current) throw Error(tr("请先打开本地资料库"));
   try {
     const parent = await host().showDirectoryPicker!({mode:"readwrite",id:"tistnote-backup-destination"});
@@ -177,8 +248,10 @@ export async function backupVault(): Promise<string | null> {
 export async function importNote(): Promise<RecordNote | null> {
   if (!current) throw Error(tr("请先打开本地资料库"));
   try {
-    const handles = await host().showOpenFilePicker!({multiple:false,types:[{description:"Tistnote Markdown",accept:{"text/markdown":[".md"]}}]});
-    const bytes = await (await handles[0].getFile()).arrayBuffer();
+    const file = internal ? await pickFile(".md,text/markdown,text/plain") : await (await host().showOpenFilePicker!({multiple:false,types:[{description:"Tistnote Markdown",accept:{"text/markdown":[".md"]}}]}))[0].getFile();
+    if(!file)return null;
+    if(internal&&file.size>16*1024*1024)throw Error(tr("浏览器备份最多 64 MiB、10000 项，单文件最多 16 MiB。"));
+    const bytes = await file.arrayBuffer();
     const note = (await parseMarkdown(new TextDecoder("utf-8",{fatal:true}).decode(bytes))).note;
     note.id = uid(); note.entries.forEach(e => { e.id = uid(); });
     note.createdAt = note.updatedAt = new Date().toISOString();
