@@ -1,3 +1,4 @@
+import { tr, locale } from "./i18n";
 import { validEntries, type Note } from "./model";
 export interface ShareOptions {
   selected: string[];
@@ -7,6 +8,8 @@ export interface ShareOptions {
   date: boolean;
   invitation: boolean;
   message: string;
+  signature: string;
+  format: "long" | "pages";
 }
 export interface ShareBlock {
   text: string;
@@ -22,7 +25,14 @@ export const WIDTH = 1000,
   FONT = 32,
   LINE = 49,
   TOP = 220,
-  BOTTOM = 1190;
+  BOTTOM = 1190,
+  MAX_LONG_HEIGHT = 16000;
+export function shareHeading(note: Note, o: ShareOptions): string {
+  const name = o.signature.replace(/\s+/gu, " ").trim();
+  if (o.invitation) return name ? tr("{0}向你求品", name) : tr("一位品友向你求品");
+  const heading = name ? tr("{0}的品单", name) : tr("一份匿名品单");
+  return o.selected.length < validEntries(note).length ? tr("{0} · 节选", heading) : heading;
+}
 export function shareBlocks(note: Note, o: ShareOptions): ShareBlock[] {
   const blocks: ShareBlock[] = [];
   if (o.description && note.description)
@@ -38,7 +48,7 @@ export function shareBlocks(note: Note, o: ShareOptions): ShareBlock[] {
     });
   if (o.date)
     blocks.push({
-      text: new Date(note.updatedAt).toLocaleDateString("zh-CN"),
+      text: new Date(note.updatedAt).toLocaleDateString(locale()),
       kind: "meta",
     });
   validEntries(note).forEach((e, i) => {
@@ -65,11 +75,20 @@ export function wrapText(
     let line = "";
     for (const { segment } of segmenter.segment(paragraph)) {
       if (line && measure(line + segment) > maxWidth) {
-        out.push(line);
-        line = segment;
+        const word = line.match(/^(.*\s)(\S+)$/u);
+        if (/\s/u.test(segment)) {
+          out.push(line.trimEnd());
+          line = "";
+        } else if (word && /^[\p{Script=Latin}\p{N}]/u.test(word[2]) && measure(word[2] + segment) <= maxWidth) {
+          out.push(word[1].trimEnd());
+          line = word[2] + segment;
+        } else {
+          out.push(line.trimEnd());
+          line = segment;
+        }
       } else line += segment;
     }
-    out.push(line);
+    out.push(line.trimEnd());
   }
   return out;
 }
@@ -83,6 +102,7 @@ export function layoutShare(
   blocks: ShareBlock[],
   wrap: (text: string, kind: ShareBlock["kind"]) => string[],
   top = TOP,
+  bottom = BOTTOM,
 ): DrawLine[][] {
   const pages: DrawLine[][] = [[]];
   let y = top;
@@ -104,20 +124,20 @@ export function layoutShare(
           : 0);
       if (
         y > top &&
-        size * LINE + 28 <= BOTTOM - top &&
-        y + size * LINE + 28 > BOTTOM
+        size * LINE + 28 <= bottom - top &&
+        y + size * LINE + 28 > bottom
       )
         page();
     }
     if (b.kind !== "reason" && y > top) y += 24;
     for (const text of lines) {
-      if (y + LINE > BOTTOM) {
+      if (y + LINE > bottom) {
         page();
         if (b.entryId) {
           pages
             .at(-1)!
             .push({
-              text: "（上页条目续）",
+              text: tr("（上页条目续）"),
               kind: "meta",
               y,
               continuation: true,
@@ -143,6 +163,11 @@ export async function renderShare(
   const font = (kind: string) =>
     `${kind === "entry" ? "600" : "400"} ${kind === "meta" ? 30 : FONT}px "Microsoft YaHei", "PingFang SC", sans-serif`;
   const titleFont = '600 46px "Microsoft YaHei", sans-serif';
+  const paged = o.format === "pages";
+  const headingFont = '500 28px "Microsoft YaHei", sans-serif';
+  ctx.font = headingFont;
+  const heading = wrapText(shareHeading(note, o), WIDTH - MARGIN * 2, s => ctx.measureText(s).width);
+  const titleY = 104 + (heading.length - 1) * 40;
   ctx.font = titleFont;
   const title = wrapText(
     note.title,
@@ -150,15 +175,16 @@ export async function renderShare(
     (s) => ctx.measureText(s).width,
   );
   // Very long titles continue as body text, keeping a two-line repeated page header.
-  const header = title.slice(0, 2);
-  if (title.length > 2) {
+  const header = paged ? title.slice(0, 2) : title;
+  if (paged && title.length > 2) {
     while (ctx.measureText(header[1] + "…").width > WIDTH - MARGIN * 2)
       header[1] = Array.from(header[1]).slice(0, -1).join("");
     header[1] += "…";
   }
-  const top = header.length > 1 ? 260 : 220;
+  const top = titleY + (header.length - 1) * 62 + 116;
+  if (paged && top > BOTTOM - LINE) throw Error(tr("署名过长，请精简后再生成品交图片。"));
   const blocks = shareBlocks(note, o);
-  if (title.length > 2) blocks.unshift({ text: note.title, kind: "title" });
+  if (paged && title.length > 2) blocks.unshift({ text: note.title, kind: "title" });
   const pages = layoutShare(
     blocks,
     (text, kind) => {
@@ -170,28 +196,24 @@ export async function renderShare(
       );
     },
     top,
+    paged ? BOTTOM : Infinity,
   );
-  if (pages.length > 200) throw Error("内容超过 200 页，请减少本次品交条目。");
-  const subset = !o.invitation && o.selected.length < validEntries(note).length;
+  if (pages.length > 200) throw Error(tr("内容超过 200 页，请减少本次品交条目。"));
   return pages.map((lines, index) => {
-    const height = Math.max(
-      620,
-      Math.min(HEIGHT, (lines.at(-1)?.y ?? top) + LINE + 210),
-    );
+    const contentHeight = (lines.at(-1)?.y ?? top) + LINE + 210;
+    const height = Math.max(620, paged ? Math.min(HEIGHT, contentHeight) : contentHeight);
+    if (!paged && height > MAX_LONG_HEIGHT)
+      throw Error(tr("长图内容过长，请将图片形式切换为“分页图片”后导出。"));
     canvas.height = height;
     ctx.fillStyle = "#f8f6f0";
     ctx.fillRect(0, 0, WIDTH, height);
     ctx.textBaseline = "top";
     ctx.fillStyle = "#52685b";
-    ctx.font = '500 28px "Microsoft YaHei", sans-serif';
-    ctx.fillText(
-      o.invitation ? "想听听你的选择" : subset ? "我的选择 · 节选" : "我的选择",
-      MARGIN,
-      48,
-    );
+    ctx.font = headingFont;
+    heading.forEach((text, i) => ctx.fillText(text, MARGIN, 48 + i * 40));
     ctx.fillStyle = "#292e28";
     ctx.font = titleFont;
-    header.forEach((t, i) => ctx.fillText(t, MARGIN, 104 + i * 62));
+    header.forEach((t, i) => ctx.fillText(t, MARGIN, titleY + i * 62));
     ctx.fillStyle = "#d9ded4";
     ctx.fillRect(MARGIN, top - 26, WIDTH - MARGIN * 2, 1);
     for (const line of lines) {
@@ -204,17 +226,24 @@ export async function renderShare(
     ctx.fillRect(MARGIN, height - 190, WIDTH - MARGIN * 2, 1);
     ctx.fillStyle = "#334b42";
     ctx.font = '600 32px "Microsoft YaHei", sans-serif';
-    ctx.fillText("品记 tistnote", MARGIN, height - 135);
+    ctx.fillText(tr("品记 tistnote"), MARGIN, height - 135);
     ctx.fillStyle = "#636a60";
     ctx.font = '400 28px "Microsoft YaHei", sans-serif';
-    ctx.fillText(`${index + 1} / ${pages.length}`, MARGIN, height - 80);
+    if (paged) ctx.fillText(`${index + 1} / ${pages.length}`, MARGIN, height - 80);
+    ctx.font = '400 24px "Microsoft YaHei", sans-serif';
+    const qrHint = o.invitation ? tr("扫描二维码，打开品记回复") : tr("来自品记，自我建设");
+    ctx.fillText(qrHint, 746 - ctx.measureText(qrHint).width, height - 108);
     ctx.strokeStyle = "#b9c2b5";
     ctx.setLineDash([5, 5]);
     ctx.strokeRect(770, height - 175, 160, 160);
     ctx.setLineDash([]);
     ctx.font = '400 28px "Microsoft YaHei", sans-serif';
-    ctx.fillText("下载二维码", 780, height - 124);
-    ctx.fillText("预留", 822, height - 82);
-    return canvas.toDataURL("image/png");
+    const qrCenter = 850;
+    const qrLabel = tr("下载二维码"), qrPlaceholder = tr("预留");
+    ctx.fillText(qrLabel, qrCenter - ctx.measureText(qrLabel).width / 2, height - 124);
+    ctx.fillText(qrPlaceholder, qrCenter - ctx.measureText(qrPlaceholder).width / 2, height - 82);
+    const png = canvas.toDataURL("image/png");
+    if (png === "data:,") throw Error(tr("图片生成失败，请切换为分页图片后重试。"));
+    return png;
   });
 }

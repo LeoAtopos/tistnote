@@ -1,3 +1,5 @@
+import { tr } from "./i18n";
+import { language } from "./preferences";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { noteActivity } from "./activity";
 import {
@@ -19,6 +21,9 @@ export const preview =
   !desktop &&
   import.meta.env.DEV &&
   new URLSearchParams(location.search).has("preview");
+export const web = !desktop && !preview;
+export const localFiles = desktop || (web && typeof window.showDirectoryPicker === "function");
+const browserVault = () => import("./browser-vault");
 interface PreviewState {
   vault: Vault;
   history: Record<string, Version[]>;
@@ -97,20 +102,20 @@ async function mock(
       const note = structuredClone(data.note as Note);
       const months = note.reviewIntervalMonths ?? 3;
       if (!Number.isInteger(months) || months < 1 || months > 1200)
-        throw Error("回顾周期需为 1 至 1200 个月");
+        throw Error(tr("回顾周期需为 1 至 1200 个月"));
       const i = s.vault.notes.findIndex((r) => r.note.id === note.id);
       if (i >= 0 && s.vault.notes[i].revision !== data.expected)
-        throw Error("CONFLICT:笔记已变化");
+        throw Error(tr("CONFLICT:笔记已变化"));
       if (
         i < 0 ||
         noteTitle(s.vault.notes[i].note.title) !== noteTitle(note.title)
       )
         assertUniqueTitle(note, s.vault.notes);
-      if (!note.title.trim()) note.title = "未命名笔记";
+      if (!note.title.trim()) note.title = tr("未命名笔记");
       const group =
         i >= 0 ? (s.vault.notes[i].group ?? "") : String(data.group ?? "");
       if (group && !s.vault.groups.includes(group))
-        throw Error("目标分组不存在，请刷新后重试");
+        throw Error(tr("目标分组不存在，请刷新后重试"));
       note.updatedAt = new Date().toISOString();
       const r = { note, revision: uid(), group };
       if (i < 0) s.vault.notes.push(r);
@@ -125,22 +130,22 @@ async function mock(
     case "commit_edit": {
       const label = String(data.label ?? "").trim();
       const record = s.vault.notes.find((r) => r.note.id === id);
-      if (!record) throw Error("笔记不存在");
+      if (!record) throw Error(tr("笔记不存在"));
       if (record.revision !== data.expected)
-        throw Error("CONFLICT:提交前检测到外部修改，请先处理冲突");
+        throw Error(tr("CONFLICT:提交前检测到外部修改，请先处理冲突"));
       snapshot(id, "edit", label);
       return null;
     }
     case "cancel_edit": {
       const baseline = structuredClone(data.note as Note);
       const index = s.vault.notes.findIndex((r) => r.note.id === baseline.id);
-      if (index < 0) throw Error("笔记不存在");
+      if (index < 0) throw Error(tr("笔记不存在"));
       const current = s.vault.notes[index];
       if (current.revision !== data.expected)
-        throw Error("CONFLICT:取消编辑前检测到外部修改，请先处理冲突");
+        throw Error(tr("CONFLICT:取消编辑前检测到外部修改，请先处理冲突"));
       assertUniqueTitle(baseline, s.vault.notes);
       const group = String(data.group ?? "");
-      if (group && !s.vault.groups.includes(group)) throw Error("原分组不存在，请先恢复分组或继续编辑");
+      if (group && !s.vault.groups.includes(group)) throw Error(tr("原分组不存在，请先恢复分组或继续编辑"));
       const record = { note: baseline, revision: uid(), group };
       s.vault.notes[index] = record;
       try {
@@ -153,10 +158,10 @@ async function mock(
     }
     case "review_note": {
       const index = s.vault.notes.findIndex((r) => r.note.id === id);
-      if (index < 0) throw Error("笔记不存在");
+      if (index < 0) throw Error(tr("笔记不存在"));
       const original = s.vault.notes[index];
       if (original.revision !== data.expected)
-        throw Error("CONFLICT:回顾确认前检测到外部修改，请先刷新笔记");
+        throw Error(tr("CONFLICT:回顾确认前检测到外部修改，请先刷新笔记"));
       const record = structuredClone(original);
       record.note.lastReviewedAt = new Date().toISOString();
       record.revision = uid();
@@ -180,14 +185,14 @@ async function mock(
         lastReviewedAt: s.vault.notes.find((r) => r.note.id === id)?.note.lastReviewedAt,
       };
       const r = await mock("save", { note: restored, expected: data.expected });
-      snapshot(id, "restore", "恢复历史版本");
+      snapshot(id, "restore", tr("恢复历史版本"));
       return r;
     }
     case "trash": {
       const from = data.restore ? s.vault.trash : s.vault.notes;
       const to = data.restore ? s.vault.notes : s.vault.trash;
       const i = from.findIndex((r) => r.note.id === id);
-      if (i < 0) throw Error("笔记不存在");
+      if (i < 0) throw Error(tr("笔记不存在"));
       if (data.restore) assertUniqueTitle(from[i].note, s.vault.notes);
       if (
         data.restore &&
@@ -208,7 +213,7 @@ async function mock(
     case "group_create": {
       const name = groupName(String(data.name ?? ""));
       if (s.vault.groups.some((g) => g.toLowerCase() === name.toLowerCase()))
-        throw Error("分组名称已存在");
+        throw Error(tr("分组名称已存在"));
       let parent = "";
       for (const part of name.split("/")) {
         const next = parent ? `${parent}/${part}` : part;
@@ -226,12 +231,12 @@ async function mock(
       const name = groupName(String(data.name ?? ""));
       let next = groupName(String(data.new_name ?? ""));
       if (!s.vault.groups.includes(name))
-        throw Error("分组不存在，请刷新后重试");
+        throw Error(tr("分组不存在，请刷新后重试"));
       if (name === next) return null;
       if (next.toLowerCase().startsWith(`${name.toLowerCase()}/`))
-        throw Error("不能把分组移动到它自己的子分组中");
+        throw Error(tr("不能把分组移动到它自己的子分组中"));
       if (s.vault.groups.some((g) => g.toLowerCase() === next.toLowerCase()))
-        throw Error("分组名称已存在");
+        throw Error(tr("分组名称已存在"));
       const parent = next.includes("/")
         ? next.slice(0, next.lastIndexOf("/"))
         : "";
@@ -239,7 +244,7 @@ async function mock(
         const actual = s.vault.groups.find(
           (g) => g.toLowerCase() === parent.toLowerCase(),
         );
-        if (!actual) throw Error("请先创建目标的父分组");
+        if (!actual) throw Error(tr("请先创建目标的父分组"));
         next = actual + next.slice(parent.length);
       }
       s.vault.groups = s.vault.groups.map((g) =>
@@ -254,25 +259,25 @@ async function mock(
     case "group_delete": {
       const name = groupName(String(data.name ?? ""));
       if (!s.vault.groups.includes(name))
-        throw Error("分组不存在，请刷新后重试");
+        throw Error(tr("分组不存在，请刷新后重试"));
       if (
         s.vault.notes.some((r) => inGroup(r.group, name)) ||
         s.vault.groups.some((g) => g.startsWith(`${name}/`))
       )
-        throw Error("分组不是空的，请先移出笔记并删除子分组。");
+        throw Error(tr("分组不是空的，请先移出笔记并删除子分组。"));
       s.vault.groups = s.vault.groups.filter((g) => g !== name);
       commit();
       return null;
     }
     case "move_note": {
       const r = s.vault.notes.find((r) => r.note.id === id);
-      if (!r) throw Error("笔记不存在");
+      if (!r) throw Error(tr("笔记不存在"));
       if (r.revision !== data.expected)
-        throw Error("CONFLICT:笔记已变化，请先刷新后再移动");
+        throw Error(tr("CONFLICT:笔记已变化，请先刷新后再移动"));
       assertUniqueTitle(r.note, s.vault.notes);
       const group = String(data.group ?? "");
       if (group && !s.vault.groups.includes(group))
-        throw Error("目标分组不存在，请刷新后重试");
+        throw Error(tr("目标分组不存在，请刷新后重试"));
       r.group = group;
       commit();
       return structuredClone(r);
@@ -291,7 +296,7 @@ async function mock(
       commit();
       return null;
     default:
-      throw Error("此操作需要 Windows 桌面版");
+      throw Error(tr("此操作需要 Windows 桌面版"));
   }
 }
 export async function command<T>(
@@ -301,35 +306,37 @@ export async function command<T>(
   if (desktop)
     return invoke<T>("vault_command", { request: { type, ...data } });
   if (preview) return mock(type, data) as Promise<T>;
-  throw Error("请使用品记 Windows 桌面版打开本地资料库。");
+  if (web) return (await browserVault()).command<T>(type,data);
+  throw Error(tr("请使用品记 Windows 桌面版打开本地资料库。"));
 }
 export async function startup(): Promise<Vault | null> {
   if (desktop) return invoke("startup");
   if (preview && localStorage.getItem(key))
     return command("list", { recover: true });
+  if (web) return (await browserVault()).startup();
   return null;
 }
 export async function pickVault(restore = false): Promise<Vault | null> {
-  if (desktop) return invoke("pick_vault", { restore });
+  if (desktop) return invoke("pick_vault", { restore, language: language() });
   if (preview) {
     read();
     commit();
     return structuredClone(read().vault);
   }
-  throw Error("请使用 Windows 桌面版选择资料库。");
+  if (web) return (await browserVault()).pickVault(restore);
+  throw Error(tr("请使用 Windows 桌面版选择资料库。"));
 }
-export const backupVault = () => invoke<string | null>("backup_vault");
-export const importNote = () => invoke<RecordNote | null>("import_note");
+export const backupVault = async () => desktop ? invoke<string | null>("backup_vault", { language: language() }) : (await browserVault()).backupVault();
+export const importNote = async () => desktop ? invoke<RecordNote | null>("import_note", { language: language() }) : (await browserVault()).importNote();
 export async function exportPngs(pages: string[]): Promise<string | null> {
-  if (desktop) return invoke("export_pngs", { pages });
-  if (!preview) throw Error("请使用桌面版");
+  if (desktop) return invoke("export_pngs", { pages, language: language() });
   for (let i = 0; i < pages.length; i++) {
     const a = document.createElement("a");
     a.href = pages[i];
-    a.download = `品记-${String(i + 1).padStart(3, "0")}.png`;
+    a.download = tr("品记-{0}.png", String(i + 1).padStart(3, "0"));
     a.click();
   }
-  return "浏览器下载目录";
+  return tr("浏览器下载目录");
 }
 export async function copyPng(data: string) {
   if (desktop) return invoke("copy_png", { data });

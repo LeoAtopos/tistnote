@@ -1,3 +1,4 @@
+import { tr, locale } from "./i18n";
 import {
   useEffect,
   useState,
@@ -186,7 +187,7 @@ export function NoteTree({
               type="button"
               role="treeitem"
               tabIndex={-1}
-              aria-label={`分组 ${child.path}`}
+              aria-label={tr("分组 {0}", child.path)}
               aria-level={level}
               aria-expanded={expanded}
               data-folder={child.path}
@@ -233,10 +234,10 @@ export function NoteTree({
               <Icon name="file" />
               <h2>{note.title}</h2>
               {needsReview(note, now) && (
-                <span className="review-dot" role="img" aria-label="需要回顾" title="需要回顾" />
+                <span className="review-dot" role="img" aria-label={tr("需要回顾")} title={tr("需要回顾")} />
               )}
               {compact && !validEntries(note).length && (
-                <span className="empty-mark">（空）</span>
+                <span className="empty-mark">{tr("（空）")}</span>
               )}
             </div>
             {!compact && (
@@ -245,12 +246,12 @@ export function NoteTree({
                   {validEntries(note)
                     .slice(0, 2)
                     .map((entry) => entry.name)
-                    .join(" · ") || "还没有填写条目"}
+                    .join(" · ") || tr("还没有填写条目")}
                 </p>
                 <div className="note-card-foot">
-                  <span>{note.tags[0] ?? "未分类"}</span>
+                  <span>{note.tags[0] ?? tr("未分类")}</span>
                   <time>
-                    {new Date(note.updatedAt).toLocaleDateString("zh-CN", {
+                    {new Date(note.updatedAt).toLocaleDateString(locale(), {
                       month: "numeric",
                       day: "numeric",
                     })}
@@ -269,7 +270,7 @@ export function NoteTree({
     >
       <ul
         role="tree"
-        aria-label="笔记文件树"
+        aria-label={tr("笔记文件树")}
         tabIndex={0}
         onKeyDown={keyboard}
         onFocus={(event) => {
@@ -290,12 +291,10 @@ export function NoteTree({
         <div
           className={`tree-drop-root ${dropTarget === "" ? "tree-drop-target" : ""}`}
           role="region"
-          aria-label="根目录拖放区"
+          aria-label={tr("根目录拖放区")}
           {...dropHandlers("")}
         >
-          <Icon name="folder" />
-          移到根目录
-        </div>
+          <Icon name="folder" />{tr("移到根目录")}</div>
       )}
     </div>
   );

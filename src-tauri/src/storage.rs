@@ -170,6 +170,13 @@ fn note_title(title: &str) -> &str {
 fn is_untitled(title: &str) -> bool {
     let title = title.trim();
     title == "未命名笔记"
+        || title == "Untitled note"
+        || title.strip_prefix("Untitled note (")
+            .and_then(|suffix| suffix.strip_suffix(')'))
+            .is_some_and(|number| !number.is_empty() && !number.starts_with('0') && number.bytes().all(|b| b.is_ascii_digit()))
+        || title.strip_prefix("Untitled note（")
+            .and_then(|suffix| suffix.strip_suffix('）'))
+            .is_some_and(|number| !number.is_empty() && !number.starts_with('0') && number.bytes().all(|b| b.is_ascii_digit()))
         || title
             .strip_prefix("未命名笔记（")
             .and_then(|suffix| suffix.strip_suffix('）'))
@@ -1370,7 +1377,7 @@ mod tests {
     fn numbered_untitled_notes_keep_empty_history_until_content_is_added() {
         let d = tempfile::tempdir().unwrap();
         let s = Store::open(d.path()).unwrap();
-        for title in ["未命名笔记", "未命名笔记（1）", "未命名笔记（12）"] {
+        for title in ["未命名笔记", "未命名笔记（1）", "未命名笔记（12）", "Untitled note", "Untitled note (1)", "Untitled note (12)", "Untitled note（2）"] {
             let mut n = note();
             n.title = title.into();
             n.entries.clear();

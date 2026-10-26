@@ -1,3 +1,5 @@
+import { tr } from "./i18n";
+import { language, theme } from "./preferences";
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "./components";
 
@@ -14,7 +16,7 @@ const slides = [
 
 function WritingIllustration({ active }: { active: boolean }) {
   return (
-    <svg className={`intro-writing ${active ? "active" : ""}`} viewBox="0 0 960 640" role="img" aria-label="用点线逐行写出品单的动画">
+    <svg className={`intro-writing ${active ? "active" : ""}`} viewBox="0 0 960 640" role="img" aria-label={tr("用点线逐行写出品单的动画")}>
       <path className="intro-stroke" pathLength={1} d="M225 144H665" strokeWidth={9} style={{ animationDelay: "0s" }} />
       {[235, 315, 395, 475].map((y, index) => (
         <g key={y}>
@@ -43,12 +45,12 @@ export function Introduction({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("keydown", keyboard);
   }, []);
   return (
-    <Modal title="关于品记" onClose={onClose} className="intro-modal">
+    <Modal title={tr("关于品记")} onClose={onClose} className="intro-modal">
       <div className="intro-body">
         <div
           className="intro-viewport"
-          aria-roledescription="轮播图"
-          aria-label="品记介绍"
+          aria-roledescription={tr("轮播图")}
+          aria-label={tr("品记介绍")}
           onPointerDown={(event) => {
             gesture.current = { x: event.clientX, y: event.clientY };
             event.currentTarget.setPointerCapture(event.pointerId);
@@ -74,21 +76,21 @@ export function Introduction({ onClose }: { onClose: () => void }) {
               <article className="intro-slide" key={index} data-intro-page={index + 1} aria-hidden={index !== page} inert={index !== page}>
                 <div className="intro-art">
                   {slide.image ? (
-                    <img src={`/introduction/${slide.image}`} alt={slide.alt} draggable={false} />
+                    <img src={`${import.meta.env.BASE_URL}introduction/${slide.image === "brand.svg" ? `brand${language() === "en" ? "-en" : ""}${theme() === "dark" ? "-dark" : ""}.svg` : slide.image}`} alt={tr(slide.alt)} draggable={false} />
                   ) : (
                     <WritingIllustration key={page === index ? "playing" : "waiting"} active={page === index} />
                   )}
                 </div>
-                <h2 className="intro-caption">{slide.caption}</h2>
+                <h2 className="intro-caption">{tr(slide.caption)}</h2>
               </article>
             ))}
           </div>
         </div>
-        <nav className="intro-navigation" aria-label="介绍翻页">
-          <button disabled={page === 0} onClick={() => turn(-1)}>上一页</button>
-          <span className="intro-page-count" aria-live="polite" aria-label={`第 ${page + 1} 页，共 ${slides.length} 页`}>{page + 1} / {slides.length}</span>
+        <nav className="intro-navigation" aria-label={tr("介绍翻页")}>
+          <button disabled={page === 0} onClick={() => turn(-1)}>{tr("上一页")}</button>
+          <span className="intro-page-count" aria-live="polite" aria-label={tr("第 {0} 页，共 {1} 页", page + 1, slides.length)}>{page + 1} / {slides.length}</span>
           <button className="primary" onClick={() => page === slides.length - 1 ? onClose() : turn(1)}>
-            {page === slides.length - 1 ? "开始品记" : "下一页"}
+            {page === slides.length - 1 ? tr("开始品记") : tr("下一页")}
           </button>
         </nav>
       </div>

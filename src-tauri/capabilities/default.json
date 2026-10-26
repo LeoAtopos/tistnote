@@ -1,10 +1,12 @@
 {
   "identifier": "main",
-  "description": "仅主窗口的生命周期与本地事件",
+  "description": "仅主窗口的生命周期、本地事件、语言标题与主题设置",
   "windows": ["main"],
   "permissions": [
     "core:event:default",
     "core:window:allow-destroy",
-    "core:window:allow-close"
+    "core:window:allow-close",
+    "core:window:allow-set-title",
+    "core:window:allow-set-theme"
   ]
 }

@@ -24,6 +24,7 @@ import {
   LINE,
   layoutShare,
   shareBlocks,
+  shareHeading,
   wrapText,
   type ShareOptions,
 } from "../src/share";
@@ -47,6 +48,8 @@ function options(): ShareOptions {
     date: false,
     invitation: false,
     message: "想听听你的选择",
+    signature: "",
+    format: "long",
   };
 }
 
@@ -271,6 +274,18 @@ test("template extraction never carries private answers", () => {
   t.tags.push("新标签");
   assert(!n.tags.includes("新标签"));
 });
+test("share attribution reads naturally for named, anonymous and partial lists", () => {
+  const n = fixture();
+  const all = { ...options(), selected: n.entries.map(e => e.id) };
+  assert.equal(shareHeading(n, all), "一份匿名品单");
+  assert.equal(shareHeading(n, { ...all, signature: "  \n  " }), "一份匿名品单");
+  assert.equal(shareHeading(n, { ...all, signature: " 小林 " }), "小林的品单");
+  assert.equal(shareHeading(n, { ...all, signature: "Alex  Lee", selected: [n.entries[0].id] }), "Alex Lee的品单 · 节选");
+  assert.equal(shareHeading(n, { ...options(), selected: [n.entries[0].id] }), "一份匿名品单 · 节选");
+  assert.equal(shareHeading(n, { ...all, invitation: true, signature: "小林" }), "小林向你求品");
+  assert.equal(shareHeading(n, { ...all, invitation: true }), "一位品友向你求品");
+});
+
 test("invitation excludes every answer, reason, tag and unselected description", () => {
   const n = fixture();
   const blocks = shareBlocks(n, {
@@ -352,6 +367,12 @@ test("wrapping preserves Chinese, emoji graphemes, newlines and long English", (
   assert(lines.some((s) => s.includes("👨‍👩‍👧‍👦")));
   assert(lines.includes(""));
 });
+test("English wrapping keeps ordinary words together and still wraps very long words", () => {
+  assert.deepEqual(wrapText("Would love to hear your picks", 10, s => s.length).map(s => s.trim()), ["Would love", "to hear", "your picks"]);
+  const long = "abcdefghijklmnopqrstuvwxyz";
+  assert.equal(wrapText(long, 8, s => s.length).join(""), long);
+});
+
 test("oversize reasons paginate with continuation and no lost content", () => {
   const reason = "甲".repeat(1000);
   const pages = layoutShare(
@@ -385,4 +406,19 @@ test("entry and reason that fit together move intact to next page", () => {
   assert.equal(pages.length, 2);
   assert.equal(pages[1][0].kind, "entry");
   assert.equal(pages[0].filter((l) => l.kind === "entry").length, 0);
+});
+
+test("long-image layout preserves all lines in one continuous image", () => {
+  const text = "甲".repeat(1000);
+  const pages = layoutShare([
+    { text: "01. 标题", kind: "entry", entryId: "one" },
+    { text, kind: "reason", entryId: "one" },
+    { text: "02. 最后一项", kind: "entry", entryId: "two" },
+  ], s => wrapText(s, 10, x => x.length), 220, Infinity);
+  assert.equal(pages.length, 1);
+  assert(!pages[0].some(line => line.continuation));
+  assert.equal(pages[0].filter(line => line.kind === "reason").map(line => line.text).join(""), text);
+  assert.equal(pages[0].at(-1)?.text, "02. 最后一项");
+  assert(pages[0].at(-1)!.y > BOTTOM);
+  assert(pages[0].every((line, i) => i === 0 || line.y >= pages[0][i - 1].y + LINE));
 });

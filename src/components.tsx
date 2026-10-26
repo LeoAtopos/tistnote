@@ -1,3 +1,5 @@
+import { tr, locale } from "./i18n";
+import { language } from "./preferences";
 import {
   useEffect,
   useLayoutEffect,
@@ -75,7 +77,7 @@ export function NoteReader({ note, now = Date.now() }: { note: Note; now?: numbe
   const List = note.ranked ? "ol" : "ul";
   const due = reviewDueAt(note);
   return (
-    <article className="editor-page note-reading" aria-label="笔记内容">
+    <article className="editor-page note-reading" aria-label={tr("笔记内容")}>
       <h1 className="reading-title">{note.title}</h1>
       {note.description.trim() && (
         <p className="reading-description">{note.description}</p>
@@ -92,22 +94,21 @@ export function NoteReader({ note, now = Date.now() }: { note: Note; now?: numbe
           )}
         </List>
       ) : (
-        <p className="reading-empty">还没有填写条目</p>
+        <p className="reading-empty">{tr("还没有填写条目")}</p>
       )}
-      <div className="review-summary" aria-label="回顾状态">
+      <div className="review-summary" aria-label={tr("回顾状态")}>
         <span>
-          {needsReview(note, now) ? "需要回顾" : "下次回顾"} · {due ? (
-            <time dateTime={due.toISOString()} title={due.toLocaleString("zh-CN")}>
+          {needsReview(note, now) ? tr("需要回顾") : tr("下次回顾")} · {due ? (
+            <time dateTime={due.toISOString()} title={due.toLocaleString(locale())}>
               {reviewTimeLabel(due.getTime(), now, needsReview(note, now))}
             </time>
-          ) : "日期未知"}
+          ) : tr("日期未知")}
         </span>
-        <span>
-          上次回顾 · {note.lastReviewedAt ? (
-            <time dateTime={note.lastReviewedAt} title={new Date(note.lastReviewedAt).toLocaleString("zh-CN")}>
+        <span>{tr("上次回顾 ·")}{note.lastReviewedAt ? (
+            <time dateTime={note.lastReviewedAt} title={new Date(note.lastReviewedAt).toLocaleString(locale())}>
               {reviewTimeLabel(Date.parse(note.lastReviewedAt), now)}
             </time>
-          ) : "尚未确认"}
+          ) : tr("尚未确认")}
         </span>
       </div>
     </article>
@@ -176,7 +177,7 @@ export function Modal({
         <h2>{title}</h2>
         <button
           className="icon-button"
-          aria-label="关闭对话框"
+          aria-label={tr("关闭对话框")}
           onClick={onClose}
         >
           <Icon name="close" />
@@ -200,7 +201,7 @@ export function TemplateEditor({
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   return (
-    <Modal title="编辑模板" onClose={onClose}>
+    <Modal title={tr("编辑模板")} onClose={onClose}>
       <form
         className="form-stack"
         onSubmit={async (e) => {
@@ -216,52 +217,40 @@ export function TemplateEditor({
           }
         }}
       >
-        <label>
-          主题
-          <input
+        <label>{tr("主题")}<input
             required
             value={t.title}
             onChange={(e) => setT({ ...t, title: e.target.value })}
           />
         </label>
-        <label>
-          说明
-          <textarea
+        <label>{tr("说明")}<textarea
             value={t.description}
             onChange={(e) => setT({ ...t, description: e.target.value })}
           />
         </label>
-        <label>
-          填写提示
-          <textarea
+        <label>{tr("填写提示")}<textarea
             value={t.hint}
             onChange={(e) => setT({ ...t, hint: e.target.value })}
           />
         </label>
-        <label>
-          标签
-          <input
+        <label>{tr("标签")}<input
             value={tags}
-            placeholder="用逗号分隔"
+            placeholder={tr("用逗号分隔")}
             onChange={(e) => setTags(e.target.value)}
           />
         </label>
         <div className="form-row">
-          <label>
-            列表模式
-            <select
+          <label>{tr("列表模式")}<select
               value={String(t.ranked)}
               onChange={(e) =>
                 setT({ ...t, ranked: e.target.value === "true" })
               }
             >
-              <option value="true">有排名</option>
-              <option value="false">无排名</option>
+              <option value="true">{tr("有排名")}</option>
+              <option value="false">{tr("无排名")}</option>
             </select>
           </label>
-          <label>
-            建议条目数
-            <input
+          <label>{tr("建议条目数")}<input
               type="number"
               min="1"
               max="999"
@@ -273,19 +262,15 @@ export function TemplateEditor({
             />
           </label>
         </div>
-        <p className="muted">模板只保留主题与结构，不包含你的列表答案。</p>
+        <p className="muted">{tr("模板只保留主题与结构，不包含你的列表答案。")}</p>
         {error && (
           <p role="alert" className="error">
-            {error}
+            {tr(error)}
           </p>
         )}
         <footer className="modal-actions">
-          <button type="button" onClick={onClose}>
-            取消
-          </button>
-          <button className="primary" disabled={busy}>
-            保存模板
-          </button>
+          <button type="button" onClick={onClose}>{tr("取消")}</button>
+          <button className="primary" disabled={busy}>{tr("保存模板")}</button>
         </footer>
       </form>
     </Modal>
@@ -308,7 +293,7 @@ export function emptyTemplate(): Template {
 }
 
 export const dateTime = (s: string) =>
-  new Date(s).toLocaleString("zh-CN", {
+  new Date(s).toLocaleString(locale(), {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -316,16 +301,16 @@ export const dateTime = (s: string) =>
     minute: "2-digit",
   });
 export const versionName = (v: Version) =>
-  v.label ||
+  (v.label ? (["edit", "milestone"].includes(v.kind) ? v.label : tr(v.label)) : "") ||
   ({
-    initial: "初始版本",
-    auto: "自动版本",
-    edit: "笔记更新",
-    review: "回顾确认",
-    milestone: "审美里程碑",
-    external: "外部修改",
-    recovery: "重新打开时留存",
-    restore: "恢复历史版本",
+    initial: tr("初始版本"),
+    auto: tr("自动版本"),
+    edit: tr("笔记更新"),
+    review: tr("回顾确认"),
+    milestone: tr("审美里程碑"),
+    external: tr("外部修改"),
+    recovery: tr("重新打开时留存"),
+    restore: tr("恢复历史版本"),
   }[v.kind] ??
     v.kind);
 export function History({
@@ -344,7 +329,7 @@ export function History({
   const a = versions[from],
     b = versions[to];
   return (
-    <Modal title="审美与偏好的变化" onClose={onClose} wide>
+    <Modal title={tr("审美与偏好的变化")} onClose={onClose} wide>
       <div className="history-layout">
         <div className="timeline">
           {[...versions].reverse().map((v, index) => {
@@ -364,11 +349,11 @@ export function History({
                 <strong>{versionName(v)}</strong>
                 <span>{dateTime(v.at)}</span>
                 <span>
-                  {v.kind === "review" ? "确认当前品单" : i === 0
-                    ? "从这里开始"
+                  {v.kind === "review" ? tr("确认当前品单") : i === 0
+                    ? tr("从这里开始")
                     : differences.length
                       ? differences.slice(0, 2).join("；")
-                      : "标记此刻的选择"}
+                      : tr("标记此刻的选择")}
                 </span>
               </button>
             );
@@ -376,13 +361,11 @@ export function History({
         </div>
         <div className="comparison">
           {!b ? (
-            <p className="muted">填写主题或条目后，会留下第一个版本。</p>
+            <p className="muted">{tr("填写主题或条目后，会留下第一个版本。")}</p>
           ) : (
             <>
               <div className="form-row">
-                <label>
-                  从
-                  <select
+                <label>{tr("从")}<select
                     value={from}
                     onChange={(e) => setFrom(+e.target.value)}
                   >
@@ -393,9 +376,7 @@ export function History({
                     ))}
                   </select>
                 </label>
-                <label>
-                  到
-                  <select value={to} onChange={(e) => setTo(+e.target.value)}>
+                <label>{tr("到")}<select value={to} onChange={(e) => setTo(+e.target.value)}>
                     {versions.map((v, i) => (
                       <option key={v.id} value={i}>
                         {dateTime(v.at)} · {versionName(v)}
@@ -405,8 +386,8 @@ export function History({
                 </label>
               </div>
               {b.kind === "edit" && b.label && (
-                <section className="change-log" aria-label="更新日志">
-                  <h3>更新日志</h3>
+                <section className="change-log" aria-label={tr("更新日志")}>
+                  <h3>{tr("更新日志")}</h3>
                   <p className="preserve">{b.label}</p>
                 </section>
               )}
@@ -416,11 +397,11 @@ export function History({
                     <p key={i}>{change}</p>
                   ))
                 ) : (
-                  <p className="muted">{b.kind === "review" ? "已回顾确认当前品单，内容未更新。" : "两个版本的内容相同。"}</p>
+                  <p className="muted">{b.kind === "review" ? tr("已回顾确认当前品单，内容未更新。") : tr("两个版本的内容相同。")}</p>
                 )}
               </div>
               <details>
-                <summary>查看所选版本全文</summary>
+                <summary>{tr("查看所选版本全文")}</summary>
                 <h3>{b.note.title}</h3>
                 <p className="preserve">{b.note.description}</p>
                 {b.note.entries.map((e, i) => (
@@ -433,7 +414,7 @@ export function History({
                   </div>
                 ))}
               </details>
-              {error && <p className="error">{error}</p>}
+              {error && <p className="error">{tr(error)}</p>}
               <button
                 className="primary"
                 disabled={busy}
@@ -448,12 +429,8 @@ export function History({
                     setBusy(false);
                   }
                 }}
-              >
-                恢复所选版本
-              </button>
-              <p className="muted">
-                恢复前会保留当前内容，既有历史不会被改写。
-              </p>
+              >{tr("恢复所选版本")}</button>
+              <p className="muted">{tr("恢复前会保留当前内容，既有历史不会被改写。")}</p>
             </>
           )}
         </div>
@@ -471,6 +448,7 @@ export function ShareDialog({
   invitation: boolean;
   onClose: () => void;
 }) {
+  const uiLanguage = language();
   const [o, setO] = useState<ShareOptions>({
     selected: validEntries(note).map((e) => e.id),
     reasons: true,
@@ -478,7 +456,9 @@ export function ShareDialog({
     tags: false,
     date: false,
     invitation,
-    message: "想知道你的答案：你会把哪些放进这份列表？",
+    message: tr("想知道你的答案：你会把哪些放进这份列表？"),
+    signature: "",
+    format: "long",
   });
   const [pages, setPages] = useState<string[]>([]),
     [page, setPage] = useState(0),
@@ -514,17 +494,17 @@ export function ShareDialog({
     return () => {
       live = false;
     };
-  }, [note, o]);
+  }, [note, o, uiLanguage]);
   const act = async (copy: boolean) => {
     setBusy(true);
     setError("");
     try {
       if (copy) {
         await copyPng(pages[page]);
-        setStatus("当前页已复制");
+        setStatus(tr("已复制到剪切板"));
       } else {
         const path = await exportPngs(pages);
-        if (path) setStatus(`图片已保存：${path}`);
+        if (path) setStatus(tr("图片已保存：{0}", path));
       }
     } catch (e) {
       setError(String(e));
@@ -534,16 +514,29 @@ export function ShareDialog({
   };
   return (
     <Modal
-      title={invitation ? "求品" : "展品"}
+      title={invitation ? tr("求品") : tr("展品")}
       onClose={onClose}
       wide
     >
       <div className="share-layout">
         <div className="share-controls form-stack">
+          <label>{tr("署名（选填）")}<input
+              aria-label={tr("署名（选填）")}
+              autoComplete="off"
+              maxLength={40}
+              placeholder={tr("你的名字或昵称，留空匿名")}
+              value={o.signature}
+              onChange={(event) => change({ signature: event.target.value })}
+            />
+          </label>
+          <label>{tr("图片形式")}<select aria-label={tr("图片形式")} value={o.format}
+              onChange={event => { setPage(0); change({ format: event.target.value as ShareOptions["format"] }); }}>
+              <option value="long">{tr("一张长图")}</option>
+              <option value="pages">{tr("分页图片")}</option>
+            </select>
+          </label>
           {invitation ? (
-            <label>
-              邀请语
-              <textarea
+            <label>{tr("邀请语")}<textarea
                 rows={4}
                 value={o.message}
                 onChange={(e) => change({ message: e.target.value })}
@@ -552,31 +545,25 @@ export function ShareDialog({
           ) : (
             <>
               <fieldset>
-                <legend>展品内容</legend>
+                <legend>{tr("展品内容")}</legend>
                 <label className="check">
                   <input
                     type="checkbox"
                     checked={o.reasons}
                     onChange={(e) => change({ reasons: e.target.checked })}
-                  />
-                  条目理由
-                </label>
+                  />{tr("条目理由")}</label>
                 <label className="check">
                   <input
                     type="checkbox"
                     checked={o.tags}
                     onChange={(e) => change({ tags: e.target.checked })}
-                  />
-                  标签
-                </label>
+                  />{tr("标签")}</label>
                 <label className="check">
                   <input
                     type="checkbox"
                     checked={o.date}
                     onChange={(e) => change({ date: e.target.checked })}
-                  />
-                  修改日期
-                </label>
+                  />{tr("修改日期")}</label>
               </fieldset>
             </>
           )}
@@ -585,12 +572,10 @@ export function ShareDialog({
               type="checkbox"
               checked={o.description}
               onChange={(e) => change({ description: e.target.checked })}
-            />
-            主题说明
-          </label>
+            />{tr("主题说明")}</label>
           {!invitation && (
             <fieldset>
-              <legend>选择条目</legend>
+              <legend>{tr("选择条目")}</legend>
               <button
                 className="text-button"
                 onClick={() =>
@@ -603,8 +588,8 @@ export function ShareDialog({
                 }
               >
                 {o.selected.length === validEntries(note).length
-                  ? "取消全选"
-                  : "全选"}
+                  ? tr("取消全选")
+                  : tr("全选")}
               </button>
               <div className="share-selection">
                 {validEntries(note).map((e, i) => (
@@ -631,8 +616,8 @@ export function ShareDialog({
           )}
           <p className="muted">
             {invitation
-              ? "这张邀请不会包含你的条目与理由。"
-              : "只导出预览中的内容，长列表自动分页。"}
+              ? tr("这张邀请不会包含你的条目与理由。")
+              : o.format === "long" ? tr("只导出预览中的内容，长列表生成一张长图。") : tr("只导出预览中的内容，长列表自动分页。")}
           </p>
           <button
             className="primary"
@@ -644,7 +629,7 @@ export function ShareDialog({
             }
             onClick={() => void act(false)}
           >
-            保存全部图片{pages.length > 1 ? `（${pages.length} 张）` : ""}
+            {o.format === "long" ? tr("保存图片") : tr("保存全部图片{0}", pages.length > 1 ? tr("（{0} 张）", pages.length) : "")}
           </button>
           <button
             disabled={
@@ -654,41 +639,35 @@ export function ShareDialog({
               (!invitation && !o.selected.length)
             }
             onClick={() => void act(true)}
-          >
-            复制当前页
-          </button>
+          >{tr("复制到剪切板")}</button>
           {error && (
             <p className="error" role="alert">
-              {error}
+              {tr(error)}
             </p>
           )}
           {status && (
             <p role="status" className="success">
-              {status}
+              {tr(status)}
             </p>
           )}
         </div>
         <div className="share-preview">
-          <div className="preview-nav">
-            <button disabled={!page} onClick={() => setPage(page - 1)}>
-              上一页
-            </button>
+          {o.format === "pages" && <div className="preview-nav">
+            <button disabled={!page} onClick={() => setPage(page - 1)}>{tr("上一页")}</button>
             <span>
               {page + 1} / {pages.length || 1}
             </span>
             <button
               disabled={page >= pages.length - 1}
               onClick={() => setPage(page + 1)}
-            >
-              下一页
-            </button>
-          </div>
+            >{tr("下一页")}</button>
+          </div>}
           <div className="image-scroll">
             {pages[page] && (
               <img
                 className="share-image"
                 src={pages[page]}
-                alt={`${note.title}的${invitation ? "求品" : "展品"}图片，第 ${page + 1} 页`}
+                alt={tr("{0}的{1}{2}", note.title, invitation ? tr("求品") : tr("展品"), o.format === "long" ? tr("长图") : tr("图片，第 {0} 页", page + 1))}
               />
             )}
           </div>

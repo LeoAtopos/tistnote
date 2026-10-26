@@ -204,13 +204,14 @@ fn startup(app: tauri::AppHandle) -> Result<Value> {
     select_store(&app, PathBuf::from(path))
 }
 #[tauri::command]
-async fn pick_vault(app: tauri::AppHandle, restore: bool) -> Result<Value> {
+async fn pick_vault(app: tauri::AppHandle, restore: bool, language: Option<String>) -> Result<Value> {
     tauri::async_runtime::spawn_blocking(move || {
+        let english = language.as_deref() == Some("en");
         let Some(path) = rfd::FileDialog::new()
             .set_title(if restore {
-                "选择完整的品记备份文件夹"
+                if english { "Select a complete Tistnote backup folder" } else { "选择完整的品记备份文件夹" }
             } else {
-                "创建或选择本地资料库文件夹"
+                if english { "Create or select a local library folder" } else { "创建或选择本地资料库文件夹" }
             })
             .pick_folder()
         else {
@@ -221,7 +222,7 @@ async fn pick_vault(app: tauri::AppHandle, restore: bool) -> Result<Value> {
                 return Err("此文件夹不是完整的品记资料库备份".into());
             }
             let Some(parent) = rfd::FileDialog::new()
-                .set_title("选择恢复位置（会创建新的文件夹）")
+                .set_title(if english { "Select a restore location (creates a new folder)" } else { "选择恢复位置（会创建新的文件夹）" })
                 .pick_folder()
             else {
                 return Ok(json!(null));
@@ -244,10 +245,10 @@ async fn pick_vault(app: tauri::AppHandle, restore: bool) -> Result<Value> {
     .map_err(|e| e.to_string())?
 }
 #[tauri::command]
-async fn backup_vault(app: tauri::AppHandle) -> Result<Value> {
+async fn backup_vault(app: tauri::AppHandle, language: Option<String>) -> Result<Value> {
     tauri::async_runtime::spawn_blocking(move || {
         let Some(parent) = rfd::FileDialog::new()
-            .set_title("将备份保存到资料库以外的位置")
+            .set_title(if language.as_deref() == Some("en") { "Save the backup outside your library" } else { "将备份保存到资料库以外的位置" })
             .pick_folder()
         else {
             return Ok(json!(null));
@@ -261,11 +262,11 @@ async fn backup_vault(app: tauri::AppHandle) -> Result<Value> {
     .map_err(|e| e.to_string())?
 }
 #[tauri::command]
-async fn import_note(app: tauri::AppHandle) -> Result<Value> {
+async fn import_note(app: tauri::AppHandle, language: Option<String>) -> Result<Value> {
     tauri::async_runtime::spawn_blocking(move || {
         let Some(path) = rfd::FileDialog::new()
-            .set_title("导入品记 Markdown")
-            .add_filter("品记笔记", &["md"])
+            .set_title(if language.as_deref() == Some("en") { "Import Tistnote Markdown" } else { "导入品记 Markdown" })
+            .add_filter(if language.as_deref() == Some("en") { "Tistnote notes" } else { "品记笔记" }, &["md"])
             .pick_file()
         else {
             return Ok(json!(null));
@@ -296,13 +297,13 @@ fn png_bytes(data: &str) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 #[tauri::command]
-async fn export_pngs(pages: Vec<String>) -> Result<Value> {
+async fn export_pngs(pages: Vec<String>, language: Option<String>) -> Result<Value> {
     if pages.is_empty() || pages.len() > 200 {
         return Err("请导出 1–200 页图片".into());
     }
     tauri::async_runtime::spawn_blocking(move || {
         let Some(parent) = rfd::FileDialog::new()
-            .set_title("保存分享图片")
+            .set_title(if language.as_deref() == Some("en") { "Save exchange images" } else { "保存分享图片" })
             .pick_folder()
         else {
             return Ok(json!(null));

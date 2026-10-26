@@ -1,11 +1,12 @@
 {
   "name": "tistnote",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
+    "build:pages": "tsc -b && vite build --mode pages --base=/tistnote/ --outDir dist-pages",
     "test": "tsx --test tests/*.test.ts",
     "tauri": "tauri",
     "desktop": "tauri dev",

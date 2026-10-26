@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640">
+  <rect width="960" height="640" fill="none"/>
+  <g transform="translate(220 218) scale(.8)">
+    <rect width="256" height="256" rx="56" fill="#344f42"/>
+    <g fill="none" stroke="#fff" stroke-width="12">
+      <rect x="97" y="49" width="62" height="60" rx="8"/>
+      <rect x="47" y="137" width="62" height="60" rx="8"/>
+      <rect x="147" y="137" width="62" height="60" rx="8"/>
+    </g>
+  </g>
+  <text x="480" y="360" fill="#a1cdb2" font-family="Microsoft YaHei, PingFang SC, sans-serif" font-size="90" font-weight="600" letter-spacing="1">Tistnote</text>
+</svg>

@@ -8,8 +8,8 @@ async(page)=>{
  await page.getByRole('button',{name:'品交',exact:true}).click();
  await page.getByRole('button',{name:'展品',exact:true}).click();
  await page.getByRole('dialog',{name:'展品',exact:true}).waitFor();
- await page.getByRole('button',{name:'复制当前页',exact:true}).click();
- await page.getByText('当前页已复制',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'复制到剪切板',exact:true}).click();
+ await page.getByText('已复制到剪切板',{exact:true}).waitFor();
  await page.getByRole('button',{name:'关闭对话框',exact:true}).click();
  const requests=await page.evaluate(()=>performance.getEntriesByType('resource').map(x=>x.name).filter(x=>!x.startsWith('http://tauri.localhost/')&&!x.startsWith('http://ipc.localhost/')&&!x.startsWith('data:')));
  if(requests.length)throw Error('External resources: '+JSON.stringify(requests));

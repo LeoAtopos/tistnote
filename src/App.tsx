@@ -1,3 +1,5 @@
+import { tr, formatCount } from "./i18n";
+import { language, setPreferences, usePreferences } from "./preferences";
 import {
   useEffect,
   useLayoutEffect,
@@ -32,7 +34,7 @@ import {
   type TreeItem,
   type ActivityEvent,
 } from "./model";
-import { builtinTemplates } from "./templates";
+import { localizedBuiltinTemplates } from "./templates";
 import { NoteTree } from "./NoteTree";
 import { ActivityPage } from "./ActivityPage";
 import { Introduction, introductionSeenKey } from "./Introduction";
@@ -61,6 +63,17 @@ type Dialog =
   | "new-folder"
   | null;
 export default function App() {
+  const preferences = usePreferences();
+  const uiLanguage = language();
+  const [preferenceError, setPreferenceError] = useState("");
+  useEffect(() => {
+    if (!api.desktop) return;
+    const window = getCurrentWindow();
+    void Promise.all([
+      window.setTheme(preferences.theme === "system" ? null : preferences.theme),
+      window.setTitle(uiLanguage === "zh" ? "品记 tistnote" : "Tistnote"),
+    ]).catch(error => setPreferenceError(String(error)));
+  }, [preferences.theme, uiLanguage]);
   const [vault, setVault] = useState<Vault | null>(null),
     [note, setNote] = useState<Note | null>(null),
     [view, setView] = useState<View>("notes");
@@ -97,7 +110,7 @@ export default function App() {
     setIntroductionOpen(false);
     introductionSeen.current = true;
     try { localStorage.setItem(introductionSeenKey, "1"); }
-    catch { setError("无法保存介绍阅读状态，下次启动可能再次显示介绍。"); }
+    catch { setError(tr("无法保存介绍阅读状态，下次启动可能再次显示介绍。")); }
   }
   const [more, setMore] = useState(false),
     [tradeOpen, setTradeOpen] = useState(false),
@@ -249,8 +262,8 @@ export default function App() {
     if (message.startsWith("CONFLICT:")) {
       conflictRef.current = true;
       setConflict(true);
-      setStatus("存在冲突");
-    } else setStatus((s) => (s === "保存失败" ? s : "操作未完成"));
+      setStatus(tr("存在冲突"));
+    } else setStatus((s) => (s === tr("保存失败") ? s : tr("操作未完成")));
   };
   const run = async (
     task: () => Promise<void>,
@@ -281,7 +294,7 @@ export default function App() {
     undo.current = [];
     redo.current = [];
     setRevisionTick((n) => n + 1);
-    setStatus(r ? "已保存" : "");
+    setStatus(r ? tr("已保存") : "");
     setMore(false);
     setConflict(false);
     conflictRef.current = false;
@@ -312,7 +325,7 @@ export default function App() {
     change(next);
     doc.current = next;
     setNote(next);
-    setStatus("待保存");
+    setStatus(tr("待保存"));
     setRevisionTick((n) => n + 1);
   }
   function travel(back: boolean) {
@@ -326,7 +339,7 @@ export default function App() {
     doc.current = next;
     setNote(next);
     setTagText(next.tags.join("，"));
-    setStatus("待保存");
+    setStatus(tr("待保存"));
     setRevisionTick((n) => n + 1);
   }
   async function save() {
@@ -336,13 +349,13 @@ export default function App() {
       .then(async () => {
         if (cancelPending.current) return;
         if (!doc.current || !saved.current) return;
-        if (conflictRef.current) throw Error("CONFLICT:请先处理外部修改冲突");
+        if (conflictRef.current) throw Error(tr("CONFLICT:请先处理外部修改冲突"));
         if (contentKey(doc.current) === contentKey(saved.current.note)) {
-          setStatus("已保存");
+          setStatus(tr("已保存"));
           return;
         }
         const sent = structuredClone(doc.current);
-        setStatus("正在保存…");
+        setStatus(tr("正在保存…"));
         try {
           const r = await api.command<RecordNote>("save", {
             note: sent,
@@ -353,8 +366,8 @@ export default function App() {
             if (contentKey(doc.current) === contentKey(sent)) {
               doc.current = r.note;
               setNote(doc.current);
-              setStatus("已保存");
-            } else setStatus("待保存");
+              setStatus(tr("已保存"));
+            } else setStatus(tr("待保存"));
           }
           setVault((v) =>
             v
@@ -365,7 +378,7 @@ export default function App() {
               : v,
           );
         } catch (e) {
-          setStatus("保存失败");
+          setStatus(tr("保存失败"));
           const msg = String(e);
           if (msg.includes("CONFLICT:")) {
             conflictRef.current = true;
@@ -397,8 +410,8 @@ export default function App() {
       const changed = contentKey(doc.current) !== contentKey(start.note)
         || (saved.current?.group ?? "") !== (start.group ?? "");
       if (changed && !await confirm(
-        "本次编辑已发生更新，退出编辑将丢失本次更新。是否放弃更新？",
-        { title: "取消编辑", confirmLabel: "放弃更新", cancelLabel: "继续编辑" },
+        tr("本次编辑已发生更新，退出编辑将丢失本次更新。是否放弃更新？"),
+        { title: tr("取消编辑"), confirmLabel: tr("放弃更新"), cancelLabel: tr("继续编辑") },
       )) return;
       const current = saved.current!;
       const record = JSON.stringify(current.note) !== JSON.stringify(start.note)
@@ -429,7 +442,7 @@ export default function App() {
     await checkpoint();
     const v = await reload();
     const r = v.notes.find((r) => r.note.id === id);
-    if (!r) throw Error("笔记无法读取，请检查资料库提示。");
+    if (!r) throw Error(tr("笔记无法读取，请检查资料库提示。"));
     await api.command("snapshot", { id, kind: "external", label: "" });
     select(r);
     setView("notes");
@@ -459,9 +472,9 @@ export default function App() {
     await checkpoint();
     if ((next === "share" || next === "invite") && doc.current) {
       if (!validTitle(doc.current))
-        throw Error("先为这份列表写一个主题，再生成品交图片。");
+        throw Error(tr("先为这份列表写一个主题，再生成品交图片。"));
       if (next === "share" && !validEntries(doc.current).length)
-        throw Error("先填写至少一个条目，或使用“求品”邀请别人回答。");
+        throw Error(tr("先填写至少一个条目，或使用“求品”邀请别人回答。"));
     }
     if (next === "history" && doc.current)
       setVersions(
@@ -497,7 +510,7 @@ export default function App() {
     const r = v.notes.find((r) => r.note.id === saved.current?.note.id);
     if (!r) {
       throw Error(
-        "CONFLICT:当前笔记已在外部移动、删除或损坏。你仍可将当前内容另存为新笔记。",
+        tr("CONFLICT:当前笔记已在外部移动、删除或损坏。你仍可将当前内容另存为新笔记。"),
       );
     }
     if (r.revision !== saved.current.revision) {
@@ -507,7 +520,7 @@ export default function App() {
         label: "",
       });
       select(r);
-      setNotice("已加载外部修改，并记录到历史。");
+      setNotice(tr("已加载外部修改，并记录到历史。"));
     } else saved.current = r;
     if (group && !v.groups.includes(group)) setGroup(null);
   }
@@ -593,8 +606,8 @@ export default function App() {
     return () => clearTimeout(t);
   }, [notice]);
   const templates = useMemo(
-    () => [...builtinTemplates, ...(vault?.templates ?? [])],
-    [vault?.templates],
+    () => [...localizedBuiltinTemplates(), ...(vault?.templates ?? [])],
+    [vault?.templates, uiLanguage],
   );
   const covered = useMemo(
     () => notesByTemplate(templates, vault?.notes ?? []),
@@ -680,7 +693,7 @@ export default function App() {
   const saveTemplate = async (t: Template) => {
     await api.command("template_put", { template: t });
     await reload();
-    setNotice("模板已保存");
+    setNotice(tr("模板已保存"));
   };
   async function resolveConflict(copy: boolean) {
     await chain.current.catch(() => {});
@@ -688,7 +701,7 @@ export default function App() {
       const n = structuredClone(doc.current);
       n.id = uid();
       const v = await reload();
-      n.title = copyTitle(`${n.title}（我的副本）`, v.notes);
+      n.title = copyTitle(tr("{0}（我的副本）", n.title), v.notes);
       n.createdAt = new Date().toISOString();
       n.entries = n.entries.map((e) => ({ ...e, id: uid() }));
       const r = await api.command<RecordNote>("save", {
@@ -701,7 +714,7 @@ export default function App() {
     } else {
       const v = await reload();
       const r = v.notes.find((r) => r.note.id === doc.current?.id);
-      if (!r) throw Error("外部文件无法读取，请选择另存为新笔记。");
+      if (!r) throw Error(tr("外部文件无法读取，请选择另存为新笔记。"));
       await api.command("snapshot", {
         id: r.note.id,
         kind: "external",
@@ -716,7 +729,7 @@ export default function App() {
     const current = v.notes.find((r) => r.note.id === doc.current?.id);
     if (current && saved.current && current.revision !== saved.current.revision)
       throw Error(
-        "CONFLICT:笔记已在外部修改，文件夹操作已完成，请先处理内容冲突。",
+        tr("CONFLICT:笔记已在外部修改，文件夹操作已完成，请先处理内容冲突。"),
       );
     if (current) saved.current = current;
     return v;
@@ -731,7 +744,7 @@ export default function App() {
     saved.current = r;
     await reload();
     setGroup(r.group ?? "");
-    setNotice(`已移到${r.group ? `“${r.group}”` : "未分组"}`);
+    setNotice(tr("已移到{0}", r.group ? `“${r.group}”` : tr("未分组")));
   }
   async function moveTreeItem(item: TreeItem, target: string) {
     await checkpoint();
@@ -741,7 +754,7 @@ export default function App() {
         saved.current?.note.id === item.id
           ? saved.current
           : vault?.notes.find((r) => r.note.id === item.id);
-      if (!record) throw Error("笔记不存在，请刷新后重试");
+      if (!record) throw Error(tr("笔记不存在，请刷新后重试"));
       await api.command("move_note", {
         id: item.id,
         group: target,
@@ -772,7 +785,7 @@ export default function App() {
             .filter((path) => !inGroup(target, path)),
         ),
     );
-    setNotice(`已移到${target ? `“${target}”` : "根目录"}`);
+    setNotice(tr("已移到{0}", target ? `“${target}”` : tr("根目录")));
   }
   const runGroup = (task: () => Promise<void>) =>
     run(task, (e) => setGroupError(String(e).replace(/^Error: /, "")));
@@ -783,28 +796,28 @@ export default function App() {
       onKeyDown={keyboard}
     >
       <aside className="rail">
-        <button className="brand" aria-label="关于品记" disabled={busy} onClick={() => setIntroductionOpen(true)}>
-          <img src="/app-icon.svg" alt="" />
+        <button className="brand" aria-label={tr("关于品记")} disabled={busy} onClick={() => setIntroductionOpen(true)}>
+          <img src={`${import.meta.env.BASE_URL}app-icon.svg`} alt="" />
           <div>
-            <strong>品记</strong>
+            <strong>{tr("品记")}</strong>
             <span>tistnote</span>
           </div>
         </button>
-        <nav aria-label="主导航">
+        <nav aria-label={tr("主导航")}>
           {(
             [
-              ["notes", "笔记", "list"],
-              ["templates", "模板库", "grid"],
-              ["activity", "历史", "history"],
+              ["notes", tr("笔记"), "list"],
+              ["templates", tr("模板库"), "grid"],
+              ["activity", tr("历史"), "history"],
             ] as const
           ).map(([id, label, icon]) => (
             <button
               key={id}
               className={`nav-item ${view === id ? "active" : ""} ${id === "templates" ? "template-nav" : ""}`}
-              aria-label={id === "templates" ? "模板库" : undefined}
+              aria-label={id === "templates" ? tr("模板库") : undefined}
               aria-description={
                 id === "templates" && vault
-                  ? `覆盖率 ${coveragePercent}%，有品 ${covered.size} / ${templates.length} 个模板`
+                  ? tr("覆盖率 {0}%，有品 {1} / {2} 个模板", coveragePercent, covered.size, templates.length)
                   : undefined
               }
               disabled={!vault || busy}
@@ -825,66 +838,56 @@ export default function App() {
         </nav>
         <div className="rail-bottom">
           <span className="local-status">
-            <i />
-            完全本地
-          </span>
+            <i />{tr("完全本地")}</span>
           <button
             className="nav-item"
+            disabled={busy}
             onClick={() => void run(() => openDialog("settings"))}
           >
-            <Icon name="settings" />
-            设置
-          </button>
+            <Icon name="settings" />{tr("设置")}</button>
         </div>
       </aside>
       <main className="workspace">
         {api.preview && (
-          <div className="preview-banner">
-            浏览器开发预览 · 真实 Markdown 资料库请使用桌面版
-          </div>
+          <div className="preview-banner">{tr("浏览器开发预览 · 真实 Markdown 资料库请使用桌面版")}</div>
         )}
+        {api.web && <div className="preview-banner">{tr(api.localFiles
+          ? "网页版 · 仅访问你授权的文件夹；同一资料库请勿同时在桌面版和网页版中编辑。"
+          : "请使用最新版桌面 Chrome 或 Edge，或下载 Windows 版。")}</div>}
         {error && (
           <div className="alert error" role="alert">
-            <span>{error.replace("CONFLICT:", "")}</span>
-            <button onClick={() => setError("")}>收起提示</button>
+            <span>{tr(error).replace("CONFLICT:", "")}</span>
+            <button onClick={() => setError("")}>{tr("收起提示")}</button>
           </div>
         )}
         {notice && (
           <div className="alert success" role="status">
-            {notice}
+            {tr(notice)}
           </div>
         )}
         {vault?.warnings.map((w, i) => (
           <div className="alert error" key={i}>
-            {w}
+            {tr(w)}
           </div>
         ))}
         {conflict && (
           <div className="conflict-box">
-            <strong>检测到外部修改</strong>
-            <p>已暂停自动保存。外部文件保持原样，你的编辑可另存为新笔记。</p>
+            <strong>{tr("检测到外部修改")}</strong>
+            <p>{tr("已暂停自动保存。外部文件保持原样，你的编辑可另存为新笔记。")}</p>
             <div className="actions">
               <button
                 className="primary"
                 onClick={() => void run(() => resolveConflict(true))}
-              >
-                我的编辑另存为新笔记
-              </button>
-              <button onClick={() => void run(() => resolveConflict(false))}>
-                加载外部版本
-              </button>
+              >{tr("我的编辑另存为新笔记")}</button>
+              <button onClick={() => void run(() => resolveConflict(false))}>{tr("加载外部版本")}</button>
             </div>
           </div>
         )}
         {!vault ? (
           <section className="welcome">
-            <span className="welcome-mark">品</span>
-            <h1>品察世间，记录好恶。</h1>
-            <p>
-              喜欢与讨厌，认同与反感。
-              <br />
-              记录审美与偏好，回看自己的变化。
-            </p>
+            <span className="welcome-mark">{tr("品")}</span>
+            <h1>{tr("品察世间，记录好恶。")}</h1>
+            <p>{tr("喜欢与讨厌，认同与反感。")}<br />{tr("记录审美与偏好，回看自己的变化。")}</p>
             <button
               className="primary"
               disabled={busy}
@@ -894,10 +897,9 @@ export default function App() {
                   if (v) install(v);
                 })
               }
-            >
-              创建或打开本地资料库 <Icon name="arrow" />
+            >{tr("创建或打开本地资料库")}<Icon name="arrow" />
             </button>
-            <p className="welcome-foot">笔记保存在你的文件夹中，随时带走。</p>
+            <p className="welcome-foot">{tr("笔记保存在你的文件夹中，随时带走。")}</p>
           </section>
         ) : view === "notes" ? (
           <div
@@ -919,15 +921,15 @@ export default function App() {
             }}>
               <div className="note-list-tools" ref={listTools}>
                 <div className="section-heading note-list-heading">
-                  <h1>我的笔记</h1>
+                  <h1>{tr("我的笔记")}</h1>
                   <div className="actions">
                     <button
                       className={`icon-button list-search-button ${query || filter.length ? "active" : ""}`}
-                      aria-label="搜索与标签筛选"
+                      aria-label={tr("搜索与标签筛选")}
                       title={
                         query || filter.length
-                          ? "搜索与标签筛选（筛选中）"
-                          : "搜索与标签筛选"
+                          ? tr("搜索与标签筛选（筛选中）")
+                          : tr("搜索与标签筛选")
                       }
                       data-panel="search"
                       aria-expanded={listPanel === "search"}
@@ -940,8 +942,8 @@ export default function App() {
                     </button>
                     <button
                       className="icon-button"
-                      aria-label="笔记列表选项"
-                      title="笔记列表选项"
+                      aria-label={tr("笔记列表选项")}
+                      title={tr("笔记列表选项")}
                       data-panel="options"
                       aria-expanded={listPanel === "options"}
                       aria-controls="note-list-options"
@@ -953,8 +955,8 @@ export default function App() {
                     </button>
                     <button
                       className="icon-button primary"
-                      aria-label="新建笔记"
-                      title="新建笔记"
+                      aria-label={tr("新建笔记")}
+                      title={tr("新建笔记")}
                       disabled={busy}
                       onClick={() => {
                         setListPanel(null);
@@ -971,16 +973,14 @@ export default function App() {
                     <TagFilter tags={tags} selected={filter} set={setFilter} />
                     {(query || filter.length > 0) && (
                       <div className="search-results">
-                        <span>{list.length} 份匹配笔记</span>
+                        <span>{list.length}{tr("份匹配笔记")}</span>
                         <button
                           className="text-button"
                           onClick={() => {
                             setQuery("");
                             setFilter([]);
                           }}
-                        >
-                          清除筛选
-                        </button>
+                        >{tr("清除筛选")}</button>
                       </div>
                     )}
                   </div>
@@ -990,29 +990,27 @@ export default function App() {
                     className="more-menu note-list-options"
                     id="note-list-options"
                     role="region"
-                    aria-label="笔记列表选项"
+                    aria-label={tr("笔记列表选项")}
                   >
-                    <p className="muted">{list.length} 份笔记</p>
-                    <label>
-                      排序
-                      <select
-                        aria-label="笔记排序"
+                    <p className="muted">{formatCount(list.length, "notes")}</p>
+                    <label>{tr("排序")}<select
+                        aria-label={tr("笔记排序")}
                         value={sort}
                         onChange={(e) => setSort(e.target.value)}
                       >
-                        <option value="updated">最近修改</option>
-                        <option value="created">创建时间</option>
-                        <option value="title">按主题</option>
+                        <option value="updated">{tr("最近修改")}</option>
+                        <option value="created">{tr("创建时间")}</option>
+                        <option value="title">{tr("按主题")}</option>
                       </select>
                     </label>
                     <button
-                      aria-label={compact ? "切换为详细展示" : "切换为精简展示"}
+                      aria-label={compact ? tr("切换为详细展示") : tr("切换为精简展示")}
                       onClick={() => {
                         setCompact(!compact);
                         setListPanel(null);
                       }}
                     >
-                      {compact ? "切换为详细展示" : "切换为精简展示"}
+                      {compact ? tr("切换为详细展示") : tr("切换为精简展示")}
                     </button>
                     {groups.length > 0 && (
                       <button
@@ -1026,35 +1024,30 @@ export default function App() {
                         }}
                       >
                         {groups.every((path) => closedGroups.has(path))
-                          ? "展开全部分组"
-                          : "折叠全部分组"}
+                          ? tr("展开全部分组")
+                          : tr("折叠全部分组")}
                       </button>
                     )}
                     <div className="list-options-divider" />
                     <button
-                      aria-label="管理分组"
+                      aria-label={tr("管理分组")}
                       disabled={busy}
                       onClick={() => {
                         setListPanel(null);
                         void run(() => openDialog("groups"));
                       }}
-                    >
-                      管理分组
-                    </button>
-                    <p className="muted creation-folder">
-                      新建位置：{group || "根目录"}
+                    >{tr("管理分组")}</button>
+                    <p className="muted creation-folder">{tr("新建位置：")}{group || tr("根目录")}
                     </p>
                     {group && (
                       <button
-                        aria-label="选择根目录"
+                        aria-label={tr("选择根目录")}
                         disabled={busy}
                         onClick={() => {
                           setGroup(null);
                           setListPanel(null);
                         }}
-                      >
-                        选择根目录
-                      </button>
+                      >{tr("选择根目录")}</button>
                     )}
                   </div>
                 )}
@@ -1081,21 +1074,20 @@ export default function App() {
                 <div className="small-empty">
                   <p>
                     {query || filter.length
-                      ? "没有找到匹配的笔记"
-                      : "还没有笔记"}
+                      ? tr("没有找到匹配的笔记")
+                      : tr("还没有笔记")}
                   </p>
                   <button
                     className="text-button"
                     onClick={() => void run(() => switchView("templates"))}
-                  >
-                    从模板开始 <Icon name="arrow" />
+                  >{tr("从模板开始")}<Icon name="arrow" />
                   </button>
                 </div>
               )}
             </section>
             <section
               className="editor"
-              aria-label={editing ? "笔记编辑区" : "笔记浏览区"}
+              aria-label={editing ? tr("笔记编辑区") : tr("笔记浏览区")}
             >
               {note ? (
                 <>
@@ -1103,21 +1095,17 @@ export default function App() {
                     <button
                       className="back-button"
                       onClick={() => setListVisible(true)}
-                    >
-                      ‹ 笔记
-                    </button>
+                    >{tr("‹ 笔记")}</button>
                     {editing && (
                       <>
                         <span
-                          className={`save-state ${status.includes("失败") ? "error" : ""}`}
+                          className={`save-state ${tr(status).toLowerCase().includes(tr("失败").toLowerCase()) ? "error" : ""}`}
                           role="status"
                         >
-                          {status}
+                          {tr(status)}
                         </span>
-                        {status === "保存失败" && (
-                          <button onClick={() => void run(save)}>
-                            重试保存
-                          </button>
+                        {tr(status) === tr("保存失败") && (
+                          <button onClick={() => void run(save)}>{tr("重试保存")}</button>
                         )}
                       </>
                     )}
@@ -1141,28 +1129,24 @@ export default function App() {
                           })
                         }
                       >
-                        {editing ? "完成编辑" : "编辑"}
+                        {editing ? tr("完成编辑") : tr("编辑")}
                       </button>
                       {editing && (
                         <>
                           <button
                             disabled={busy}
                             onClick={() => void run(cancelEditing)}
-                          >
-                            取消编辑
-                          </button>
+                          >{tr("取消编辑")}</button>
                           <button
                             onClick={() =>
                               void run(() => openDialog("history"))
                             }
-                          >
-                            历史
-                          </button>
+                          >{tr("历史")}</button>
                         </>
                       )}
                       {!editing && (
                         <button
-                          title={needsReview(note, reviewNow) ? "需要回顾" : undefined}
+                          title={needsReview(note, reviewNow) ? tr("需要回顾") : undefined}
                           disabled={busy || conflict}
                           onClick={() => void run(async () => {
                             const record = await api.command<RecordNote>(
@@ -1175,11 +1159,9 @@ export default function App() {
                               notes: v.notes.map((r) => r.note.id === record.note.id ? record : r),
                             } : v);
                             setReviewNow(Date.now());
-                            setNotice("已回顾确认");
+                            setNotice(tr("已回顾确认"));
                           })}
-                        >
-                          回顾确认
-                          {needsReview(note, reviewNow) && (
+                        >{tr("回顾确认")}{needsReview(note, reviewNow) && (
                             <span className="review-dot" aria-hidden="true" />
                           )}
                         </button>
@@ -1190,25 +1172,24 @@ export default function App() {
                           aria-controls="trade-menu"
                           disabled={busy || conflict}
                           onClick={() => { setMore(false); setTradeOpen(!tradeOpen); }}
-                        >
-                          品交 <span className="trade-chevron"><Icon name="arrow" /></span>
+                        >{tr("品交")}<span className="trade-chevron"><Icon name="arrow" /></span>
                         </button>
                         {tradeOpen && (
-                          <div className="more-menu" id="trade-menu" data-trade-menu role="group" aria-label="品交选项">
+                          <div className="more-menu" id="trade-menu" data-trade-menu role="group" aria-label={tr("品交选项")}>
                             <button onClick={() => {
                               setTradeOpen(false);
                               void run(() => openDialog("share"));
-                            }}>展品</button>
+                            }}>{tr("展品")}</button>
                             <button onClick={() => {
                               setTradeOpen(false);
                               void run(() => openDialog("invite"));
-                            }}>求品</button>
+                            }}>{tr("求品")}</button>
                           </div>
                         )}
                       </div>
                       <div className="more-wrap">
                         <button
-                          aria-label="更多笔记操作"
+                          aria-label={tr("更多笔记操作")}
                           aria-expanded={more}
                           onClick={() => { setTradeOpen(false); setMore(!more); }}
                         >
@@ -1222,9 +1203,7 @@ export default function App() {
                                   onClick={() =>
                                     void run(() => openDialog("history"))
                                   }
-                                >
-                                  历史
-                                </button>
+                                >{tr("历史")}</button>
                               </>
                             ) : (
                               <>
@@ -1234,22 +1213,18 @@ export default function App() {
                                     setMore(false);
                                     setDialog("milestone");
                                   }}
-                                >
-                                  保存里程碑
-                                </button>
+                                >{tr("保存里程碑")}</button>
                                 <button
                                   onClick={() =>
                                     void run(async () => {
                                       await checkpoint();
                                       if (!validTitle(doc.current!))
-                                        throw Error("请先填写主题");
+                                        throw Error(tr("请先填写主题"));
                                       setTemplate(asTemplate(doc.current!));
                                       setMore(false);
                                     })
                                   }
-                                >
-                                  保存为模板
-                                </button>
+                                >{tr("保存为模板")}</button>
                                 <button
                                   onClick={() =>
                                     void run(async () => {
@@ -1257,7 +1232,7 @@ export default function App() {
                                       const n = structuredClone(doc.current!);
                                       n.id = uid();
                                       n.title = copyTitle(
-                                        `${n.title}（副本）`,
+                                        tr("{0}（副本）", n.title),
                                         vault.notes,
                                       );
                                       n.createdAt = new Date().toISOString();
@@ -1278,9 +1253,7 @@ export default function App() {
                                       select(r);
                                     })
                                   }
-                                >
-                                  复制笔记
-                                </button>
+                                >{tr("复制笔记")}</button>
                                 <button
                                   className="danger"
                                   onClick={() =>
@@ -1294,12 +1267,10 @@ export default function App() {
                                       const v = await reload();
                                       select(v.notes[0] ?? null);
                                       setListVisible(true);
-                                      setNotice("已移入回收站");
+                                      setNotice(tr("已移入回收站"));
                                     })
                                   }
-                                >
-                                  移入回收站
-                                </button>
+                                >{tr("移入回收站")}</button>
                               </>
                             )}
                           </div>
@@ -1315,7 +1286,7 @@ export default function App() {
                       >
                         <input
                           className="note-title"
-                          aria-label="笔记主题"
+                          aria-label={tr("笔记主题")}
                           value={note.title}
                           onChange={(e) =>
                             edit((n) => {
@@ -1325,8 +1296,8 @@ export default function App() {
                         />
                         <AutoTextarea
                           className="description"
-                          aria-label="主题说明"
-                          placeholder="为这份列表加一句说明（可选）"
+                          aria-label={tr("主题说明")}
+                          placeholder={tr("为这份列表加一句说明（可选）")}
                           rows={Math.max(
                             1,
                             Math.min(5, note.description.split("\n").length),
@@ -1340,9 +1311,9 @@ export default function App() {
                         />
                         <div className="note-properties">
                           <label className="group-input">
-                            <span>分组</span>
+                            <span>{tr("分组")}</span>
                             <select
-                              aria-label="笔记所在分组"
+                              aria-label={tr("笔记所在分组")}
                               value={
                                 vault.notes.find((r) => r.note.id === note.id)
                                   ?.group ?? ""
@@ -1351,7 +1322,7 @@ export default function App() {
                                 void run(() => moveToGroup(e.target.value))
                               }
                             >
-                              <option value="">未分组</option>
+                              <option value="">{tr("未分组")}</option>
                               {groups.map((g) => (
                                 <option key={g} value={g}>
                                   {g.replaceAll("/", " / ")}
@@ -1360,10 +1331,10 @@ export default function App() {
                             </select>
                           </label>
                           <label className="tag-input">
-                            <span>标签</span>
+                            <span>{tr("标签")}</span>
                             <input
-                              aria-label="笔记标签"
-                              placeholder="添加标签，用逗号分隔"
+                              aria-label={tr("笔记标签")}
+                              placeholder={tr("添加标签，用逗号分隔")}
                               value={tagText}
                               onChange={(e) => {
                                 setTagText(e.target.value);
@@ -1377,7 +1348,7 @@ export default function App() {
                             />
                           </label>
                           <select
-                            aria-label="列表模式"
+                            aria-label={tr("列表模式")}
                             value={String(note.ranked)}
                             onChange={(e) =>
                               edit((n) => {
@@ -1385,22 +1356,22 @@ export default function App() {
                               })
                             }
                           >
-                            <option value="true">有排名</option>
-                            <option value="false">无排名</option>
+                            <option value="true">{tr("有排名")}</option>
+                            <option value="false">{tr("无排名")}</option>
                           </select>
                           <label className="review-settings">
-                            <span>回顾周期</span>
+                            <span>{tr("回顾周期")}</span>
                             <select
-                              aria-label="回顾周期"
+                              aria-label={tr("回顾周期")}
                               value={note.reviewTestMinute ? "test-minute" : note.reviewIntervalMonths ?? 3}
                               onChange={(e) => edit((n) => {
                                 n.reviewTestMinute = e.target.value === "test-minute";
                                 if (!n.reviewTestMinute) n.reviewIntervalMonths = Number(e.target.value);
                               })}
                             >
-                              <option value="test-minute">1 分钟（测试）</option>
+                              <option value="test-minute">{tr("1 分钟（测试）")}</option>
                               {[...new Set([1, 2, 3, 6, 12, 24, note.reviewIntervalMonths ?? 3])].sort((a, b) => a - b).map((months) => (
-                                <option key={months} value={months}>{months} 个月</option>
+                                <option key={months} value={months}>{formatCount(months, "months")}</option>
                               ))}
                             </select>
                           </label>
@@ -1423,8 +1394,8 @@ export default function App() {
                               <button
                                 className="rank-handle"
                                 draggable
-                                aria-label={`拖动条目 ${index + 1}`}
-                                title="拖动调整顺序；Alt + 上下方向键也可移动"
+                                aria-label={tr("拖动条目 {0}", index + 1)}
+                                title={tr("拖动调整顺序；Alt + 上下方向键也可移动")}
                                 onDragStart={(e) => {
                                   drag.current = entry.id;
                                   e.dataTransfer.setData("text/plain", entry.id);
@@ -1453,8 +1424,8 @@ export default function App() {
                               <div className="entry-body">
                                 <input
                                   id={`entry-${entry.id}`}
-                                  aria-label={`条目 ${index + 1} 名称`}
-                                  placeholder="写下你的选择"
+                                  aria-label={tr("条目 {0} 名称", index + 1)}
+                                  placeholder={tr("写下你的选择")}
                                   value={entry.name}
                                   onChange={(e) =>
                                     edit((n) => {
@@ -1483,8 +1454,8 @@ export default function App() {
                                   }}
                                 />
                                 <AutoTextarea
-                                  aria-label={`条目 ${index + 1} 理由`}
-                                  placeholder="感受与理由（可选）"
+                                  aria-label={tr("条目 {0} 理由", index + 1)}
+                                  placeholder={tr("感受与理由（可选）")}
                                   rows={Math.max(
                                     1,
                                     Math.min(10, entry.reason.split("\n").length),
@@ -1499,28 +1470,22 @@ export default function App() {
                                 <div className="entry-actions">
                                   <button
                                     disabled={index === 0}
-                                    aria-label={`上移条目 ${index + 1}`}
+                                    aria-label={tr("上移条目 {0}", index + 1)}
                                     onClick={() => move(index, index - 1)}
-                                  >
-                                    上移
-                                  </button>
+                                  >{tr("上移")}</button>
                                   <button
                                     disabled={index === note.entries.length - 1}
-                                    aria-label={`下移条目 ${index + 1}`}
+                                    aria-label={tr("下移条目 {0}", index + 1)}
                                     onClick={() => move(index, index + 1)}
-                                  >
-                                    下移
-                                  </button>
+                                  >{tr("下移")}</button>
                                   <button
-                                    aria-label={`删除条目 ${index + 1}`}
+                                    aria-label={tr("删除条目 {0}", index + 1)}
                                     onClick={() =>
                                       edit((n) => {
                                         n.entries.splice(index, 1);
                                       })
                                     }
-                                  >
-                                    删除
-                                  </button>
+                                  >{tr("删除")}</button>
                                 </div>
                               </div>
                             </article>
@@ -1531,26 +1496,20 @@ export default function App() {
                           onClick={() => addEntry()}
                           disabled={conflict}
                         >
-                          <Icon name="plus" />
-                          添加一个选择
-                        </button>
+                          <Icon name="plus" />{tr("添加一个选择")}</button>
                         <footer className="editor-footer">
-                          <span>{validEntries(note).length} 个选择</span>
+                          <span>{formatCount(validEntries(note).length, "choices")}</span>
                           <div>
                             <button
                               className="text-button"
                               disabled={!undo.current.length}
                               onClick={() => travel(true)}
-                            >
-                              撤销
-                            </button>
+                            >{tr("撤销")}</button>
                             <button
                               className="text-button"
                               disabled={!redo.current.length}
                               onClick={() => travel(false)}
-                            >
-                              重做
-                            </button>
+                            >{tr("重做")}</button>
                           </div>
                         </footer>
                       </fieldset>
@@ -1562,20 +1521,16 @@ export default function App() {
               ) : (
                 <div className="empty-editor">
                   <span className="empty-symbol">＋</span>
-                  <h2>从一次品察开始。</h2>
-                  <p>喜欢与讨厌，都可以成为一份记录。</p>
+                  <h2>{tr("从一次品察开始。")}</h2>
+                  <p>{tr("喜欢与讨厌，都可以成为一份记录。")}</p>
                   <button
                     className="primary"
                     onClick={() => void run(() => create())}
-                  >
-                    写一份新笔记
-                  </button>
+                  >{tr("写一份新笔记")}</button>
                   <button
                     className="text-button"
                     onClick={() => void run(() => switchView("templates"))}
-                  >
-                    去模板库找灵感
-                  </button>
+                  >{tr("去模板库找灵感")}</button>
                 </div>
               )}
             </section>
@@ -1598,28 +1553,21 @@ export default function App() {
           <section className="library">
             <header className="library-header">
               <div>
-                <h1>世间万事，皆可一品</h1>
-                <p className="muted">
-                  喜欢、不喜欢，或说不清的感受，从一个主题开始记录。
-                </p>
-                <p className="template-coverage-summary" role="status">
-                  有品 {covered.size} / {templates.length} · 覆盖率{" "}
+                <h1>{tr("世间万事，皆可一品")}</h1>
+                <p className="muted">{tr("喜欢、不喜欢，或说不清的感受，从一个主题开始记录。")}</p>
+                <p className="template-coverage-summary" role="status">{tr("有品")} {covered.size} / {templates.length} {tr("· 覆盖率")}{" "}
                   {coveragePercent}%
                 </p>
               </div>
               <div className="actions">
-                <button onClick={() => setTemplate(emptyTemplate())}>
-                  新建模板
-                </button>
+                <button onClick={() => setTemplate(emptyTemplate())}>{tr("新建模板")}</button>
                 <button
                   className="primary"
                   disabled={!templateList.length}
                   onClick={() =>
                     setPicked(randomTemplate(templateList, picked?.id) ?? null)
                   }
-                >
-                  随机一品 ↗
-                </button>
+                >{tr("随机一品 ↗")}</button>
               </div>
             </header>
             <SearchFilters
@@ -1637,7 +1585,7 @@ export default function App() {
             />
             {picked && (
               <div className="random-card">
-                <span className="muted">这次，聊聊这个</span>
+                <span className="muted">{tr("这次，聊聊这个")}</span>
                 <div className="template-title-heading">
                   <h2>
                     {covered.has(picked.id) ? (
@@ -1654,11 +1602,9 @@ export default function App() {
                     <button
                       className="template-covered"
                       disabled={busy}
-                      aria-label={`查看“${picked.title}”的笔记`}
+                      aria-label={tr("查看“{0}”的笔记", picked.title)}
                       onClick={() => void run(() => openTemplate(picked))}
-                    >
-                      有品
-                    </button>
+                    >{tr("有品")}</button>
                   )}
                 </div>
                 <p>{picked.hint}</p>
@@ -1668,15 +1614,13 @@ export default function App() {
                     disabled={busy}
                     onClick={() => void run(() => openTemplate(picked))}
                   >
-                    {covered.has(picked.id) ? "查看笔记" : "开始填写"}
+                    {covered.has(picked.id) ? tr("查看笔记") : tr("开始填写")}
                   </button>
                   <button
                     onClick={() =>
                       setPicked(randomTemplate(templateList, picked.id) ?? null)
                     }
-                  >
-                    换个主题
-                  </button>
+                  >{tr("换个主题")}</button>
                 </div>
               </div>
             )}
@@ -1684,8 +1628,8 @@ export default function App() {
               {templateList.map((t) => (
                 <article className="template-card" key={t.id}>
                   <div className="template-tags">
-                    {t.tags.join(" · ") || "未分类"}
-                    {!t.builtin && <span>个人模板</span>}
+                    {t.tags.join(" · ") || tr("未分类")}
+                    {!t.builtin && <span>{tr("个人模板")}</span>}
                   </div>
                   <div className="template-title-heading">
                     <h2>
@@ -1703,17 +1647,15 @@ export default function App() {
                       <button
                         className="template-covered"
                         disabled={busy}
-                        aria-label={`查看“${t.title}”的笔记`}
+                        aria-label={tr("查看“{0}”的笔记", t.title)}
                         onClick={() => void run(() => openTemplate(t))}
-                      >
-                        有品
-                      </button>
+                      >{tr("有品")}</button>
                     )}
                   </div>
                   <p>
                     {t.hint ||
                       t.description ||
-                      `从 ${t.suggestedCount} 个选择开始，数量由你决定。`}
+                      tr("从 {0} 个选择开始，数量由你决定。", t.suggestedCount)}
                   </p>
                   <div className="template-actions">
                     <button
@@ -1721,39 +1663,33 @@ export default function App() {
                       disabled={busy}
                       onClick={() => void run(() => openTemplate(t))}
                     >
-                      {covered.has(t.id) ? "查看笔记" : "开始填写"}{" "}
+                      {covered.has(t.id) ? tr("查看笔记") : tr("开始填写")}{" "}
                       <Icon name="arrow" />
                     </button>
                     <details>
-                      <summary aria-label={`${t.title}的模板操作`}>
-                        更多
-                      </summary>
+                      <summary aria-label={tr("{0}的模板操作", t.title)}>{tr("更多")}</summary>
                       <div>
                         {covered.has(t.id) && (
                           <button
                             disabled={busy}
                             onClick={() => void run(() => create(t))}
-                          >
-                            另写一份
-                          </button>
+                          >{tr("另写一份")}</button>
                         )}
                         <button
                           onClick={() =>
                             setTemplate({ ...t, id: uid(), builtin: false })
                           }
-                        >
-                          复制编辑
-                        </button>
+                        >{tr("复制编辑")}</button>
                         {!t.builtin && (
                           <>
-                            <button onClick={() => setTemplate(t)}>编辑</button>
+                            <button onClick={() => setTemplate(t)}>{tr("编辑")}</button>
                             <button
                               className="danger"
                               onClick={() =>
                                 void run(async () => {
                                   if (
                                     await confirm(
-                                      `删除个人模板“${t.title}”？已有笔记不受影响。`,
+                                      tr("删除个人模板“{0}”？已有笔记不受影响。", t.title),
                                     )
                                   ) {
                                     await api.command("template_delete", {
@@ -1763,9 +1699,7 @@ export default function App() {
                                   }
                                 })
                               }
-                            >
-                              删除
-                            </button>
+                            >{tr("删除")}</button>
                           </>
                         )}
                       </div>
@@ -1775,17 +1709,15 @@ export default function App() {
               ))}
             </div>
             {!templateList.length && (
-              <p className="small-empty">
-                没有匹配的模板，请试试其他关键词或标签。
-              </p>
+              <p className="small-empty">{tr("没有匹配的模板，请试试其他关键词或标签。")}</p>
             )}
           </section>
         ) : (
           <section className="library">
             <header className="library-header">
               <div>
-                <h1>回收站</h1>
-                <p className="muted">笔记与历史一起保留，直到你永久删除。</p>
+                <h1>{tr("回收站")}</h1>
+                <p className="muted">{tr("笔记与历史一起保留，直到你永久删除。")}</p>
               </div>
             </header>
             <SearchFilters
@@ -1801,7 +1733,7 @@ export default function App() {
                   <div>
                     <h2>{r.note.title}</h2>
                     <p className="muted">
-                      {validEntries(r.note).length} 个选择 ·{" "}
+                      {formatCount(validEntries(r.note).length, "choices")} · {" "}
                       {dateTime(r.note.updatedAt)}
                     </p>
                   </div>
@@ -1819,20 +1751,18 @@ export default function App() {
                             (x) => x.note.id === r.note.id,
                           )?.group;
                           setNotice(
-                            `笔记与历史已恢复到${restoredGroup ? `“${restoredGroup}”` : "未分组"}`,
+                            tr("笔记与历史已恢复到{0}", restoredGroup ? `“${restoredGroup}”` : tr("未分组")),
                           );
                         })
                       }
-                    >
-                      恢复
-                    </button>
+                    >{tr("恢复")}</button>
                     <button
                       className="danger"
                       onClick={() =>
                         void run(async () => {
                           if (
                             await confirm(
-                              `永久删除“${r.note.title}”及它的全部历史？此操作无法撤销。`,
+                              tr("永久删除“{0}”及它的全部历史？此操作无法撤销。", r.note.title),
                             )
                           ) {
                             await api.command("purge", { id: r.note.id });
@@ -1840,38 +1770,36 @@ export default function App() {
                           }
                         })
                       }
-                    >
-                      永久删除
-                    </button>
+                    >{tr("永久删除")}</button>
                   </div>
                 </article>
               ))}
             </div>
-            {!list.length && <p className="small-empty">回收站是空的。</p>}
+            {!list.length && <p className="small-empty">{tr("回收站是空的。")}</p>}
           </section>
         )}
       </main>
       {treeMenu && (
         <div className="more-menu note-context-menu" ref={treeMenuRef}
-          role="menu" aria-label="笔记新建菜单"
+          role="menu" aria-label={tr("笔记新建菜单")}
           style={{ left: treeMenu.x, top: treeMenu.y }}
           onContextMenu={(event) => event.preventDefault()}
         >
           <button role="menuitem" onClick={() => {
             setTreeMenu(null);
             void run(() => create(undefined, treeMenu.group));
-          }}>新建笔记</button>
+          }}>{tr("新建笔记")}</button>
           <button role="menuitem" onClick={() => {
             setTreeMenu(null);
             setNewFolderParent(treeMenu.group);
             setGroupInput("");
             setGroupError("");
             void run(() => openDialog("new-folder"));
-          }}>新建分组</button>
+          }}>{tr("新建分组")}</button>
         </div>
       )}
       {dialog === "new-folder" && vault && (
-        <Modal title="新建分组" onClose={() => { if (!busy) setDialog(null); }}>
+        <Modal title={tr("新建分组")} onClose={() => { if (!busy) setDialog(null); }}>
           <form className="form-stack" onSubmit={(event) => {
             event.preventDefault();
             void runGroup(async () => {
@@ -1883,38 +1811,36 @@ export default function App() {
               const created = v.groups.find(path => path.toLowerCase() === name.toLowerCase()) ?? name;
               setGroup(created);
               setClosedGroups(previous => new Set([...previous].filter(path => !inGroup(created, path))));
-              setNotice("分组已创建");
+              setNotice(tr("分组已创建"));
               setDialog(null);
             });
           }}>
-            <p className="muted">新建位置：{newFolderParent || "根目录"}</p>
+            <p className="muted">{tr("新建位置：")}{newFolderParent || tr("根目录")}</p>
             <label className="form-stack">
-              <span>分组名称</span>
-              <input aria-label="分组名称" autoFocus value={groupInput}
+              <span>{tr("分组名称")}</span>
+              <input aria-label={tr("分组名称")} autoFocus value={groupInput}
                 disabled={busy} onChange={event => setGroupInput(event.target.value)} />
             </label>
-            {groupError && <p className="error" role="alert">{groupError}</p>}
+            {groupError && <p className="error" role="alert">{tr(groupError)}</p>}
             <div className="actions">
-              <button className="primary" disabled={busy || !groupInput.trim()}>新建分组</button>
-              <button type="button" disabled={busy} onClick={() => setDialog(null)}>取消</button>
+              <button className="primary" disabled={busy || !groupInput.trim()}>{tr("新建分组")}</button>
+              <button type="button" disabled={busy} onClick={() => setDialog(null)}>{tr("取消")}</button>
             </div>
           </form>
         </Modal>
       )}
       {dialog === "groups" && vault && (
         <Modal
-          title="管理分组"
+          title={tr("管理分组")}
           onClose={() => {
             if (!busy) setDialog(null);
           }}
         >
           <div className="form-stack">
-            <p className="muted">
-              分组对应资料库中的文件夹。可用 / 建立子分组；只有空分组可以删除。
-            </p>
+            <p className="muted">{tr("分组对应资料库中的文件夹。可用 / 建立子分组；只有空分组可以删除。")}</p>
             {groupError && (
               <p className="error" role="alert">
-                {groupError}
+                {tr(groupError)}
               </p>
             )}
             <form
@@ -1948,7 +1874,7 @@ export default function App() {
                     );
                   setGroupInput("");
                   setEditingGroup(null);
-                  setNotice(editingGroup ? "分组已重命名" : "分组已创建");
+                  setNotice(editingGroup ? tr("分组已重命名") : tr("分组已创建"));
                   if (!editingGroup && group !== null)
                     setGroup(
                       v.groups.find(
@@ -1959,14 +1885,14 @@ export default function App() {
               }}
             >
               <label>
-                <span>{editingGroup ? "分组新名称" : "新分组名称"}</span>
+                <span>{editingGroup ? tr("分组新名称") : tr("新分组名称")}</span>
                 <input
-                  aria-label={editingGroup ? "分组新名称" : "新分组名称"}
+                  aria-label={editingGroup ? tr("分组新名称") : tr("新分组名称")}
                   autoComplete="off"
                   value={groupInput}
                   disabled={busy}
                   onChange={(e) => setGroupInput(e.target.value)}
-                  placeholder="例如：电影/收藏"
+                  placeholder={tr("例如：电影/收藏")}
                 />
               </label>
               <div className="actions">
@@ -1975,7 +1901,7 @@ export default function App() {
                   type="submit"
                   disabled={busy || !groupInput.trim()}
                 >
-                  {editingGroup ? "保存名称" : "新建分组"}
+                  {editingGroup ? tr("保存名称") : tr("新建分组")}
                 </button>
                 {editingGroup && (
                   <button
@@ -1986,9 +1912,7 @@ export default function App() {
                       setGroupInput("");
                       setGroupError("");
                     }}
-                  >
-                    取消重命名
-                  </button>
+                  >{tr("取消重命名")}</button>
                 )}
               </div>
             </form>
@@ -1998,24 +1922,20 @@ export default function App() {
                   <div>
                     <strong>{g.replaceAll("/", " / ")}</strong>
                     <span className="muted">
-                      {vault.notes.filter((r) => inGroup(r.group, g)).length}{" "}
-                      份笔记
-                    </span>
+                      {formatCount(vault.notes.filter((r) => inGroup(r.group, g)).length, "notes")}</span>
                   </div>
                   <div className="actions">
                     <button
-                      aria-label={`重命名分组 ${g}`}
+                      aria-label={tr("重命名分组 {0}", g)}
                       disabled={busy}
                       onClick={() => {
                         setEditingGroup(g);
                         setGroupInput(g);
                         setGroupError("");
                       }}
-                    >
-                      重命名
-                    </button>
+                    >{tr("重命名")}</button>
                     <button
-                      aria-label={`删除分组 ${g}`}
+                      aria-label={tr("删除分组 {0}", g)}
                       className="danger"
                       disabled={busy}
                       onClick={() =>
@@ -2029,16 +1949,14 @@ export default function App() {
                             setEditingGroup(null);
                             setGroupInput("");
                           }
-                          setNotice("空分组已删除");
+                          setNotice(tr("空分组已删除"));
                         })
                       }
-                    >
-                      删除
-                    </button>
+                    >{tr("删除")}</button>
                   </div>
                 </div>
               ))}
-              {!groups.length && <p className="muted">还没有分组</p>}
+              {!groups.length && <p className="muted">{tr("还没有分组")}</p>}
             </div>
           </div>
         </Modal>
@@ -2071,13 +1989,13 @@ export default function App() {
             });
             select(r);
             await reload();
-            setNotice("历史版本已恢复");
+            setNotice(tr("历史版本已恢复"));
           }}
         />
       )}
       {dialog === "commit" && (
         <Modal
-          title="更新日志"
+          title={tr("更新日志")}
           onClose={() => {
             if (!busyRef.current) setDialog(null);
           }}
@@ -2107,40 +2025,34 @@ export default function App() {
               );
             }}
           >
-            <label>
-              更新日志（可选）
-              <textarea
+            <label>{tr("更新日志（可选）")}<textarea
                 autoFocus
                 rows={4}
-                placeholder="例如：调整了电影排名，补充重看后的感受。"
+                placeholder={tr("例如：调整了电影排名，补充重看后的感受。")}
                 value={changeLog}
                 disabled={busy}
                 onChange={(e) => setChangeLog(e.target.value)}
               />
             </label>
             {changeLogError && (
-              <p className="error" role="alert">{changeLogError}</p>
+              <p className="error" role="alert">{tr(changeLogError)}</p>
             )}
             <div className="modal-actions">
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => setDialog(null)}
-              >
-                继续编辑
-              </button>
+              >{tr("继续编辑")}</button>
               <button
                 className="primary"
                 disabled={busy || conflict}
-              >
-                提交更新
-              </button>
+              >{tr("提交更新")}</button>
             </div>
           </form>
         </Modal>
       )}
       {dialog === "milestone" && (
-        <Modal title="为此刻留个标记" onClose={() => setDialog(null)}>
+        <Modal title={tr("为此刻留个标记")} onClose={() => setDialog(null)}>
           <form
             className="form-stack"
             onSubmit={(e) => {
@@ -2150,32 +2062,55 @@ export default function App() {
                 await api.command("snapshot", {
                   id: doc.current!.id,
                   kind: "milestone",
-                  label: milestone.trim() || "审美里程碑",
+                  label: milestone.trim() || tr("审美里程碑"),
                 });
                 setDialog(null);
-                setNotice("里程碑已保存");
+                setNotice(tr("里程碑已保存"));
               });
             }}
           >
-            <label>
-              里程碑名称
-              <input
+            <label>{tr("里程碑名称")}<input
                 autoFocus
-                placeholder="例如：毕业时的十部电影"
+                placeholder={tr("例如：毕业时的十部电影")}
                 value={milestone}
                 onChange={(e) => setMilestone(e.target.value)}
               />
             </label>
-            <button className="primary" disabled={busy}>
-              保存里程碑
-            </button>
+            <button className="primary" disabled={busy}>{tr("保存里程碑")}</button>
           </form>
         </Modal>
       )}
       {dialog === "settings" && (
-        <Modal title="本地资料库" onClose={() => setDialog(null)}>
+        <Modal title={tr("本地资料库")} onClose={() => setDialog(null)}>
           <div className="form-stack">
-            <p className="vault-path">{vault?.path ?? "尚未选择资料库"}</p>
+            <div className="preference-fields">
+              <label>
+                {tr("界面语言")}
+                <select aria-label={tr("界面语言")} value={preferences.language} onChange={event => {
+                  try { setPreferences({ language: event.target.value as typeof preferences.language }); setPreferenceError(""); }
+                  catch { setPreferenceError(tr("无法保存界面设置，请检查本地存储权限。")); }
+                }}>
+                  <option value="system">{tr("跟随系统")}</option>
+                  <option value="zh">中文</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label>
+                {tr("外观")}
+                <select aria-label={tr("外观")} value={preferences.theme} onChange={event => {
+                  try { setPreferences({ theme: event.target.value as typeof preferences.theme }); setPreferenceError(""); }
+                  catch { setPreferenceError(tr("无法保存界面设置，请检查本地存储权限。")); }
+                }}>
+                  <option value="system">{tr("跟随系统")}</option>
+                  <option value="light">{tr("浅色")}</option>
+                  <option value="dark">{tr("深色")}</option>
+                </select>
+              </label>
+            </div>
+            {preferenceError && <p className="error" role="alert">{tr(preferenceError)}</p>}
+            <p className="vault-path">{vault
+              ? api.preview ? tr("浏览器预览 · 数据仅保存在此浏览器") : vault.path
+              : tr("尚未选择资料库")}</p>
             <div className="settings-grid">
               <button
                 disabled={busy}
@@ -2189,9 +2124,7 @@ export default function App() {
                     }
                   })
                 }
-              >
-                创建 / 切换资料库
-              </button>
+              >{tr("创建 / 切换资料库")}</button>
               <button
                 disabled={!vault || !api.desktop}
                 onClick={() =>
@@ -2199,23 +2132,19 @@ export default function App() {
                     await api.command("reveal");
                   })
                 }
-              >
-                在文件管理器中打开
-              </button>
+              >{tr("在文件管理器中打开")}</button>
               <button
-                disabled={!vault || !api.desktop || busy}
+                disabled={!vault || !api.localFiles || busy}
                 onClick={() =>
                   void run(async () => {
                     await checkpoint();
                     const path = await api.backupVault();
-                    if (path) setNotice(`备份完成：${path}`);
+                    if (path) setNotice(tr("备份完成：{0}", path));
                   })
                 }
-              >
-                完整备份
-              </button>
+              >{tr("完整备份")}</button>
               <button
-                disabled={!api.desktop || busy}
+                disabled={!api.localFiles || busy}
                 onClick={() =>
                   void run(async () => {
                     await checkpoint();
@@ -2223,15 +2152,13 @@ export default function App() {
                     if (v) {
                       install(v);
                       setDialog(null);
-                      setNotice("备份已恢复到新文件夹");
+                      setNotice(tr("备份已恢复到新文件夹"));
                     }
                   })
                 }
-              >
-                从备份恢复
-              </button>
+              >{tr("从备份恢复")}</button>
               <button
-                disabled={!vault || !api.desktop || busy}
+                disabled={!vault || !api.localFiles || busy}
                 onClick={() =>
                   void run(async () => {
                     await checkpoint();
@@ -2245,10 +2172,8 @@ export default function App() {
                     }
                   })
                 }
-              >
-                导入品记 Markdown
-              </button>
-              <button onClick={() => setDialog("help")}>使用帮助</button>
+              >{tr("导入品记 Markdown")}</button>
+              <button onClick={() => setDialog("help")}>{tr("使用帮助")}</button>
               <button
                 disabled={!vault || busy}
                 onClick={() =>
@@ -2258,68 +2183,49 @@ export default function App() {
                   })
                 }
               >
-                <Icon name="trash" />
-                回收站
-              </button>
+                <Icon name="trash" />{tr("回收站")}</button>
             </div>
-            <p className="muted">
-              笔记、历史与模板都在此文件夹内。完整复制文件夹即可迁移。资料库未加密。
-            </p>
-            <p className="muted">品记 0.1.0 · 不联网，不上传。</p>
+            <p className="muted">{tr("笔记、历史与模板都在此文件夹内。完整复制文件夹即可迁移。资料库未加密。")}</p>
+            <p className="muted">{tr(api.web ? "品记网页版 · 网页资源联网加载，笔记只保存在本地资料库。" : "品记 0.2.0 · 不联网，不上传。")}</p>
           </div>
         </Modal>
       )}
       {dialog === "help" && (
-        <Modal title="使用帮助" onClose={() => setDialog(null)}>
+        <Modal title={tr("使用帮助")} onClose={() => setDialog(null)}>
           <div className="form-stack help">
-            <h3>记录与排序</h3>
-            <p>
-              条目名称输入后按 Enter 继续添加。拖动序号、使用上移 / 下移，或按
-              Alt + 方向键调整顺序。无排名列表的位置只表示展示顺序。
-            </p>
-            <h3>保存与历史</h3>
-            <p>
-              编辑自动保存。停止编辑 60
-              秒、离开笔记或关闭应用时保存一个历史版本。“保存里程碑”可以为某个阶段命名。Ctrl
-              + Z 撤销，Ctrl + Shift + Z 或 Ctrl + Y 重做，Ctrl + S 立即保存。
-            </p>
-            <h3>品交：展品与求品</h3>
-            <p>
-              点击“品交”，选择“展品”展示自己的选择，或选择“求品”邀请别人回答。展品前可选择公开的条目与字段，长内容自动分页，节选保留原排名。求品图片不包含你的答案。
-            </p>
-            <h3>本地文件</h3>
-            <p>
-              notes 文件夹内为
-              Markdown。外部编辑时请保留元数据、列表分隔标记和条目标识。重新进入应用时会检查改动。发生冲突时，待保存内容保存在
-              .tistnote/conflicts。
-            </p>
-            <h3>推广二维码</h3>
-            <p>当前使用明确占位，正式下载二维码将在发布时内置。</p>
+            <h3>{tr("记录与排序")}</h3>
+            <p>{tr("条目名称输入后按 Enter 继续添加。拖动序号、使用上移 / 下移，或按 Alt + 方向键调整顺序。无排名列表的位置只表示展示顺序。")}</p>
+            <h3>{tr("保存与历史")}</h3>
+            <p>{tr("编辑自动保存。停止编辑 60 秒、离开笔记或关闭应用时保存一个历史版本。“保存里程碑”可以为某个阶段命名。Ctrl + Z 撤销，Ctrl + Shift + Z 或 Ctrl + Y 重做，Ctrl + S 立即保存。")}</p>
+            <h3>{tr("品交：展品与求品")}</h3>
+            <p>{tr("点击“品交”，选择“展品”展示自己的选择，或选择“求品”邀请别人回答。展品前可选择公开的条目与字段，默认导出一张长图，也可选择分页图片，节选保留原排名。求品图片不包含你的答案。")}</p>
+            <h3>{tr("本地文件")}</h3>
+            <p>{tr("notes 文件夹内为 Markdown。外部编辑时请保留元数据、列表分隔标记和条目标识。重新进入应用时会检查改动。发生冲突时，待保存内容保存在 .tistnote/conflicts。")}</p>
+            <h3>{tr("推广二维码")}</h3>
+            <p>{tr("当前使用明确占位，正式下载二维码将在发布时内置。")}</p>
           </div>
         </Modal>
       )}
       {duplicateTitle && (
-        <Modal title="标题重复" onClose={() => setDuplicateTitle("")}>
+        <Modal title={tr("标题重复")} onClose={() => setDuplicateTitle("")}>
           <div className="form-stack">
-            <p role="alert">{duplicateTitle}</p>
+            <p role="alert">{tr("DUPLICATE_TITLE:" + duplicateTitle).slice("DUPLICATE_TITLE:".length)}</p>
             <div className="modal-actions">
-              <button className="primary" onClick={() => setDuplicateTitle("")}>
-                知道了
-              </button>
+              <button className="primary" onClick={() => setDuplicateTitle("")}>{tr("知道了")}</button>
             </div>
           </div>
         </Modal>
       )}
       {confirmation && (
         <Modal
-          title={confirmation.title ?? "确认操作"}
+          title={confirmation.title ?? tr("确认操作")}
           onClose={() => {
             confirmation.resolve(false);
             setConfirmation(null);
           }}
         >
           <div className="form-stack">
-            <p>{confirmation.text}</p>
+            <p>{tr(confirmation.text)}</p>
             <div className="modal-actions">
               <button
                 onClick={() => {
@@ -2327,7 +2233,7 @@ export default function App() {
                   setConfirmation(null);
                 }}
               >
-                {confirmation.cancelLabel ?? "取消"}
+                {confirmation.cancelLabel ?? tr("取消")}
               </button>
               <button
                 className="danger"
@@ -2336,7 +2242,7 @@ export default function App() {
                   setConfirmation(null);
                 }}
               >
-                {confirmation.confirmLabel ?? "确认删除"}
+                {confirmation.confirmLabel ?? tr("确认删除")}
               </button>
             </div>
           </div>
@@ -2363,21 +2269,21 @@ function SearchFilters({
     <div className="search-filters">
       <div className="filter-buttons">
         <button
-          aria-label="展开或收起搜索"
+          aria-label={tr("展开或收起搜索")}
           aria-expanded={open === "search"}
           className={query ? "selected" : ""}
           onClick={() => setOpen(open === "search" ? null : "search")}
         >
           <Icon name="search" />
-          {query ? "搜索中" : "搜索"}
+          {query ? tr("搜索中") : tr("搜索")}
         </button>
         <button
-          aria-label="展开或收起标签筛选"
+          aria-label={tr("展开或收起标签筛选")}
           aria-expanded={open === "tags"}
           className={selected.length ? "selected" : ""}
           onClick={() => setOpen(open === "tags" ? null : "tags")}
         >
-          {selected.length ? `标签（${selected.length}）` : "标签"}
+          {selected.length ? tr("标签（{0}）", selected.length) : tr("标签")}
         </button>
         {(query || selected.length > 0) && (
           <button
@@ -2386,9 +2292,7 @@ function SearchFilters({
               setQuery("");
               setFilter([]);
             }}
-          >
-            清除
-          </button>
+          >{tr("清除")}</button>
         )}
       </div>
       {open === "search" && <Search value={query} set={setQuery} />}
@@ -2396,7 +2300,7 @@ function SearchFilters({
         (tags.length ? (
           <TagFilter tags={tags} selected={selected} set={setFilter} />
         ) : (
-          <p className="muted">暂无标签</p>
+          <p className="muted">{tr("暂无标签")}</p>
         ))}
     </div>
   );
@@ -2406,15 +2310,15 @@ function Search({ value, set }: { value: string; set: (s: string) => void }) {
     <label className="search">
       <Icon name="search" />
       <input
-        aria-label="搜索"
-        placeholder="搜索主题、条目、标签…"
+        aria-label={tr("搜索")}
+        placeholder={tr("搜索主题、条目、标签…")}
         value={value}
         onChange={(e) => set(e.target.value)}
       />
       {value && (
         <button
           className="icon-button"
-          aria-label="清除搜索"
+          aria-label={tr("清除搜索")}
           onClick={() => set("")}
         >
           <Icon name="close" />
@@ -2433,13 +2337,11 @@ function TagFilter({
   set: (v: string[]) => void;
 }) {
   return tags.length ? (
-    <div className="tag-filter" aria-label="按标签筛选">
+    <div className="tag-filter" aria-label={tr("按标签筛选")}>
       <button
         className={!selected.length ? "selected" : ""}
         onClick={() => set([])}
-      >
-        全部
-      </button>
+      >{tr("全部")}</button>
       {tags.map((t) => (
         <button
           key={t}

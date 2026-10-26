@@ -1,3 +1,4 @@
+import { tr, locale } from "./i18n";
 import {
   useEffect,
   useMemo,
@@ -11,7 +12,7 @@ import type { ActivityEvent, RecordNote } from "./model";
 const level = (count: number) =>
   count === 0 ? 0 : count === 1 ? 1 : count < 4 ? 2 : count < 7 ? 3 : 4;
 const dateLabel = (key: string) =>
-  new Date(`${key}T12:00:00`).toLocaleDateString("zh-CN", {
+  new Date(`${key}T12:00:00`).toLocaleDateString(locale(), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -64,7 +65,7 @@ export function ActivityPage({
     const created = events.filter((event) => event.kind === "created").length;
     const modified = events.filter((event) => event.kind === "modified").length;
     const reviewed = events.filter((event) => event.kind === "reviewed").length;
-    return `新增 ${created} 篇，修改 ${modified} 篇，回顾 ${reviewed} 篇`;
+    return tr("新增 {0} 篇，修改 {1} 篇，回顾 {2} 篇", created, modified, reviewed);
   };
   useEffect(() => {
     const container = graph.current;
@@ -135,12 +136,12 @@ export function ActivityPage({
     next.focus();
   };
   return (
-    <section className="library activity-page" aria-label="品记使用历史">
+    <section className="library activity-page" aria-label={tr("品记使用历史")}>
       <header className="library-header">
-        <h1>历史</h1>
+        <h1>{tr("历史")}</h1>
         <div className="actions">
           <select
-            aria-label="历史年份"
+            aria-label={tr("历史年份")}
             value={year}
             onChange={(event) => {
               const year = Number(event.target.value);
@@ -158,20 +159,13 @@ export function ActivityPage({
           >
             {years.map((year) => (
               <option key={year} value={year}>
-                {year} 年
-              </option>
+                {year}</option>
             ))}
           </select>
-          <button disabled={busy} onClick={onRefresh}>
-            刷新历史
-          </button>
+          <button disabled={busy} onClick={onRefresh}>{tr("刷新历史")}</button>
         </div>
       </header>
-      <p className="activity-summary">
-        记录了 <strong>{entries.length}</strong> 天 · 新增{" "}
-        <strong>{created}</strong> 篇 · 修改 <strong>{modified}</strong> 篇次
-        {" "}· 回顾 <strong>{reviewed}</strong> 篇次
-      </p>
+      <p className="activity-summary">{tr("活跃天数：{0} · 新增：{1} · 更新：{2} · 回顾：{3}", entries.length, created, modified, reviewed)}</p>
       <div className="activity-calendar">
         <div
           className="activity-scroll"
@@ -185,7 +179,7 @@ export function ActivityPage({
             }}
           >
             <div className="activity-weekdays" aria-hidden="true">
-              {["日", "", "二", "", "四", "", "六"].map((label, index) => (
+              {[tr("日"), "", tr("二"), "", tr("四"), "", tr("六")].map((label, index) => (
                 <span key={index}>{label}</span>
               ))}
             </div>
@@ -196,7 +190,7 @@ export function ActivityPage({
               return (
                 <div className="activity-week" key={column}>
                   <span className="activity-month" aria-hidden="true">
-                    {monthStart ? `${monthStart.getMonth() + 1}月` : ""}
+                    {monthStart ? monthStart.toLocaleDateString(locale(), { month: "short" }) : ""}
                   </span>
                   {week.map((date) => {
                     const key = dayKey(date);
@@ -209,7 +203,7 @@ export function ActivityPage({
                         className={`activity-cell activity-level-${level(count)} ${selected === key ? "chosen" : ""}`}
                         disabled={key > today}
                         data-date={key}
-                        aria-label={`${dateLabel(key)}，${key > today ? "尚未到来" : summary(key)}`}
+                        aria-label={`${dateLabel(key)}，${key > today ? tr("尚未到来") : summary(key)}`}
                         aria-pressed={selected === key}
                         tabIndex={selected === key ? 0 : -1}
                         onFocus={() => setPreview(key)}
@@ -231,8 +225,8 @@ export function ActivityPage({
           <p>
             {dateLabel(preview ?? selected)} · {summary(preview ?? selected)}
           </p>
-          <div className="activity-legend" aria-label="颜色越深表示记录越多">
-            <span>少</span>
+          <div className="activity-legend" aria-label={tr("颜色越深表示记录越多")}>
+            <span>{tr("少")}</span>
             {[0, 1, 2, 3, 4].map((value) => (
               <i
                 key={value}
@@ -240,16 +234,14 @@ export function ActivityPage({
                 aria-hidden="true"
               />
             ))}
-            <span>多</span>
+            <span>{tr("多")}</span>
           </div>
         </div>
       </div>
       <div className="activity-day-heading">
         <h2 aria-live="polite">{dateLabel(selected)}</h2>
-        <label>
-          查看日期
-          <input
-            aria-label="查看历史日期"
+        <label>{tr("查看日期")}<input
+            aria-label={tr("查看历史日期")}
             type="date"
             min={`${year}-01-01`}
             max={year === currentYear ? today : `${year}-12-31`}
@@ -267,7 +259,7 @@ export function ActivityPage({
           />
         </label>
       </div>
-      <div className="activity-records" aria-label="当天笔记记录">
+      <div className="activity-records" aria-label={tr("当天笔记记录")}>
         {dayEvents.length ? (
           dayEvents.map((event) => (
             <button
@@ -277,30 +269,26 @@ export function ActivityPage({
               onClick={() => onOpen(event.noteId)}
             >
               <span className={`activity-kind ${event.kind}`}>
-                {event.kind === "created" ? "新增" : event.kind === "reviewed" ? "回顾" : "修改"}
+                {event.kind === "created" ? tr("新增") : event.kind === "reviewed" ? tr("回顾") : tr("修改")}
               </span>
               <span className="activity-record-title">{event.title}</span>
               <span className="activity-record-time">
                 {active.has(event.noteId)
-                  ? new Date(event.at).toLocaleTimeString("zh-CN", {
+                  ? new Date(event.at).toLocaleTimeString(locale(), {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
-                  : "在回收站"}
+                  : tr("在回收站")}
               </span>
             </button>
           ))
         ) : (
-          <p className="activity-empty">这一天还没有新增、修改或回顾笔记。</p>
+          <p className="activity-empty">{tr("这一天还没有新增、修改或回顾笔记。")}</p>
         )}
       </div>
-      <p className="activity-source">
-        按本地日期汇总；同一天同一篇笔记的多次修改或回顾分别计为一次。历史以现有笔记及保留的版本为准，包含回收站中的笔记。
-      </p>
+      <p className="activity-source">{tr("按本地日期汇总；同一天同一篇笔记的多次修改或回顾分别计为一次。历史以现有笔记及保留的版本为准，包含回收站中的笔记。")}</p>
       {invalid > 0 && (
-        <p className="error" role="alert">
-          有 {invalid} 条记录的时间无效，未计入图表；原文件未修改。
-        </p>
+        <p className="error" role="alert">{tr("有")}{invalid}{tr("条记录的时间无效，未计入图表；原文件未修改。")}</p>
       )}
     </section>
   );

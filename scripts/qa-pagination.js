@@ -7,7 +7,7 @@ async(page)=>{
    const original=CanvasRenderingContext2D.prototype.fillText;const drawn=[];
    CanvasRenderingContext2D.prototype.fillText=function(text,x,y,...rest){drawn.push({text,x,y,width:this.measureText(text).width,canvasWidth:this.canvas.width,canvasHeight:this.canvas.height});return original.call(this,text,x,y,...rest);};
    let pages;
-   try{pages=await renderShare(note,{selected:[note.entries[0].id],reasons:true,description:false,tags:false,date:false,invitation:false,message:''});}finally{CanvasRenderingContext2D.prototype.fillText=original;}
+   try{pages=await renderShare(note,{selected:[note.entries[0].id],reasons:true,description:false,tags:false,date:false,invitation:false,message:'',signature:'',format:'pages'});}finally{CanvasRenderingContext2D.prototype.fillText=original;}
    if(pages.length<3)throw Error('Expected multiple pages');
    if(drawn.some(x=>x.text.includes('不应泄露')||x.text.includes('绝不公开')))throw Error('Share privacy failed');
    const clipped=drawn.filter(x=>x.x+x.width>x.canvasWidth-50||x.y+32>x.canvasHeight);

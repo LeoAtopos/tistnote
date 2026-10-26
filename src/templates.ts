@@ -1,4 +1,5 @@
 import type { Template } from "./model";
+import { tr } from "./i18n";
 const topics: [string, string, string][] = [
   ["我最喜欢的电影", "电影", "哪一幕让你至今记得？"],
   ["想反复重看的电影", "电影", "想一想在不同阶段重看的感受。"],
@@ -58,3 +59,6 @@ export const builtinTemplates: Template[] = topics.map(
     builtin: true,
   }),
 );
+export const localizedBuiltinTemplates = (): Template[] => builtinTemplates.map(template => ({
+  ...template, title: tr(template.title), tags: template.tags.map(tag => tr(tag)), hint: tr(template.hint),
+}));
