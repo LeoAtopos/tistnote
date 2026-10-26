@@ -1,5 +1,14 @@
 # 品记验证记录
 
+## 2026-10-26 Windows / Android 刷新发行构建
+
+- 构建源码：`db8591ffee4a`。45 项 TypeScript、23 项 Rust、4 项 Android 文件 / ZIP 测试通过；Windows 完整离线 NSIS 与 Android Release 构建通过，Android lint 无错误。
+- Windows 保留 0.2.0 下载地址，标准安装包和 offline-setup 兼容文件内容相同，均内置 WebView2；独立 exe 为 x64，ProductVersion 为 0.2.0。
+- Android 沿用原发行签名，versionCode 提高为 2；APK 校验通过，无 INTERNET 权限，不启用调试。在 Android 15 模拟器覆盖安装，既有中文笔记、条目和理由保留；验证笔记画布、平移及点击打开，关闭 Wi-Fi / 移动数据后重启可用，模板库显示新画布。没有在实体手机验收。
+- 首次并行原生构建时 Java 测试进程内存不足；关闭本次测试模拟器、待 Windows 编译结束后重试通过，未跳过测试。最终 APK 来自成功重试的构建。
+- Pages 部署后线上复测笔记画布、模板画布、宽窄屏下载菜单及关闭提示状态均通过。完整安装包、签名信息和 SHA256 记录随 GitHub Release 提供，原下载链接保留。
+- Windows 安装包未签名，未在全新的 Windows 10 / 11 系统进行安装验收。
+
 ## 2026-10-26 我的笔记画布
 
 - 45 项领域测试通过；新增无分组直连中心、多级祖先、空分组、筛选剪枝、空心 / 实心 / 回顾标记及一分钟到期边界测试。Pages 生产构建通过。
