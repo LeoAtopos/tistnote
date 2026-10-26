@@ -1,5 +1,11 @@
 # 品记验证记录
 
+## 2026-10-27 iOS 浏览器存储 Pages 发布
+
+- 源码 `d81e8a5` 已推送 main，Pages 构建提交 `2f0bb339708d`，GitHub 构建状态 built，线上入口确认加载本次 `index-DaeMrorT.js`。
+- 在正式 HTTPS 页面用 WebKit 26.6 与 iPhone 用户代理复测 `qa-ios-local.js`：本地 Markdown 保存、刷新恢复、提示关闭、多标签独占、空间不足保护、ZIP 下载与恢复、损坏备份保护、资料库切换 / 新建、Markdown 导入及英文提示均通过，检查字号最低 18px。
+- 本轮发布范围为源码、文档及 Pages；没有重新打包或替换 Windows / Android 安装文件。测试使用 WebKit 自动化，未使用真实苹果设备。
+
 ## 2026-10-27 iPhone / iPad 浏览器内部资料库
 
 - 54 项 TypeScript 测试及 Pages 生产构建通过。新增 iPhone / iPad / 桌面身份 iPad 检测、ZIP Unicode / 二进制 / 空分组往返、外层目录兼容、锁文件排除、路径穿越、文件目录碰撞、大小写冲突、损坏清单 / CRC、符号链接、加密、超大和虚报解压大小检查。压缩库 fflate 0.8.3 随程序打包，npm 官方审计无漏洞。
