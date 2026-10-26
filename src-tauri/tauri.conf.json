@@ -34,9 +34,10 @@
       "icons/icon.ico"
     ],
     "shortDescription": "品察世间人生，记录个人审美与偏好",
+    "resources": { "../LICENSE": "LICENSE" },
     "windows": {
       "webviewInstallMode": {
-        "type": "skip"
+        "type": "offlineInstaller"
       },
       "nsis": {
         "languages": [

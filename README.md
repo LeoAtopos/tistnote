@@ -11,8 +11,7 @@ Tistnote is a local-first list notebook for personal preferences, judgments, and
 | Edition | Link | Requirements |
 | --- | --- | --- |
 | Web app | [Open Tistnote on GitHub Pages](https://leoatopos.github.io/tistnote/) | Current desktop Chrome or Edge; authorize a local library folder |
-| Windows installer | [Download 0.2.0](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe) | Windows 10/11 x64 with Microsoft WebView2 |
-| Windows offline installer | [Download with WebView2](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-offline-setup.exe) | Includes the WebView2 offline runtime |
+| Windows offline installer | [Download 0.2.0](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe) | Windows 10/11 x64; includes the WebView2 offline runtime |
 | Windows portable executable | [Download tistnote.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe) | Microsoft WebView2 installed |
 
 [All releases, checksums, and build information](https://github.com/LeoAtopos/tistnote/releases). Windows builds are currently unsigned.
@@ -79,10 +78,9 @@ cargo test --lib --manifest-path src-tauri/Cargo.toml
 
 ```powershell
 npm run package
-npm run package:offline
 ```
 
-Executables are in `src-tauri/target/release/`; NSIS installers are in `src-tauri/target/release/bundle/nsis/`. Both commands use the same installer output name, so copy each result before building the other variant. Build dependency downloads need a network connection; the Windows app does not.
+Executables are in `src-tauri/target/release/`; NSIS installers are in `src-tauri/target/release/bundle/nsis/`. The default build includes the WebView2 offline runtime; `npm run package:offline` remains an equivalent command. The existing Windows download URL is preserved and serves the complete offline installer. Build dependency downloads need a network connection; the Windows app does not. The web-only installation link is hidden in the Windows app.
 
 ### GitHub Pages builds
 

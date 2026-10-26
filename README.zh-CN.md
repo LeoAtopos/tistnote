@@ -16,11 +16,12 @@
 
 | 文件 | 使用方式 |
 | --- | --- |
-| [tistnote-0.2.0-windows-x64-setup.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe) | 轻量安装包，需要电脑已有 Microsoft WebView2 |
-| [tistnote-0.2.0-windows-x64-offline-setup.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-offline-setup.exe) | 包含 WebView2 的完整离线安装包，适合首次安装 |
+| [tistnote-0.2.0-windows-x64-setup.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe) | 完整离线安装包，包含 WebView2 运行时，适合首次安装 |
 | [tistnote.exe](https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe) | 直接运行，需要电脑已有 Microsoft WebView2 |
 
 Release 同时提供使用说明、构建信息及 `SHA256SUMS.txt` 校验文件。仓库已公开，下载和应用使用均无需账号。
+
+Windows 安装包下载链接保持不变，现有地址对应完整离线安装包。Windows 应用中不显示网页上的“安装 Windows 版本”入口。
 
 ## 使用网页版
 
@@ -109,16 +110,13 @@ npm run dev
 ## 构建 Windows 版本
 
 ```powershell
-# 轻量安装包：使用电脑已有的 WebView2
-npm run package
-
 # 完整离线安装包：内置 WebView2 离线运行时
-npm run package:offline
+npm run package
 ```
 
 - 可执行程序：`src-tauri/target/release/tistnote.exe`。
 - NSIS 安装包：`src-tauri/target/release/bundle/nsis/`。
-- 两种安装包默认写入同一目录，保留两者时请分别复制并命名。
+- 默认只构建完整离线安装包，`npm run package:offline` 保留为等效命令。
 
 开发依赖和打包工具的首次下载需要网络，正式应用的核心功能不需要网络。目标平台为 Windows 10/11 x64；当前程序尚未代码签名，正式分发前应完成干净系统的安装与卸载验收。
 

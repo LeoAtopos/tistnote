@@ -1,5 +1,12 @@
 # 品记验证记录
 
+## 2026-10-26 Windows 完整离线包刷新
+
+- 安装入口继续由 `api.web` 限定；生产前端分别注入 Tauri 运行环境标识与普通网页环境验证，前者调用原生命令且无下载链接，后者保留安装链接，均无页面异常。此项是前端环境验证，不等同于干净系统安装验收。
+- 默认 `npm run package` 改为包含完整 WebView2 离线运行时；NSIS 脚本确认 `INSTALLWEBVIEW2MODE=offlineInstaller`、嵌入运行时文件及 MIT LICENSE。Windows 生产构建成功。
+- 中英文 README 只提供完整离线安装包和独立 exe，安装包的既有 `v0.2.0/...-setup.exe` 地址保持不变，旧 `...-offline-setup.exe` 地址保留为同一离线包的兼容别名。保留发布标签，刷新二进制与构建信息，以 `build-info.json` 的源码提交确定本次构建。
+- Pages 生产构建通过并重新发布。此次不改写用户资料库；安装包仍未签名，未在全新 Windows 虚拟机执行安装 / 卸载验收。
+
 ## 2026-10-26 欢迎页定位与 Windows 下载入口
 
 - 欢迎标题改为“品察世间，建设自我。”，英文同步为“Notice the world. Build yourself.”。网页版底部新增“安装 Windows 版本”链接，指向 GitHub Release 已发布的 0.2.0 x64 轻量安装包；桌面应用不显示该网页下载入口。
