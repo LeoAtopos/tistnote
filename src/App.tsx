@@ -887,7 +887,7 @@ export default function App() {
         {!vault ? (
           <section className="welcome">
             <span className="welcome-mark">{tr("品")}</span>
-            <h1>{tr("品察世间，记录好恶。")}</h1>
+            <h1>{tr("品察世间，建设自我。")}</h1>
             <p>{tr("喜欢与讨厌，认同与反感。")}<br />{tr("记录审美与偏好，回看自己的变化。")}</p>
             <button
               className="primary"
@@ -901,6 +901,11 @@ export default function App() {
             >{tr("创建或打开本地资料库")}<Icon name="arrow" />
             </button>
             <p className="welcome-foot">{tr("笔记保存在你的文件夹中，随时带走。")}</p>
+            {api.web && (
+              <a className="windows-download" href="https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-windows-x64-setup.exe" target="_blank" rel="noopener noreferrer">
+                {tr("安装 Windows 版本")}
+              </a>
+            )}
           </section>
         ) : view === "notes" ? (
           <div

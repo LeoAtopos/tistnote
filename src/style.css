@@ -1152,6 +1152,19 @@ svg {
   font-size: 18px;
   color: var(--secondary-ink, #949b8d);
 }
+.windows-download {
+  color: var(--green);
+  font-size: 22px;
+  line-height: 1.5;
+  padding: 8px;
+  text-underline-offset: 5px;
+}
+.windows-download:hover { text-decoration-thickness: 2px; }
+.windows-download:focus-visible {
+  outline: 2px solid var(--focus-color, #668875);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
 .library {
   padding: 44px 48px;
   max-width: 1500px;
