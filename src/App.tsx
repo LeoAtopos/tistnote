@@ -52,6 +52,7 @@ import {
 } from "./components";
 
 type View = "notes" | "templates" | "activity" | "trash";
+const browserTipDismissedKey = "tistnote-browser-tip-dismissed-v1";
 type Dialog =
   | "settings"
   | "share"
@@ -66,6 +67,15 @@ type Dialog =
   | null;
 export default function App() {
   const preferences = usePreferences();
+  const [browserTipVisible, setBrowserTipVisible] = useState(() => {
+    try { return localStorage.getItem(browserTipDismissedKey) !== "1"; }
+    catch { return true; }
+  });
+  function dismissBrowserTip() {
+    setBrowserTipVisible(false);
+    try { localStorage.setItem(browserTipDismissedKey, "1"); }
+    catch { /* Keep the tip dismissed for this visit if storage is unavailable. */ }
+  }
   const uiLanguage = language();
   const [preferenceError, setPreferenceError] = useState("");
   const resolvedTheme = theme();
@@ -871,12 +881,18 @@ export default function App() {
         </div>
       </aside>
       <main className="workspace">
-        {api.preview && (
-          <div className="preview-banner">{tr("浏览器开发预览 · 真实 Markdown 资料库请使用桌面版")}</div>
+        {browserTipVisible && (api.preview || api.web) && (
+          <div className="preview-banner">
+            <span>{tr(api.preview
+              ? "浏览器开发预览 · 真实 Markdown 资料库请使用桌面版"
+              : api.localFiles
+                ? "网页版 · 仅访问你授权的文件夹；同一资料库请勿同时在桌面版和网页版中编辑。"
+                : "请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。")}</span>
+            <button className="icon-button" aria-label={tr("关闭提示")} title={tr("关闭提示")} onClick={dismissBrowserTip}>
+              <Icon name="close" />
+            </button>
+          </div>
         )}
-        {api.web && <div className="preview-banner">{tr(api.localFiles
-          ? "网页版 · 仅访问你授权的文件夹；同一资料库请勿同时在桌面版和网页版中编辑。"
-          : "请使用最新版桌面 Chrome 或 Edge，或在设置中安装本地版本。")}</div>}
         {error && (
           <div className="alert error" role="alert">
             <span>{tr(error).replace("CONFLICT:", "")}</span>

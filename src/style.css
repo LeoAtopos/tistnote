@@ -369,11 +369,17 @@ svg {
   min-width: 0;
 }
 .preview-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: var(--quiet-surface, #e7ecdf);
-  padding: 8px 22px;
-  font-size: 18px;
+  padding: 4px 22px;
+  font-size: 20px;
   color: var(--accent-ink, #4b6242);
 }
+.preview-banner > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.preview-banner .icon-button { background: transparent; border: 0; color: inherit; }
+.preview-banner .icon-button:hover { background: var(--tint); }
 .alert {
   display: flex;
   align-items: center;

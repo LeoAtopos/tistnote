@@ -23,6 +23,16 @@ async page=>{
    const welcomeLayout=await welcome.evaluate(el=>({minFont:Math.min(...[...el.querySelectorAll('a')].map(n=>parseFloat(getComputedStyle(n).fontSize))),overflow:document.documentElement.scrollWidth>innerWidth}));
    if(welcomeLayout.minFont<18||welcomeLayout.overflow)throw Error(JSON.stringify(welcomeLayout));
    if(platform==='web')await tab.screenshot({path:`output/playwright/welcome-downloads-${width}.png`,fullPage:true});
+   if(platform==='web'){
+    const banner=tab.locator('.preview-banner');
+    if(await banner.count()!==1)throw Error('Browser tip missing');
+    if(await banner.locator('span').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))<18)throw Error('Browser tip font too small');
+    await banner.getByRole('button',{name:'关闭提示',exact:true}).focus();
+    await tab.keyboard.press('Enter');
+    if(await banner.count())throw Error('Browser tip did not close');
+    await tab.reload();
+    if(await banner.count())throw Error('Browser tip dismissal was not remembered');
+   }
    await tab.getByRole('button',{name:'设置',exact:true}).click();
    await tab.getByRole('button',{name:'安装本地版本',exact:true}).click();
    const modal=tab.getByRole('dialog',{name:'安装本地版本',exact:true});
