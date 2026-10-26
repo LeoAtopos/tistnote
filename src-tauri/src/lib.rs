@@ -1,4 +1,5 @@
 mod storage;
+mod canvas;
 use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -11,6 +12,8 @@ struct AppState(Mutex<Option<Store>>);
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum Request {
+    CanvasGet,
+    CanvasPut { layout: canvas::CanvasLayout, expected: Option<String> },
     Activity,
     List {
         #[serde(default)]
@@ -86,6 +89,8 @@ fn vault_command(request: Request, state: State<AppState>) -> Result<Value> {
     let guard = state.0.lock().map_err(|e| e.to_string())?;
     let s = guard.as_ref().ok_or("请先打开本地资料库")?;
     let value = match request {
+        Request::CanvasGet => canvas::get(&s.root)?,
+        Request::CanvasPut { layout, expected } => canvas::put(&s.root, layout, expected.as_deref())?,
         Request::Activity => json!(s.activity()?),
         Request::List { recover } => json!(s.list(recover)?),
         Request::Save {

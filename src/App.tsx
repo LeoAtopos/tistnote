@@ -40,6 +40,7 @@ import { NoteTree } from "./NoteTree";
 import { ActivityPage } from "./ActivityPage";
 import { TemplateCanvas } from "./TemplateCanvas";
 import { NoteCanvas } from "./NoteCanvas";
+import { canvasKeys, emptyCanvasLayout, remapCanvasGroup, reorderCanvas, translateCanvas, type CanvasArrangement, type CanvasState, type NoteGraph } from "./canvas-layout";
 import { Introduction, introductionSeenKey } from "./Introduction";
 import {
   AutoTextarea,
@@ -117,6 +118,17 @@ export default function App() {
   const [introductionOpen, setIntroductionOpen] = useState(false);
   const [templateView, setTemplateView] = useState<"canvas" | "cards">("canvas");
   const [noteView, setNoteView] = useState<"list" | "canvas">("list");
+  const [canvasState, setCanvasState] = useState<CanvasState>({ layout: emptyCanvasLayout(), revision: null });
+  const [canvasSession, setCanvasSession] = useState(0);
+  const [canvasReady, setCanvasReady] = useState(false);
+  useEffect(() => {
+    if (!canvasSession) return;
+    let cancelled = false;
+    setCanvasReady(false);
+    api.command<CanvasState>("canvas_get").then(state => { if (!cancelled) { setCanvasState(state); setCanvasReady(true); } })
+      .catch(error => { if (!cancelled) setError(tr(String(error).replace(/^Error: /, ""))); });
+    return () => { cancelled = true; };
+  }, [canvasSession]);
   const [templateTools, setTemplateTools] = useState(false);
   const introductionSeen = useRef(false);
   function introduceIfNeeded() {
@@ -321,6 +333,8 @@ export default function App() {
     conflictRef.current = false;
   }
   function install(v: Vault) {
+    setCanvasReady(false);
+    setCanvasSession(s => s + 1);
     setVault(v);
     select(
       v.notes
@@ -780,6 +794,15 @@ export default function App() {
     setGroup(r.group ?? "");
     setNotice(tr("已移到{0}", r.group ? `“${r.group}”` : tr("未分组")));
   }
+  async function renameGroupAndLayout(name: string, newName: string) {
+    const state = await api.command<CanvasState>("canvas_get");
+    await api.command("group_rename", { name, new_name: newName });
+    const layout = remapCanvasGroup(state.layout, name, newName);
+    if (JSON.stringify(layout) !== JSON.stringify(state.layout)) {
+      try { setCanvasState(await api.command<CanvasState>("canvas_put", { layout, expected: state.revision })); }
+      catch (error) { await refreshGroups(); throw Error(tr("分组已移动，但画布布局未保存：{0}", String(error))); }
+    }
+  }
   async function moveTreeItem(item: TreeItem, target: string) {
     await checkpoint();
     let movedGroup: string | null = null;
@@ -797,10 +820,7 @@ export default function App() {
     } else {
       movedGroup = groupMovePath(item.id, target);
       if (movedGroup === item.id) return;
-      await api.command("group_rename", {
-        name: item.id,
-        new_name: movedGroup,
-      });
+      await renameGroupAndLayout(item.id, movedGroup);
     }
     await refreshGroups();
     if (movedGroup && group !== null && inGroup(group, item.id))
@@ -820,6 +840,31 @@ export default function App() {
         ),
     );
     setNotice(tr("已移到{0}", target ? `“${target}”` : tr("根目录")));
+  }
+  async function arrangeCanvas(change: CanvasArrangement, graph: NoteGraph) {
+    await run(async () => {
+      let layout = canvasState.layout;
+      let expected = canvasState.revision;
+      if (change.target?.mode === "into") {
+        const item: TreeItem = change.key.startsWith("group:") ? { type: "group", id: change.key.slice(6) } : { type: "note", id: change.key.slice(5) };
+        const target = change.target.key === "root" ? "" : change.target.key.slice(6);
+        const movedGroup = item.type === "group" ? groupMovePath(item.id, target) : null;
+        await moveTreeItem(item, target);
+        const latest = await api.command<CanvasState>("canvas_get");
+        layout = latest.layout; expected = latest.revision;
+        const affected = canvasKeys(graph, change.key);
+        if (movedGroup) for (const key of [...affected]) if (key.startsWith("group:")) affected.add("group:" + movedGroup + key.slice(6 + item.id.length));
+        layout = { ...layout, positions: Object.fromEntries(Object.entries(layout.positions).filter(([key]) => !affected.has(key))) };
+      } else if (change.target) {
+        layout = reorderCanvas(layout, graph, change.key, change.target.key, change.target.mode);
+      } else layout = translateCanvas(layout, graph, change.key, change.delta);
+      try {
+        setCanvasState(await api.command<CanvasState>("canvas_put", { layout, expected }));
+      } catch (error) {
+        setCanvasState(await api.command<CanvasState>("canvas_get"));
+        throw error;
+      }
+    });
   }
   const runGroup = (task: () => Promise<void>) =>
     run(task, (e) => setGroupError(String(e).replace(/^Error: /, "")));
@@ -1132,6 +1177,14 @@ export default function App() {
                       setListVisible(true);
                       setListPanel(null);
                     }}>{tr(noteView === "list" ? "画布视图" : "列表视图")}</button>
+                    {noteView === "canvas" && <>
+                      <button disabled={busy} onClick={() => void run(async () => { setCanvasState(await api.command<CanvasState>("canvas_get")); setCanvasReady(true); setListPanel(null); })}>{tr("刷新画布布局")}</button>
+                      <button disabled={busy || !canvasReady} onClick={() => void run(async () => {
+                        if (!await confirm(tr("恢复自动布局会清除自定义位置，分组排序保持不变。是否继续？"), { title: tr("恢复自动布局"), confirmLabel: tr("恢复") })) return;
+                        setCanvasState(await api.command<CanvasState>("canvas_put", { layout: { ...canvasState.layout, positions: {} }, expected: canvasState.revision }));
+                        setListPanel(null);
+                      })}>{tr("恢复自动布局")}</button>
+                    </>}
                     <label>{tr("排序")}<select
                         aria-label={tr("笔记排序")}
                         value={sort}
@@ -1193,7 +1246,8 @@ export default function App() {
               </div>
               {noteView === "canvas" ? <NoteCanvas
                 groups={groups} records={list} now={reviewNow} filtered={!!(query.trim() || filter.length)}
-                currentId={note?.id} busy={busy} onOpen={id => void run(() => openNote(id))}
+                allRecords={vault.notes} layout={canvasState.layout} onArrange={canvasReady ? arrangeCanvas : undefined}
+                onFolder={setGroup} busy={busy} onOpen={id => void run(() => openNote(id))}
               /> : <NoteTree
                 groups={groups}
                 records={list}
@@ -1202,6 +1256,7 @@ export default function App() {
                 currentId={note?.id}
                 currentGroup={group}
                 compact={compact}
+                groupOrder={canvasState.layout.groupOrder}
                 now={reviewNow}
                 busy={busy}
                 query={query}
@@ -1878,10 +1933,7 @@ export default function App() {
                   const name = groupName(groupInput);
                   await checkpoint();
                   if (editingGroup)
-                    await api.command("group_rename", {
-                      name: editingGroup,
-                      new_name: name,
-                    });
+                    await renameGroupAndLayout(editingGroup, name);
                   else await api.command("group_create", { name });
                   const v = await refreshGroups();
                   if (

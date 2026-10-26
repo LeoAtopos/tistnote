@@ -34,6 +34,7 @@ export function NoteTree({
   onFolder,
   onOpen,
   onMove,
+  groupOrder = [],
 }: {
   groups: string[];
   records: RecordNote[];
@@ -49,6 +50,7 @@ export function NoteTree({
   onFolder: (path: string | null) => void;
   onOpen: (id: string) => void;
   onMove: (item: TreeItem, target: string) => void;
+  groupOrder?: string[];
 }) {
   const [dragging, setDragging] = useState<TreeItem | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export function NoteTree({
   });
   const selectedGroup =
     records.find((r) => r.note.id === currentId)?.group ?? "";
-  const root = noteTree(groups, records, !!(query.trim() || tags.length));
+  const root = noteTree(groups, records, !!(query.trim() || tags.length), groupOrder);
   useEffect(() => {
     setClosed(
       (previous) =>

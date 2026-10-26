@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { newNote, uid, type Note, type RecordNote, type Vault, type Version } from "../src/model";
 import { markdown, parseMarkdown, revision } from "../src/markdown";
 import { WebStore, type FilePort } from "../src/web-store";
+import { emptyCanvasLayout, type CanvasState } from "../src/canvas-layout";
 
 class MemoryFiles implements FilePort {
   data = new Map<string,string>();
@@ -28,6 +29,29 @@ const fixture=()=>{const note=newNote();note.title='喜欢与不喜欢';note.des
 async function setup(){const files=new MemoryFiles();const store=new WebStore(files,'test');await store.initialize();return {files,store};}
 const save=(store:WebStore,note:Note,expected:string|null=null,group='')=>store.command('save',{note,expected,group}) as Promise<RecordNote>;
 const versions=(store:WebStore,id:string)=>store.command('versions',{id}) as Promise<Version[]>;
+
+test('canvas positions and group order persist without touching Markdown and reject conflicts or corruption',async()=>{
+  const {store,files}=await setup();
+  const r=await save(store,fixture());
+  const noteFile=`notes/${r.note.id}.md`,original=files.data.get(noteFile);
+  const initial=await store.command('canvas_get') as CanvasState;
+  assert.equal(initial.revision,null);
+  const layout={...emptyCanvasLayout(),positions:{[`note:${r.note.id}`]:{x:120,y:-50}},groupOrder:['B','A']};
+  const saved=await store.command('canvas_put',{layout,expected:null}) as CanvasState;
+  assert(saved.revision);
+  assert.deepEqual((await store.command('canvas_get') as CanvasState).layout,layout);
+  const reopened=new WebStore(files,'test');await reopened.initialize();
+  assert.deepEqual(await reopened.command('canvas_get'),saved);
+  await assert.rejects(store.command('canvas_put',{layout:emptyCanvasLayout(),expected:null}),/外部更新/);
+  assert.equal(files.data.get(noteFile),original);
+  const before=files.data.get('.tistnote/canvas.json');
+  files.fail=(path,text)=>path==='.tistnote/canvas.json'&&text!==null;
+  await assert.rejects(store.command('canvas_put',{layout:emptyCanvasLayout(),expected:saved.revision}));
+  assert.equal(files.data.get('.tistnote/canvas.json'),before);files.fail=null;
+  files.data.set('.tistnote/canvas.json','broken');
+  await assert.rejects(store.command('canvas_put',{layout,expected:saved.revision}),/原文件已保留/);
+  assert.equal(files.data.get('.tistnote/canvas.json'),'broken');assert.equal(files.data.get(noteFile),original);
+});
 
 test('web Markdown roundtrip preserves multiline reasons, metadata and stable entry IDs',async()=>{
   const note=fixture();note.reviewTestMinute=true;note.lastReviewedAt=new Date().toISOString();note.tags=['电影'];

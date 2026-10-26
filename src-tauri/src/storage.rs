@@ -344,7 +344,7 @@ pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     tmp.persist(path).map_err(io)?;
     Ok(())
 }
-fn no_links(path: &Path) -> Result<()> {
+pub(crate) fn no_links(path: &Path) -> Result<()> {
     for p in path.ancestors() {
         if let Ok(m) = fs::symlink_metadata(p) {
             #[cfg(windows)]
@@ -378,7 +378,7 @@ fn read_record(path: &Path) -> Result<Record> {
     })
 }
 
-fn group_name(name: &str) -> Result<String> {
+pub(crate) fn group_name(name: &str) -> Result<String> {
     let name = name.trim();
     if name.is_empty() {
         return Err("请填写分组名称".into());

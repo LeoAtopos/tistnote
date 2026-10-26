@@ -3,6 +3,7 @@ import { language } from "./preferences";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { androidRequest, isAndroid } from "./android-bridge";
 import { noteActivity } from "./activity";
+import { readCanvasState, validateCanvasLayout } from "./canvas-layout";
 import {
   contentKey,
   assertUniqueTitle,
@@ -31,6 +32,7 @@ const androidVault = () => import("./android-vault");
 interface PreviewState {
   vault: Vault;
   history: Record<string, Version[]>;
+  canvasRaw?: string;
 }
 const key = "tistnote-development-preview-v1";
 let memory: PreviewState | null = null;
@@ -94,6 +96,16 @@ async function mock(
   const s = read();
   const id = data.id as string;
   switch (type) {
+    case "canvas_get": return readCanvasState(s.canvasRaw ?? null);
+    case "canvas_put": {
+      const current = await readCanvasState(s.canvasRaw ?? null);
+      validateCanvasLayout(data.layout);
+      if (current.revision !== (data.expected ?? null)) throw Error(tr("画布布局已在外部更新，请刷新画布后重试。"));
+      const before = s.canvasRaw;
+      s.canvasRaw = JSON.stringify(data.layout, null, 2);
+      try { commit(); } catch (error) { s.canvasRaw = before; throw error; }
+      return readCanvasState(s.canvasRaw);
+    }
     case "activity":
       return [...s.vault.notes, ...s.vault.trash].flatMap((r) =>
         noteActivity(r.note, s.history[r.note.id] ?? []),

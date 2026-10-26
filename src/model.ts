@@ -184,6 +184,7 @@ export function noteTree(
   groups: string[],
   records: RecordNote[],
   filtered = false,
+  groupOrder: string[] = [],
 ): NoteFolder {
   const root: NoteFolder = { path: "", name: "", folders: [], notes: [] };
   const folders = new Map<string, NoteFolder>([["", root]]);
@@ -206,7 +207,10 @@ export function noteTree(
   records.forEach((r) => folder(r.group ?? "").notes.push(r));
   function arrange(node: NoteFolder): boolean {
     node.folders = node.folders.filter((child) => arrange(child) || !filtered);
-    node.folders.sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+    node.folders.sort((a, b) => {
+      const rank = (path: string) => { const index = groupOrder.indexOf(path); return index < 0 ? Infinity : index; };
+      return (rank(a.path) - rank(b.path)) || a.name.localeCompare(b.name, "zh-CN");
+    });
     return !!(node.notes.length || node.folders.length);
   }
   arrange(root);

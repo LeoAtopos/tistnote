@@ -1,6 +1,7 @@
 import { assertUniqueTitle, contentKey, groupName, inGroup, uid, validEntries, validTitle, type Note, type RecordNote, type Template, type Vault, type Version } from "./model";
 import { noteActivity } from "./activity";
 import { markdown, parseMarkdown, revision, validateNote } from "./markdown";
+import { readCanvasState, validateCanvasLayout } from "./canvas-layout";
 
 export interface FilePort {
   read(path: string): Promise<string | null>;
@@ -42,7 +43,7 @@ export class WebStore {
       const paths = new Set<string>();
       if (!Array.isArray(changes) || !changes.length) throw Error(`Invalid recovery journal: ${path}`);
       for (const c of changes) {
-        if (!c || typeof c.path !== "string" || !/^(notes\/|\.tistnote\/(history|trash|templates|conflicts)\/)/.test(c.path)
+        if (!c || typeof c.path !== "string" || !/^(notes\/|\.tistnote\/(history|trash|templates|conflicts)\/|\.tistnote\/canvas\.json$)/.test(c.path)
           || paths.has(c.path) || ![c.before,c.after].every(value => value === null || typeof value === "string"))
           throw Error(`Invalid recovery journal: ${path}`);
         groupName(c.path); paths.add(c.path);
@@ -146,6 +147,16 @@ export class WebStore {
   }
   private async execute(type: string, data: Record<string, unknown>): Promise<unknown> {
     await this.recover();
+    if (type === "canvas_get" || type === "canvas_put") {
+      const path = ".tistnote/canvas.json", raw = await this.files.read(path);
+      const current = await readCanvasState(raw);
+      if (type === "canvas_get") return current;
+      validateCanvasLayout(data.layout);
+      if (current.revision !== (data.expected ?? null)) throw Error("画布布局已在外部更新，请刷新画布后重试。");
+      const after = JSON.stringify(data.layout, null, 2);
+      await this.transaction([{ path, before: raw, after }]);
+      return readCanvasState(after);
+    }
     const state = await this.load();
     const id = data.id as string;
     if (type === "list") {

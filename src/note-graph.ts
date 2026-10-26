@@ -1,9 +1,9 @@
 import { noteTree, validEntries, needsReview, type NoteFolder, type RecordNote } from "./model";
 import type { CanvasBranch, CanvasNode } from "./canvas-graph";
 
-export function noteGraph(groups: string[], records: RecordNote[], now: number, filtered = false) {
+export function noteGraph(groups: string[], records: RecordNote[], now: number, filtered = false, groupOrder: string[] = []) {
   const branches: CanvasBranch[] = [], nodes: CanvasNode[] = [];
-  const root = noteTree(groups, records, filtered);
+  const root = noteTree(groups, records, filtered, groupOrder);
   function weight(folder: NoteFolder): number {
     return Math.max(1, folder.notes.length + folder.folders.reduce((sum, child) => sum + weight(child) + 1, 0));
   }
