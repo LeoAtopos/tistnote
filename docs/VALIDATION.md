@@ -1,5 +1,13 @@
 # 品记验证记录
 
+## 2026-10-27 Windows 直接运行版与下载入口
+
+- 源码 `8fd428f`，通过 `npm run package:portable`（Tauri `--no-bundle`）生成 Windows x64 `tistnote.exe`，8,667,136 字节，约 8.3 MiB；不捆绑 WebView2，需要电脑已有该运行时。未重新生成完整离线安装包，Release 保留的旧包在构建信息中记录各自真实来源。
+- 首页与设置的所有 Windows 按钮统一指向 Release 中的 `tistnote.exe`，中英文说明及 README 同步更新。安卓同签名 APK 的 versionCode 提升为 4，使其中的 Windows 下载入口也保持一致。
+- 49 项 TypeScript、4 项 Android 文件 / ZIP 测试通过；Windows 直接运行版、Android Release、Pages 构建通过，Android lint 无错误。APK 签名、版本和无 INTERNET 权限已核验。本轮只修改下载入口，未重新执行原生窗口或模拟器交互验收。
+- Pages 提交 `970f6a4c0f6d`。`qa-install-menu.js` 在本地产物及线上各覆盖 web / Windows / Android 三种前端环境 × 1440 / 390 两种宽度，验证首页与设置下载链接、自身平台隐藏规则及中英文 WebView2 提示；检查深浅主题截图，实际最小字号 20px、无横向溢出。
+- 程序仍未签名，未在无 WebView2 的干净 Windows 系统或实体安卓手机验收；直接运行版不可代替 WebView2 本身。
+
 ## 2026-10-26 画布整理发行构建
 
 - 构建源码 `541b2c6e3797`。49 项 TypeScript、24 项 Rust、4 项 Android 文件 / ZIP 测试通过；Windows 完整离线 NSIS、Android 签名 Release 和 Pages 生产构建成功，Android lint 无错误。
