@@ -1,5 +1,14 @@
 # 品记验证记录
 
+## 2026-10-27 Windows / Android / Pages 发布
+
+- 源码构建提交 `f0558b33a2d0ed0018bde23f8296617e9acdacb3` 已推送 main，包含近期资料库名称 / 路径、窄屏覆盖率、自定义回顾周期和 iOS 主屏幕功能；个人 `example/` 修改、历史文件和测试资料库未提交。
+- Windows 直接运行版 `tistnote.exe` 已替换 v0.2.0 同名资产，8,701,952 字节，SHA256 `1b0f123cbaddc4c5e5d29b73e4ddf76079da1369bb4eceb5c6b06b57cb737424`。生产编译通过，未签名，需要已有 WebView2。历史离线安装包未重建，其旧源码与校验仍单独标明；README 与 Release 说明明确使用新直接运行版读取格式 2 笔记。
+- 安卓 APK 7,979,556 字节，SHA256 `8f2eee3c15c3eab1c5c7bbaa3b4da3ec9bf5483b4320cf682e3b8f070afd010b`，versionCode 5，沿用证书 SHA256 `cdc0dd2ba0c4d088e99250ca6a41ca4d56fd9e3f4fc9808b3eb6b3604a73f6a3`。4 项原生测试通过，Release lint 0 错误 / 5 条已有警告；签名、最低 API 26、目标 API 35、无联网权限及不可调试均已核验，APK 内前端入口与本次构建一致。
+- 两个公开下载地址实际重新下载并校验，字节及 SHA256 与本地产物一致；原下载链接、原 v0.2.0 标签保留，Release 附件 build-info 指向实际构建提交，英文优先的发布说明、MIT 协议和使用说明已同步。
+- Pages 提交 `05423edf3339fb5c0cc36a7a2e9fb741fcfdc355` 已发布，GitHub 状态 built；正式网址 build-info 确认源提交，入口加载 `index-BAwIHUav.js`。线上 WebKit 重跑主屏幕 8 种平台 / 启动模式场景，图标尺寸、路径、不透明背景与显隐正确；另用独立 IndexedDB 上下文验证新周期预设、自定义保存刷新、取消恢复、分钟到期 / 确认清除和中英文窄屏，均通过。
+- 本次复用已通过的 58 项 TypeScript、25 项 Rust 与 UI 检查，并完成上述构建 / 线上复核；未在干净 Windows 系统、安卓模拟器 / 真机或实体苹果设备重新安装验收。
+
 ## 2026-10-27 iPhone / iPad 添加到主屏幕入口与图标
 
 - iOS / iPadOS 浏览器增加独立可关闭的顶部提示和“设置 → 添加到主屏幕”步骤说明；关闭偏好保留，设置入口仍可打开。非苹果移动系统隐藏；从主屏幕运行时，分别用 `navigator.standalone` 和 `display-mode: standalone` 识别并隐藏。说明包含 Safari / 编辑操作路径，以及独立存储、先备份后恢复、删除前备份和联网加载提醒；不提供虚假的直接安装按钮，不引入云同步或离线缓存。
