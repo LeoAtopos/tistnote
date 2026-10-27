@@ -1,5 +1,16 @@
 # 品记验证记录
 
+## 2026-10-28 审计修复 Windows / Android / Pages 发布
+
+- 构建源码 `b06b760999fc21a8a8dc0112da200377d9cec0a1` 已推送 main：包含 Windows 原子替换短暂占用的有限重试及外部更新保护、英文资料库诊断本地化、编辑时隐藏品交，以及原始 Computer Use 计划 / 报告与修复跟进。个人 `example/` 修改、历史与测试资料库未提交。
+- Windows 直接运行版已通过 `npm run package:portable` 构建并替换 v0.2.0 的 `tistnote.exe` 附件：8,702,976 字节，SHA256 `f3da8a70a0e29fe46f41a19227ed80b2780f1d82fb4956291c1a3510276f7b85`。程序未签名，需要已有 WebView2；保留的历史离线安装包未重建，其真实来源和校验仍单独标记。正在运行的本地旧 `release/tistnote.exe` 未覆盖或终止，新产物保存在 `release/portable-refresh-b06b760999fc/tistnote.exe` 与 `release/tistnote-latest.exe`。
+- 安卓通过 `npm run package:android`：4 项原生存储 / 归档测试通过，Release lint 0 错误、5 条已有警告。APK 为 7,979,676 字节，SHA256 `6a79978bb53a20bd98c6251bc91669c76fddac33b779fa591d85470801622a01`，versionCode 6，签名证书 SHA256 仍为 `cdc0dd2ba0c4d088e99250ca6a41ca4d56fd9e3f4fc9808b3eb6b3604a73f6a3`。已验证 API 26/35、无联网权限、不可调试及包内前端入口与本次 dist-android 一致。
+- 两个原有公开下载地址均实际重新下载，字节与 SHA256 和本地产物一致；原 v0.2.0 标签和 README 中的 Windows / Android 链接不变，英文优先的 Release 说明、构建信息及校验附件已更新。
+- Pages 生产构建通过，部署提交 `dfe6c240ff6ae0a89790d5e63967154e6bc7994e` 已推送 gh-pages，GitHub 构建状态 `built`。正式站点 build-info 确认上述源提交，入口为 `index-K6FNo0i9.js`；采用增量部署保留旧静态资源，避免打开中的旧页面丢失资源。
+- 在正式 HTTPS 页面用隔离 Chromium 上下文执行 `scripts/qa-pages.js`：真实浏览器文件句柄 / Markdown 写入、分组内新建、编辑日志、回顾历史、两类 PNG 导出、备份 / 恢复、回收站恢复、刷新重开及多标签独占通过。1440px / 390px 截图与实际渲染字号检查通过，最低 18px，无横向溢出。
+- 另在正式产物中注入独立 Tauri 返回值夹具，验证中英文切换保留中文文件名与原始解析细节、英文诊断正确显示、编辑隐藏品交 / 取消后恢复，1440px / 390px 均通过并已查看截图。这是前端集成验证，不等同于原生文件测试或新一轮 Computer Use 全面验收。
+- 复用打包前已通过的 59 项 TypeScript / 28 项 Rust 回归（含3项新增 Windows 文件占用测试）。未在干净 Windows、安卓模拟器 / 真机或实体苹果设备重做安装验收；原摸排中的重名提示重复和原生拖拽观察仍待复核。全库格式检查的既有差异保留，见[审计报告](QA_COMPUTER_USE_REPORT_2026-10-27.md)。
+
 ## 2026-10-27 Windows / Android / Pages 发布
 
 - 源码构建提交 `f0558b33a2d0ed0018bde23f8296617e9acdacb3` 已推送 main，包含近期资料库名称 / 路径、窄屏覆盖率、自定义回顾周期和 iOS 主屏幕功能；个人 `example/` 修改、历史文件和测试资料库未提交。
