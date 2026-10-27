@@ -1,6 +1,64 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { newNote, reviewDueAt, needsReview, reviewTimeLabel, contentKey, diffNotes } from "../src/model";
+import { newNote, reviewDueAt, needsReview, reviewTimeLabel, contentKey, diffNotes, setReviewInterval, validReviewSettings, reviewLimits, type ReviewUnit } from "../src/model";
+
+test("day and week cycles keep local time across calendar boundaries and restart on review", () => {
+  for (const [value, unit, days] of [[1,"day",1],[3,"day",3],[1,"week",7],[2,"week",14]] as const) {
+    const note = newNote();
+    const start = new Date(2026, 2, 7, 12, 30);
+    note.createdAt = note.updatedAt = start.toISOString();
+    const original = structuredClone(note);
+    setReviewInterval(note, {value,unit});
+    const due = new Date(2026, 2, 7 + days, 12, 30);
+    assert.equal(reviewDueAt(note)?.getTime(), due.getTime());
+    assert.equal(needsReview(note, due.getTime() - 1), false);
+    assert.equal(needsReview(note, due.getTime()), true);
+    assert.notEqual(contentKey(original), contentKey(note));
+    assert.deepEqual(diffNotes(original, note), [`回顾周期：3 个月 → ${value} ${unit === "day" ? "天" : "周"}`]);
+    note.lastReviewedAt = new Date(2026, 2, 8, 9).toISOString();
+    assert.equal(reviewDueAt(note)?.getTime(), new Date(2026, 2, 8 + days, 9).getTime());
+    note.updatedAt = new Date(2026, 2, 9, 10).toISOString();
+    assert.equal(reviewDueAt(note)?.getTime(), new Date(2026, 2, 9 + days, 10).getTime());
+  }
+});
+
+test("custom minute/hour cycles are elapsed time; calendar years clamp leap days", () => {
+  const note = newNote();
+  note.createdAt = note.updatedAt = new Date(2024, 1, 29, 12).toISOString();
+  for (const [unit,size] of [["minute",60_000],["hour",3_600_000]] as const) {
+    setReviewInterval(note, {value:5,unit});
+    assert.equal(reviewDueAt(note)?.getTime(), Date.parse(note.updatedAt) + 5 * size);
+  }
+  setReviewInterval(note, {value:1,unit:"year"});
+  assert.equal(reviewDueAt(note)?.getTime(), new Date(2025, 1, 28, 12).getTime());
+  assert.equal(note.reviewInterval, undefined);
+  assert.equal(note.reviewIntervalMonths, 12);
+  setReviewInterval(note, {value:5,unit:"month"});
+  assert.equal(reviewDueAt(note)?.getTime(), new Date(2024, 6, 29, 12).getTime());
+});
+
+test("custom intervals reject invalid units, fractions, extra fields and inconsistent legacy metadata", () => {
+  for (const unit of Object.keys(reviewLimits) as ReviewUnit[]) {
+    const note = newNote();
+    setReviewInterval(note, {value:reviewLimits[unit],unit});
+    assert(validReviewSettings(note));
+    for (const value of [0,-1,0.5,NaN,Infinity,reviewLimits[unit]+1]) assert.throws(() => setReviewInterval(note,{value,unit}));
+  }
+  const note = newNote();
+  setReviewInterval(note,{value:1,unit:"day"});
+  const reordered = {...note, reviewInterval:{unit:"day" as const,value:1}};
+  assert.equal(contentKey(note),contentKey(reordered));
+  assert.deepEqual(diffNotes(note,reordered),[]);
+  note.reviewIntervalMonths = 3;
+  assert.equal(reviewDueAt(note),null);
+  note.reviewIntervalMonths = 0;note.reviewTestMinute = true;
+  assert.equal(validReviewSettings(note),false);
+  note.reviewTestMinute = false;
+  for (const interval of [{value:1,unit:"second"},{value:1,unit:"day",extra:true},null,[]]) {
+    note.reviewInterval = interval as never;
+    assert.equal(validReviewSettings(note),false);
+  }
+});
 
 test("reviews use calendar months, clamping month ends and respecting exact due time", () => {
   const note = newNote();

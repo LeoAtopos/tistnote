@@ -11,6 +11,7 @@ import {
   assertUniqueTitle,
   noteTitle,
   validTitle,
+  validReviewSettings,
   groupName,
   inGroup,
   uid,
@@ -122,9 +123,7 @@ async function mock(
       return structuredClone(s.vault);
     case "save": {
       const note = structuredClone(data.note as Note);
-      const months = note.reviewIntervalMonths ?? 3;
-      if (!Number.isInteger(months) || months < 1 || months > 1200)
-        throw Error(tr("回顾周期需为 1 至 1200 个月"));
+      if (!validReviewSettings(note)) throw Error(tr("回顾周期无效"));
       const i = s.vault.notes.findIndex((r) => r.note.id === note.id);
       if (i >= 0 && s.vault.notes[i].revision !== data.expected)
         throw Error(tr("CONFLICT:笔记已变化"));

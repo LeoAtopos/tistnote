@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "品记 Tistnote",
+  "short_name": "品记",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fafaf7",
+  "theme_color": "#344f42",
+  "icons": [
+    { "src": "app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

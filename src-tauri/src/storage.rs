@@ -36,6 +36,35 @@ pub struct Entry {
     pub reason: String,
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ReviewUnit {
+    Minute,
+    Hour,
+    Day,
+    Week,
+    Month,
+    Year,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ReviewInterval {
+    pub value: u32,
+    pub unit: ReviewUnit,
+}
+impl ReviewInterval {
+    fn valid(&self) -> bool {
+        let limit = match self.unit {
+            ReviewUnit::Minute => 52_560_000,
+            ReviewUnit::Hour => 876_000,
+            ReviewUnit::Day => 36_500,
+            ReviewUnit::Week => 5_200,
+            ReviewUnit::Month => 1_200,
+            ReviewUnit::Year => 100,
+        };
+        (1..=limit).contains(&self.value)
+    }
+}
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Note {
     pub id: String,
@@ -50,6 +79,8 @@ pub struct Note {
     pub review_interval_months: u32,
     #[serde(default)]
     pub review_test_minute: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review_interval: Option<ReviewInterval>,
     #[serde(default)]
     pub last_reviewed_at: Option<String>,
     pub source: Option<String>,
@@ -111,6 +142,8 @@ struct Meta {
     review_interval_months: u32,
     #[serde(default)]
     review_test_minute: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    review_interval: Option<ReviewInterval>,
     #[serde(default)]
     last_reviewed_at: Option<String>,
     source: Option<String>,
@@ -129,8 +162,14 @@ pub fn clean_tags(tags: &mut Vec<String>) {
 }
 fn validate(n: &Note) -> Result<()> {
     valid_id(&n.id)?;
-    if !(1..=1200).contains(&n.review_interval_months) {
-        return Err("回顾周期需为 1 至 1200 个月".into());
+    let valid_review = match &n.review_interval {
+        Some(interval) => {
+            interval.valid() && n.review_interval_months == 0 && !n.review_test_minute
+        }
+        None => (1..=1200).contains(&n.review_interval_months),
+    };
+    if !valid_review {
+        return Err("回顾周期无效".into());
     }
     if let Some(at) = &n.last_reviewed_at {
         chrono::DateTime::parse_from_rfc3339(at).map_err(|_| "回顾时间无法读取".to_string())?;
@@ -158,6 +197,7 @@ pub fn same_content(a: &Note, b: &Note) -> bool {
         && a.entries == b.entries
         && a.review_interval_months == b.review_interval_months
         && a.review_test_minute == b.review_test_minute
+        && a.review_interval == b.review_interval
 }
 fn note_title(title: &str) -> &str {
     let title = title.trim();
@@ -190,7 +230,7 @@ fn is_untitled(title: &str) -> bool {
 pub fn markdown(n: &Note) -> Result<String> {
     validate(n)?;
     let m = Meta {
-        schema: 1,
+        schema: if n.review_interval.is_some() { 2 } else { 1 },
         id: n.id.clone(),
         tags: n.tags.clone(),
         ranked: n.ranked,
@@ -198,6 +238,7 @@ pub fn markdown(n: &Note) -> Result<String> {
         updated_at: n.updated_at.clone(),
         review_interval_months: n.review_interval_months,
         review_test_minute: n.review_test_minute,
+        review_interval: n.review_interval.clone(),
         last_reviewed_at: n.last_reviewed_at.clone(),
         source: n.source.clone(),
     };
@@ -234,7 +275,7 @@ pub fn parse(raw: &str) -> Result<(Note, bool)> {
         .ok_or("不是品记 Markdown：缺少元数据")?;
     let (meta, body) = s.split_once("\n---\n").ok_or("元数据不完整")?;
     let m: Meta = serde_json::from_str(meta).map_err(|e| format!("元数据无法读取：{e}"))?;
-    if m.schema != 1 {
+    if !matches!(m.schema, 1 | 2) || (m.schema == 2) != m.review_interval.is_some() {
         return Err("不支持此文件格式版本".into());
     }
     valid_id(&m.id)?;
@@ -327,6 +368,7 @@ pub fn parse(raw: &str) -> Result<(Note, bool)> {
         updated_at: m.updated_at,
         review_interval_months: m.review_interval_months,
         review_test_minute: m.review_test_minute,
+        review_interval: m.review_interval,
         last_reviewed_at: m.last_reviewed_at,
         source: m.source,
     };
@@ -1098,8 +1140,72 @@ mod tests {
             updated_at: now(),
             review_interval_months: 3,
             review_test_minute: false,
+            review_interval: None,
             last_reviewed_at: None,
             source: None,
+        }
+    }
+    #[test]
+    fn custom_review_cycles_roundtrip_review_history_and_cancel_without_losing_metadata() {
+        let d = tempfile::tempdir().unwrap();
+        let s = Store::open(d.path()).unwrap();
+        let mut n = note();
+        n.review_interval_months = 0;
+        n.review_interval = Some(ReviewInterval {
+            value: 3,
+            unit: ReviewUnit::Day,
+        });
+        n.tags = vec!["电影".into()];
+        let text = markdown(&n).unwrap();
+        assert!(text.contains("\"schema\": 2"));
+        assert_eq!(parse(&text).unwrap().0, n);
+        assert!(parse(&text.replace("\"schema\": 2", "\"schema\": 1")).is_err());
+        let initial = s.save(n, None).unwrap();
+        let reviewed = s.review_note(&initial.note.id, &initial.revision).unwrap();
+        assert_eq!(reviewed.note.review_interval, initial.note.review_interval);
+        assert_eq!(
+            s.versions(&initial.note.id)
+                .unwrap()
+                .last()
+                .unwrap()
+                .note
+                .review_interval,
+            initial.note.review_interval
+        );
+        let mut changed = reviewed.note.clone();
+        changed.review_interval = Some(ReviewInterval {
+            value: 2,
+            unit: ReviewUnit::Week,
+        });
+        let changed = s.save(changed, Some(&reviewed.revision)).unwrap();
+        let restored = s
+            .cancel_edit(reviewed.note.clone(), &changed.revision, "")
+            .unwrap();
+        assert_eq!(restored.note, reviewed.note);
+        let path = s.locate(&restored.note.id, false).unwrap();
+        let before = fs::read(&path).unwrap();
+        let mut invalid = restored.note.clone();
+        invalid.review_interval.as_mut().unwrap().value = 0;
+        assert!(s.save(invalid, Some(&restored.revision)).is_err());
+        assert_eq!(fs::read(path).unwrap(), before);
+        for (unit, limit) in [
+            (ReviewUnit::Minute, 52_560_000),
+            (ReviewUnit::Hour, 876_000),
+            (ReviewUnit::Day, 36_500),
+            (ReviewUnit::Week, 5_200),
+            (ReviewUnit::Month, 1_200),
+            (ReviewUnit::Year, 100),
+        ] {
+            assert!(ReviewInterval {
+                value: limit,
+                unit: unit.clone()
+            }
+            .valid());
+            assert!(!ReviewInterval {
+                value: limit + 1,
+                unit
+            }
+            .valid());
         }
     }
     #[test]
@@ -1377,7 +1483,15 @@ mod tests {
     fn numbered_untitled_notes_keep_empty_history_until_content_is_added() {
         let d = tempfile::tempdir().unwrap();
         let s = Store::open(d.path()).unwrap();
-        for title in ["未命名笔记", "未命名笔记（1）", "未命名笔记（12）", "Untitled note", "Untitled note (1)", "Untitled note (12)", "Untitled note（2）"] {
+        for title in [
+            "未命名笔记",
+            "未命名笔记（1）",
+            "未命名笔记（12）",
+            "Untitled note",
+            "Untitled note (1)",
+            "Untitled note (12)",
+            "Untitled note（2）",
+        ] {
             let mut n = note();
             n.title = title.into();
             n.entries.clear();

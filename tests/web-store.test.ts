@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { newNote, uid, type Note, type RecordNote, type Vault, type Version } from "../src/model";
+import { newNote, uid, setReviewInterval, type Note, type RecordNote, type Vault, type Version } from "../src/model";
 import { markdown, parseMarkdown, revision } from "../src/markdown";
 import { WebStore, type FilePort } from "../src/web-store";
 import { emptyCanvasLayout, type CanvasState } from "../src/canvas-layout";
@@ -29,6 +29,31 @@ const fixture=()=>{const note=newNote();note.title='喜欢与不喜欢';note.des
 async function setup(){const files=new MemoryFiles();const store=new WebStore(files,'test');await store.initialize();return {files,store};}
 const save=(store:WebStore,note:Note,expected:string|null=null,group='')=>store.command('save',{note,expected,group}) as Promise<RecordNote>;
 const versions=(store:WebStore,id:string)=>store.command('versions',{id}) as Promise<Version[]>;
+
+test('custom review intervals survive Markdown, review history, moves and cancellation; invalid metadata preserves files',async()=>{
+  const {store,files}=await setup();
+  const note=fixture();setReviewInterval(note,{value:3,unit:'day'});
+  assert.match(markdown(note),/"schema": 2/);
+  const initial=await save(store,note);
+  assert.deepEqual((await parseMarkdown(markdown(initial.note))).note,{...initial.note,source:null});
+  const reviewed=await store.command('review_note',{id:note.id,expected:initial.revision}) as RecordNote;
+  assert.deepEqual(reviewed.note.reviewInterval,{value:3,unit:'day'});
+  assert.deepEqual((await versions(store,note.id)).at(-1)?.note.reviewInterval,{value:3,unit:'day'});
+  const draft=structuredClone(reviewed.note);setReviewInterval(draft,{value:2,unit:'week'});
+  const changed=await save(store,draft,reviewed.revision);
+  const cancelled=await store.command('cancel_edit',{note:reviewed.note,expected:changed.revision,group:''}) as RecordNote;
+  assert.deepEqual(cancelled.note,reviewed.note);
+  await store.command('group_create',{name:'回顾'});
+  const moved=await store.command('move_note',{id:note.id,expected:cancelled.revision,group:'回顾'}) as RecordNote;
+  const reopened=new WebStore(files,'test');await reopened.initialize();
+  assert.deepEqual((await reopened.list()).notes[0].note,moved.note);
+  const path=`notes/回顾/${note.id}.md`,before=files.data.get(path)!;
+  await assert.rejects(save(store,{...moved.note,reviewInterval:{value:0,unit:'day'}},moved.revision));
+  assert.equal(files.data.get(path),before);
+  await assert.rejects(parseMarkdown(before.replace('"schema": 2','"schema": 1')));
+  setReviewInterval(note,{value:6,unit:'month'});
+  assert.match(markdown(note),/"schema": 1/);
+});
 
 test('canvas positions and group order persist without touching Markdown and reject conflicts or corruption',async()=>{
   const {store,files}=await setup();

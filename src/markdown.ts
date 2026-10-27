@@ -1,4 +1,4 @@
-import { cleanTags, type Note } from "./model";
+import { cleanTags, validReviewSettings, type Note } from "./model";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function validateNote(value: unknown): asserts value is Note {
@@ -8,8 +8,7 @@ export function validateNote(value: unknown): asserts value is Note {
     || typeof n.ranked !== "boolean" || !Array.isArray(n.entries)
     || !Number.isFinite(Date.parse(n.createdAt)) || !Number.isFinite(Date.parse(n.updatedAt)))
     throw Error("Invalid note metadata. The original file was preserved.");
-  const months = n.reviewIntervalMonths ?? 3;
-  if (!Number.isInteger(months) || months < 1 || months > 1200
+  if (!validReviewSettings(n)
     || (n.reviewTestMinute != null && typeof n.reviewTestMinute !== "boolean")
     || (n.lastReviewedAt != null && !Number.isFinite(Date.parse(n.lastReviewedAt)))
     || (n.source != null && typeof n.source !== "string")) throw Error("Invalid review or source metadata.");
@@ -23,10 +22,11 @@ export function validateNote(value: unknown): asserts value is Note {
 export function markdown(note: Note): string {
   validateNote(note);
   const metadata = {
-    schema: 1, id: note.id, tags: cleanTags(note.tags), ranked: note.ranked,
+    schema: note.reviewInterval ? 2 : 1, id: note.id, tags: cleanTags(note.tags), ranked: note.ranked,
     createdAt: note.createdAt, updatedAt: note.updatedAt,
     reviewIntervalMonths: note.reviewIntervalMonths ?? 3,
     reviewTestMinute: note.reviewTestMinute ?? false,
+    ...(note.reviewInterval ? {reviewInterval:note.reviewInterval} : {}),
     lastReviewedAt: note.lastReviewedAt ?? null, source: note.source ?? null,
   };
   let text = `---\n${JSON.stringify(metadata, null, 2)}\n---\n\n# ${note.title}\n\n`;
@@ -55,7 +55,7 @@ export async function parseMarkdown(raw: string): Promise<{ note: Note; approxim
   const end = text.indexOf("\n---\n", 4);
   if (end < 0) throw Error("Incomplete metadata.");
   const meta = JSON.parse(text.slice(4, end));
-  if (meta.schema !== 1 || !uuid.test(meta.id)) throw Error("Unsupported or invalid note metadata.");
+  if (![1,2].includes(meta.schema) || !uuid.test(meta.id) || (meta.schema === 2) !== !!meta.reviewInterval) throw Error("Unsupported or invalid note metadata.");
   const body = text.slice(end + 5);
   const marker = "\n<!-- tistnote:entries -->\n";
   const split = body.indexOf(marker);

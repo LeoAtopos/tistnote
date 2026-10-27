@@ -20,19 +20,19 @@ Actual app screenshots with fictional example notes and history. The examples in
 
 [All releases, checksums, and build information](https://github.com/LeoAtopos/tistnote/releases). Windows builds are currently unsigned.
 
-In the app, open **Settings → Install a local version** for Windows and Android downloads. All Windows download buttons open the portable executable; the installed platform's download is hidden. If WebView2 is missing, the full offline installer is available under All releases above.
+In the app, open **Settings → Install a local version** for Windows and Android downloads. All Windows download buttons open the portable executable; the installed platform's download is hidden. Microsoft WebView2 Runtime must already be installed. Older offline setup files retained in Releases contain an earlier app build; use the current portable executable for the features described here.
 
 ## Features
 
 - Ranked or unranked lists, descriptions, tags, and optional reasons for each choice.
 - Compact note trees, nested groups backed by real folders, drag-and-drop moves, and context menus.
-- Optional note canvas under **My notes → More → Canvas view**, with groups and subgroups branching from Tistnote. Hollow circles mark empty notes, filled green circles mark populated notes, and a small extra dot marks reviews due. Lists remain the default.
+- Optional note canvas under **My notes → More → Canvas view**, with groups and subgroups branching from the current library's name. Hollow circles mark empty notes, filled green circles mark populated notes, and a small extra dot marks reviews due. Lists remain the default.
 - Arrange notes and whole groups on the canvas. Drop into another group to move the local files, or on a sibling group's top/bottom edge to reorder groups in both views. Right-click a group to create within it. Positions and group order are saved with the library.
 - Search, filtering, and sorting. Titles are unique across the library; new untitled notes receive unique numbered titles.
 - 45 built-in themes covering positive, negative, and mixed feelings; personal templates and template coverage. The default template canvas branches by tag, supports panning and zooming, and marks recorded themes with filled green circles. Open a circle for template actions, or switch to cards.
 - Separate reading and editing modes, autosaved drafts, optional update logs, and cancel editing.
 - Version comparison and restoration, milestones, and a yearly activity graph of creation, updates, and reviews.
-- Configurable review intervals, green reminders, and review confirmation recorded in history.
+- Review intervals of 1 or 3 days, 1 or 2 weeks, calendar months, or a custom number of minutes, hours, days, weeks, months, or years; green reminders and review confirmations recorded in history. The default remains 3 months.
 - PNG sharing with optional signatures, anonymous attribution, long images or pages. Both image types include a QR code for the web app; invitations omit your own answers.
 - Chinese and English; light, dark, or system appearance. Preferences stay on your device.
 - Full library backup and restoration, Tistnote Markdown import, and Trash recovery.
@@ -66,6 +66,8 @@ The Android app bundles its interface and illustrations, requires no Internet pe
 On desktop Chrome/Edge, choose an existing Tistnote library or an empty folder. Notes, groups, history, templates, and Trash use the Windows library format. The browser remembers the folder when permitted and may ask you to authorize it again. Other desktop browsers without folder access remain unsupported.
 
 On **iPhone/iPad**, Tistnote automatically uses IndexedDB inside the current browser, including iPads using a desktop-style browser identity. Notes are not written to the Files app and do not sync between browsers, site addresses, or devices. Clearing site data, removing the browser, or browser/system storage cleanup may delete libraries. Avoid private browsing. The dismissible top notice explains these limits; the warning remains available in Settings.
+
+On iPhone/iPad, **Settings → Add to Home Screen** explains how to add a shortcut with Tistnote's green icon. The dismissible hint and setting are hidden on other platforms and when running from the Home Screen. Export a full backup before switching: the Home Screen web app has separate storage, so existing browser notes do not move automatically. Open it from the Home Screen, then restore the ZIP in Settings. Adding the shortcut does not provide cloud sync or guarantee offline loading. [WebKit's storage guidance](https://webkit.org/blog/14787/webkit-features-in-safari-17-2/).
 
 Use **Settings → Full backup** regularly and confirm the downloaded ZIP is saved somewhere safe outside the browser. ZIP backups contain compatible Markdown, history, templates, Trash, canvas layout, and empty groups. Extract a backup to open its folder on Windows/desktop web, or restore it in Android. iPhone/iPad ZIP restoration creates a new browser library and preserves the original; Settings can create and switch libraries. Browser ZIPs are limited to 64 MiB compressed and uncompressed, 10,000 entries, and 16 MiB per file. Markdown import is also available. Browser-private storage is separate from the disposable development preview.
 

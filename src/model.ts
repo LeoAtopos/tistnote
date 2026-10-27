@@ -5,6 +5,14 @@ export interface Entry {
   name: string;
   reason: string;
 }
+export type ReviewUnit = "minute" | "hour" | "day" | "week" | "month" | "year";
+export interface ReviewInterval { value: number; unit: ReviewUnit }
+export const reviewLimits: Record<ReviewUnit, number> = { minute: 52_560_000, hour: 876_000, day: 36_500, week: 5_200, month: 1_200, year: 100 };
+export function validReviewInterval(value: unknown): value is ReviewInterval {
+  const interval = value as ReviewInterval;
+  return !!interval && typeof interval === "object" && Object.keys(interval).every(key => key === "unit" || key === "value")
+    && Object.hasOwn(reviewLimits, interval.unit) && Number.isInteger(interval.value) && interval.value >= 1 && interval.value <= reviewLimits[interval.unit];
+}
 export interface Note {
   id: string;
   title: string;
@@ -16,6 +24,7 @@ export interface Note {
   updatedAt: string;
   reviewIntervalMonths?: number;
   reviewTestMinute?: boolean;
+  reviewInterval?: ReviewInterval;
   lastReviewedAt?: string | null;
   source?: string | null;
 }
@@ -85,17 +94,47 @@ export const contentKey = (n: Note) =>
     n.title, n.description, n.tags, n.ranked, n.entries,
     n.reviewIntervalMonths ?? 3,
     n.reviewTestMinute ?? false,
+    n.reviewInterval?.value ?? null, n.reviewInterval?.unit ?? null,
   ]);
-export function reviewDueAt(note: Note): Date | null {
+export function validReviewSettings(note: Pick<Note, "reviewInterval" | "reviewIntervalMonths" | "reviewTestMinute">) {
+  if (note.reviewInterval !== undefined) return validReviewInterval(note.reviewInterval) && note.reviewIntervalMonths === 0 && !note.reviewTestMinute;
   const months = note.reviewIntervalMonths ?? 3;
-  if (!Number.isInteger(months) || months < 1 || months > 1200) return null;
+  return Number.isInteger(months) && months >= 1 && months <= 1200;
+}
+export function setReviewInterval(note: Note, interval: ReviewInterval) {
+  if (!validReviewInterval(interval)) throw Error(tr("回顾周期无效"));
+  if (interval.unit === "month" || interval.unit === "year") {
+    note.reviewIntervalMonths = interval.value * (interval.unit === "year" ? 12 : 1);
+    delete note.reviewInterval;
+  } else {
+    note.reviewInterval = interval;
+    // Legacy readers reject zero rather than silently dropping the new interval from history.
+    note.reviewIntervalMonths = 0;
+  }
+  note.reviewTestMinute = false;
+}
+export function reviewIntervalLabel(note: Note): string {
+  if (note.reviewInterval) {
+    const { value, unit } = note.reviewInterval;
+    const labels: Record<ReviewUnit,string> = {minute:"分钟",hour:"小时",day:"天",week:"周",month:"个月",year:"年"};
+    return language() === "zh" ? tr("{0} {1}", value, labels[unit]) : `${value} ${unit}${value === 1 ? "" : "s"}`;
+  }
+  return note.reviewTestMinute ? tr("1 分钟（测试）") : language() === "zh" ? tr("{0} 个月", note.reviewIntervalMonths ?? 3) : formatCount(note.reviewIntervalMonths ?? 3, "months");
+}
+export function reviewDueAt(note: Note): Date | null {
+  if (!validReviewSettings(note)) return null;
   const times = [note.createdAt, note.updatedAt, note.lastReviewedAt]
     .filter((value): value is string => !!value)
     .map(Date.parse)
     .filter(Number.isFinite);
   if (!times.length) return null;
-  if (note.reviewTestMinute) return new Date(Math.max(...times) + 60_000);
   const due = new Date(Math.max(...times));
+  if (note.reviewInterval) {
+    const { value, unit } = note.reviewInterval;
+    if (unit === "minute" || unit === "hour") return new Date(due.getTime() + value * (unit === "minute" ? 60_000 : 3_600_000));
+    if (unit === "day" || unit === "week") { due.setDate(due.getDate() + value * (unit === "week" ? 7 : 1)); return due; }
+  } else if (note.reviewTestMinute) return new Date(due.getTime() + 60_000);
+  const months = note.reviewInterval ? note.reviewInterval.value * (note.reviewInterval.unit === "year" ? 12 : 1) : note.reviewIntervalMonths ?? 3;
   const day = due.getDate();
   due.setDate(1);
   due.setMonth(due.getMonth() + months);
@@ -302,10 +341,8 @@ export function diffNotes(a: Note, b: Note): string[] {
   if (a.ranked !== b.ranked)
     changes.push(tr("列表模式：{0}", b.ranked ? tr("有排名") : tr("无排名")));
   if ((a.reviewIntervalMonths ?? 3) !== (b.reviewIntervalMonths ?? 3)
-    || !!a.reviewTestMinute !== !!b.reviewTestMinute) {
-    const cycle = (n: Note) => n.reviewTestMinute ? tr("1 分钟（测试）")
-      : language() === "zh" ? tr("{0} 个月", n.reviewIntervalMonths ?? 3) : formatCount(n.reviewIntervalMonths ?? 3, "months");
-    changes.push(tr("回顾周期：{0} → {1}", cycle(a), cycle(b)));
+    || !!a.reviewTestMinute !== !!b.reviewTestMinute || a.reviewInterval?.value !== b.reviewInterval?.value || a.reviewInterval?.unit !== b.reviewInterval?.unit) {
+    changes.push(tr("回顾周期：{0} → {1}", reviewIntervalLabel(a), reviewIntervalLabel(b)));
   }
   const before = new Map(a.entries.map((e, i) => [e.id, { e, i }]));
   const after = new Map(b.entries.map((e, i) => [e.id, { e, i }]));

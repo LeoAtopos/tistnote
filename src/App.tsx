@@ -40,6 +40,8 @@ import { NoteTree } from "./NoteTree";
 import { ActivityPage } from "./ActivityPage";
 import { TemplateCanvas } from "./TemplateCanvas";
 import { NoteCanvas } from "./NoteCanvas";
+import { ReviewSettings } from "./ReviewSettings";
+import { isIOSBrowser } from "./browser-platform";
 import { canvasKeys, emptyCanvasLayout, remapCanvasGroup, reorderCanvas, translateCanvas, type CanvasArrangement, type CanvasState, type NoteGraph } from "./canvas-layout";
 import { Introduction, introductionSeenKey } from "./Introduction";
 import {
@@ -57,6 +59,7 @@ import {
 type View = "notes" | "templates" | "activity" | "trash";
 const browserTipDismissedKey = api.browserLocal ? "tistnote-browser-local-tip-dismissed-v1" : "tistnote-browser-tip-dismissed-v1";
 const browserStorageNotice = "iOS/iPadOS · 数据仅存于当前浏览器，不会同步。清除网站数据、卸载浏览器或系统清理可能丢失笔记；请勿用无痕模式，定期在设置中导出完整备份。";
+const homeScreenTipKey = "tistnote-home-screen-tip-dismissed-v1";
 type Dialog =
   | "settings"
   | "share"
@@ -69,9 +72,21 @@ type Dialog =
   | "new-folder"
   | "install"
   | "browser-libraries"
+  | "home-screen"
   | null;
 export default function App() {
   const preferences = usePreferences();
+  const iosBrowser = (api.web || api.preview) && isIOSBrowser(navigator);
+  const homeScreen = matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  const [homeScreenTipVisible, setHomeScreenTipVisible] = useState(() => {
+    try { return localStorage.getItem(homeScreenTipKey) !== "1"; }
+    catch { return true; }
+  });
+  function dismissHomeScreenTip() {
+    setHomeScreenTipVisible(false);
+    try { localStorage.setItem(homeScreenTipKey, "1"); }
+    catch { /* Keep dismissed for this visit. */ }
+  }
   const [browserTipVisible, setBrowserTipVisible] = useState(() => {
     try { return localStorage.getItem(browserTipDismissedKey) !== "1"; }
     catch { return true; }
@@ -161,7 +176,7 @@ export default function App() {
   const [closedGroups, setClosedGroups] = useState<Set<string>>(new Set());
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [reviewNow, setReviewNow] = useState(Date.now());
-  const minuteReviewEnabled = vault?.notes.some((r) => r.note.reviewTestMinute) ?? false;
+  const minuteReviewEnabled = vault?.notes.some((r) => r.note.reviewTestMinute || r.note.reviewInterval?.unit === "minute") ?? false;
   useEffect(() => {
     const timer = setInterval(() => setReviewNow(Date.now()), minuteReviewEnabled ? 1000 : 60_000);
     return () => clearInterval(timer);
@@ -1033,6 +1048,14 @@ export default function App() {
             </button>
           </div>
         )}
+        {iosBrowser && !homeScreen && homeScreenTipVisible && (
+          <div className="preview-banner home-screen-tip">
+            <button className="home-screen-tip-action" onClick={() => setDialog("home-screen")}>
+              {tr("添加到主屏幕，快速打开品记")}<Icon name="arrow" />
+            </button>
+            <button className="icon-button" aria-label={tr("关闭主屏幕提示")} title={tr("关闭主屏幕提示")} onClick={dismissHomeScreenTip}><Icon name="close" /></button>
+          </div>
+        )}
         {error && (
           <div className="alert error" role="alert">
             <span>{tr(error).replace("CONFLICT:", "")}</span>
@@ -1250,6 +1273,7 @@ export default function App() {
                 )}
               </div>
               {noteView === "canvas" ? <NoteCanvas
+                rootLabel={vaultName || tr("本地资料库")}
                 groups={groups} records={list} now={reviewNow} filtered={!!(query.trim() || filter.length)}
                 allRecords={vault.notes} layout={canvasState.layout} onArrange={canvasReady ? arrangeCanvas : undefined}
                 onFolder={setGroup} busy={busy} onOpen={id => void run(() => openNote(id))}
@@ -1566,22 +1590,7 @@ export default function App() {
                             <option value="true">{tr("有排名")}</option>
                             <option value="false">{tr("无排名")}</option>
                           </select>
-                          <label className="review-settings">
-                            <span>{tr("回顾周期")}</span>
-                            <select
-                              aria-label={tr("回顾周期")}
-                              value={note.reviewTestMinute ? "test-minute" : note.reviewIntervalMonths ?? 3}
-                              onChange={(e) => edit((n) => {
-                                n.reviewTestMinute = e.target.value === "test-minute";
-                                if (!n.reviewTestMinute) n.reviewIntervalMonths = Number(e.target.value);
-                              })}
-                            >
-                              <option value="test-minute">{tr("1 分钟（测试）")}</option>
-                              {[...new Set([1, 2, 3, 6, 12, 24, note.reviewIntervalMonths ?? 3])].sort((a, b) => a - b).map((months) => (
-                                <option key={months} value={months}>{formatCount(months, "months")}</option>
-                              ))}
-                            </select>
-                          </label>
+                          <ReviewSettings key={note.id} note={note} onChange={edit} />
                         </div>
                         <div className="entries">
                           {note.entries.map((entry, index) => (
@@ -2197,7 +2206,10 @@ export default function App() {
             </div>
             {preferenceError && <p className="error" role="alert">{tr(preferenceError)}</p>}
             <p className="vault-path">{vault
-              ? api.preview ? tr("浏览器预览 · 数据仅保存在此浏览器") : vault.path
+              ? api.preview ? tr("浏览器预览 · 数据仅保存在此浏览器")
+                : api.browserLocal ? tr("浏览器内部存储：{0}", location.origin)
+                : api.web ? <>{tr("已授权文件夹：…/{0}/", vault.path)}<br />{tr("浏览器不提供完整磁盘路径")}</>
+                : vault.path
               : tr("尚未选择资料库")}</p>
             <div className="settings-grid">
               <button
@@ -2269,6 +2281,7 @@ export default function App() {
               <button onClick={() => setDialog("help")}>{tr("使用帮助")}</button>
               <button disabled={busy} onClick={() => { setDialog(null); setIntroductionOpen(true); }}>{tr("引导页")}</button>
               <button disabled={busy} onClick={() => setDialog("install")}>{tr("安装本地版本")}</button>
+              {iosBrowser && !homeScreen && <button disabled={busy} onClick={() => setDialog("home-screen")}>{tr("添加到主屏幕")}</button>}
               <button
                 disabled={!vault || busy}
                 onClick={() =>
@@ -2284,6 +2297,24 @@ export default function App() {
             {api.browserLocal && <p className="muted">{tr("资料库保存在浏览器内部，不在“文件”App中，也未加密。不同浏览器、网址和设备不共享数据。请将导出的 ZIP 保存到浏览器以外的安全位置；恢复会新建资料库，不覆盖原资料库。")}</p>}
             {api.android && <p className="muted">{tr("安卓资料库保存在应用私有目录。卸载应用前请导出完整备份，避免丢失数据。")}</p>}
             <p className="muted">{tr(api.web ? "品记网页版 · 网页资源联网加载，笔记只保存在本地资料库。" : "品记 0.2.0 · 不联网，不上传。")}</p>
+          </div>
+        </Modal>
+      )}
+      {dialog === "home-screen" && iosBrowser && !homeScreen && (
+        <Modal title={tr("添加到主屏幕")} onClose={() => setDialog(null)}>
+          <div className="form-stack home-screen-guide">
+            <div className="home-screen-brand">
+              <img src={`${import.meta.env.BASE_URL}app-icon.svg`} width="72" height="72" alt="" />
+              <div><strong>{tr("品记")}</strong><p>{tr("从主屏幕，一点打开。")}</p></div>
+            </div>
+            <ol>
+              <li>{tr("打开浏览器菜单，选择“分享”或“共享”。")}</li>
+              <li>{tr("选择“添加到主屏幕”，再点“添加”。")}</li>
+            </ol>
+            <p>{tr("如果找不到这个选项，请用 Safari 打开当前网址；也可在共享菜单底部的“编辑操作”中查找。")}</p>
+            <p className="home-screen-storage">{tr("已有笔记？先在设置中导出“完整备份”。主屏幕网页 App 与浏览器的存储独立，笔记不会自动迁移；从主屏幕打开后，可在设置中“从备份恢复”。")}</p>
+            <p className="muted">{tr("页面资源需要联网加载；添加到主屏幕不会开启云同步。删除主屏幕网页 App 前请先备份。")}</p>
+            <button className="primary" onClick={() => setDialog(null)}>{tr("知道了")}</button>
           </div>
         </Modal>
       )}

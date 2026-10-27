@@ -5,7 +5,8 @@ import { tr } from "./i18n";
 import type { RecordNote } from "./model";
 import { applyCanvasPositions, type CanvasArrangement, type CanvasLayout, type NoteGraph } from "./canvas-layout";
 
-export function NoteCanvas({ groups, records, allRecords, now, filtered, busy, onOpen, layout, onArrange, onFolder }: {
+export function NoteCanvas({ rootLabel, groups, records, allRecords, now, filtered, busy, onOpen, layout, onArrange, onFolder }: {
+  rootLabel: string;
   groups: string[];
   records: RecordNote[];
   allRecords: RecordNote[];
@@ -28,7 +29,7 @@ export function NoteCanvas({ groups, records, allRecords, now, filtered, busy, o
     }
     return { branches: full.branches.filter(b => parents.has(b.id)), nodes };
   }, [full, records, filtered]);
-  return <GraphCanvas {...graph} rootLabel={tr("品记")} label={tr("我的笔记画布")}
+  return <GraphCanvas {...graph} rootLabel={rootLabel} label={tr("我的笔记画布")}
     emptyLabel={tr(filtered ? "没有找到匹配的笔记" : "还没有笔记")}
     onSelect={id => { if (id) onOpen(id); }} busy={busy} className="note-canvas"
     onArrange={onArrange ? change => onArrange(change, full) : undefined} onFolder={onFolder}
