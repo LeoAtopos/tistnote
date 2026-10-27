@@ -380,11 +380,53 @@ pub fn parse(raw: &str) -> Result<(Note, bool)> {
 // Same-directory temporary file + flush + atomic replacement; original survives a failed write.
 pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path.parent().ok_or("目标路径无效")?;
+    #[cfg(windows)]
+    let original = fs::read(path);
     let mut tmp = tempfile::NamedTempFile::new_in(parent).map_err(io)?;
     tmp.write_all(bytes).map_err(io)?;
     tmp.as_file().sync_all().map_err(io)?;
-    tmp.persist(path).map_err(io)?;
-    Ok(())
+    #[cfg(windows)]
+    let mut retries = 0;
+    loop {
+        match tmp.persist(path) {
+            Ok(_) => return Ok(()),
+            Err(error) => {
+                #[cfg(windows)]
+                if retries < 5
+                    && matches!(error.error.raw_os_error(), Some(5 | 32 | 33))
+                    && !fs::metadata(path).is_ok_and(|m| m.permissions().readonly())
+                {
+                    // Windows readers may briefly deny replacement; keep the same flushed temp file.
+                    std::thread::sleep(std::time::Duration::from_millis((25 << retries).min(200)));
+                    let current = fs::read(path);
+                    let changed = match (&original, &current) {
+                        (Ok(before), Ok(after)) => before != after,
+                        (Err(before), Err(after)) => {
+                            if before.kind() != std::io::ErrorKind::NotFound
+                                || after.kind() != std::io::ErrorKind::NotFound
+                            {
+                                return Err(io(error));
+                            }
+                            false
+                        }
+                        (Ok(_), Err(e)) | (Err(e), Ok(_))
+                            if e.kind() == std::io::ErrorKind::NotFound =>
+                        {
+                            true
+                        }
+                        _ => return Err(io(error)),
+                    };
+                    if changed {
+                        return Err("CONFLICT:重试写入前检测到外部修改，已停止保存".into());
+                    }
+                    retries += 1;
+                    tmp = error.file;
+                    continue;
+                }
+                return Err(io(error));
+            }
+        }
+    }
 }
 pub(crate) fn no_links(path: &Path) -> Result<()> {
     for p in path.ancestors() {
@@ -1777,6 +1819,70 @@ mod tests {
         let d = tempfile::tempdir().unwrap();
         let _s = Store::open(d.path()).unwrap();
         assert!(Store::open(d.path()).is_err());
+    }
+    #[test]
+    #[cfg(windows)]
+    fn temporary_file_lock_allows_atomic_write_after_release() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let d = tempfile::tempdir().unwrap();
+        let p = d.path().join("note.md");
+        fs::write(&p, b"original").unwrap();
+        // Readers such as indexers may allow reads/writes but temporarily deny replacement.
+        let reader = OpenOptions::new()
+            .read(true)
+            .share_mode(3)
+            .open(&p)
+            .unwrap();
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(80));
+            drop(reader);
+        });
+        let result = atomic_write(&p, b"replacement");
+        release.join().unwrap();
+        result.unwrap();
+        assert_eq!(fs::read(&p).unwrap(), b"replacement");
+        assert_eq!(fs::read_dir(d.path()).unwrap().count(), 1);
+    }
+    #[test]
+    #[cfg(windows)]
+    fn locked_write_does_not_overwrite_external_changes_during_retry() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let d = tempfile::tempdir().unwrap();
+        let p = d.path().join("note.md");
+        fs::write(&p, b"original").unwrap();
+        let reader = OpenOptions::new()
+            .read(true)
+            .share_mode(3)
+            .open(&p)
+            .unwrap();
+        let external_path = p.clone();
+        let external = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(40));
+            fs::write(external_path, b"external update").unwrap();
+        });
+        let result = atomic_write(&p, b"replacement");
+        external.join().unwrap();
+        assert!(result.unwrap_err().starts_with("CONFLICT:"));
+        assert_eq!(fs::read(&p).unwrap(), b"external update");
+        assert_eq!(fs::read_dir(d.path()).unwrap().count(), 1);
+        drop(reader);
+    }
+    #[test]
+    #[cfg(windows)]
+    fn persistent_file_lock_preserves_original_without_temporary_files() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let d = tempfile::tempdir().unwrap();
+        let p = d.path().join("note.md");
+        fs::write(&p, b"original").unwrap();
+        let reader = OpenOptions::new()
+            .read(true)
+            .share_mode(3)
+            .open(&p)
+            .unwrap();
+        assert!(atomic_write(&p, b"replacement").is_err());
+        assert_eq!(fs::read(&p).unwrap(), b"original");
+        assert_eq!(fs::read_dir(d.path()).unwrap().count(), 1);
+        drop(reader);
     }
     #[test]
     fn readonly_write_preserves_original() {

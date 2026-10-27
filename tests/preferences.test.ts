@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import english from "../src/en.json";
 import { language, parsePreferences, setPreferences, systemLanguage, theme } from "../src/preferences";
-import { tr, formatCount } from "../src/i18n";
+import { tr, trDiagnostic, formatCount } from "../src/i18n";
 import { copyTitle, newNote, notesByTemplate, reviewTimeLabel, validTitle } from "../src/model";
 import { builtinTemplates, localizedBuiltinTemplates } from "../src/templates";
 
@@ -59,4 +59,18 @@ test("all translation messages preserve their numbered placeholders", () => {
     assert(en.trim(), `Empty English translation: ${zh}`);
     assert.deepEqual(placeholders(en), placeholders(zh), zh);
   }
+});
+
+test("file warnings translate diagnostics without translating filenames or parser details", () => {
+  const detail = "key must be a string at line 2 column 1\n{invalid}";
+  const warning = `未命名笔记.md：元数据无法读取：${detail}`;
+  try {
+    setPreferences({ language: "en" });
+    assert.equal(trDiagnostic(warning), `未命名笔记.md: Could not read metadata: ${detail}`);
+    assert.equal(trDiagnostic(`invalid.md：元数据无法读取：${detail}`), `invalid.md: Could not read metadata: ${detail}`);
+    assert.equal(trDiagnostic(`元数据无法读取：${detail}`), `Could not read metadata: ${detail}`);
+    assert.equal(trDiagnostic("我的文件.md：未知诊断"), "我的文件.md: 未知诊断");
+    setPreferences({ language: "zh" });
+    assert.equal(trDiagnostic(warning), warning);
+  } finally { setPreferences({ language: "system" }); }
 });

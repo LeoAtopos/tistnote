@@ -588,6 +588,7 @@
   "不是品记 Markdown：缺少元数据": "Not Tistnote Markdown: metadata is missing",
   "元数据不完整": "Incomplete metadata",
   "元数据无法读取：{0}": "Could not read metadata: {0}",
+  "CONFLICT:重试写入前检测到外部修改，已停止保存": "CONFLICT:An external update was detected before retrying the write. Saving has stopped.",
   "不支持此文件格式版本": "Unsupported file format version",
   "缺少列表分隔标记": "Missing list delimiter",
   "缺少主题标题": "Missing note title",

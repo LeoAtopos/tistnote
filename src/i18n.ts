@@ -35,3 +35,10 @@ export function tr(source: string, ...values: unknown[]): string {
   }
   return values.length ? text.replace(/\{(\d+)\}/g, (_, index) => String(values[Number(index)] ?? "")) : text;
 }
+
+// Vault warnings prefix diagnostics with a user filename; translate only the diagnostic.
+export function trDiagnostic(source: string): string {
+  const wrapped = /^(.+\.(?:md|json))：([\s\S]*)$/i.exec(source);
+  if (!wrapped) return tr(source);
+  return `${wrapped[1]}${language() === "en" ? ": " : "："}${tr(wrapped[2])}`;
+}

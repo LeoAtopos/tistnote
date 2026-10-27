@@ -1,4 +1,4 @@
-import { tr, formatCount } from "./i18n";
+import { tr, trDiagnostic, formatCount } from "./i18n";
 import { language, theme, setPreferences, usePreferences } from "./preferences";
 import { androidRequest } from "./android-bridge";
 import {
@@ -1069,7 +1069,7 @@ export default function App() {
         )}
         {vault?.warnings.map((w, i) => (
           <div className="alert error" key={i}>
-            {tr(w)}
+            {trDiagnostic(w)}
           </div>
         ))}
         {conflict && (
@@ -1392,7 +1392,7 @@ export default function App() {
                           )}
                         </button>
                       )}
-                      <div className="more-wrap" ref={tradeTools}>
+                      {!editing && <div className="more-wrap" ref={tradeTools}>
                         <button
                           aria-expanded={tradeOpen}
                           aria-controls="trade-menu"
@@ -1412,7 +1412,7 @@ export default function App() {
                             }}>{tr("求品")}</button>
                           </div>
                         )}
-                      </div>
+                      </div>}
                       <div className="more-wrap">
                         <button
                           aria-label={tr("更多笔记操作")}
