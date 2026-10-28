@@ -12,6 +12,8 @@
   --line: #e1e4dc;
   --paper: #fafaf7;
   --tint: #e9eee5;
+  --review-reminder: #e8afbf;
+  --review-reminder-border: #a86178;
 }
 :root[data-theme="dark"] {
   --ink: #e4ebe2;
@@ -36,6 +38,8 @@
   --hover-green: #b6dfc4;
   --on-green: #12271b;
   --review-green: #87cc9a;
+  --review-reminder: #f0b7c8;
+  --review-reminder-border: #f0b7c8;
   --focus-color: #a3d9b3;
   --scrollbar: #7a9480;
   --menu-shadow: #0007;
@@ -591,7 +595,8 @@ svg {
   align-self: center;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--review-green, #39864c);
+  background: var(--review-reminder);
+  border: 1px solid var(--review-reminder-border);
 }
 .review-settings {
   display: flex;
@@ -1315,7 +1320,7 @@ svg {
 .graph-node.selected { z-index: 2; }
 .graph-dot { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--secondary-ink); border-radius: 50%; background: var(--paper); flex-shrink: 0; }
 .graph-dot { position: relative; }
-.graph-review-dot { position: absolute; right: -8px; top: -8px; width: 9px; height: 9px; border-radius: 50%; background: var(--review-green, #39874b); outline: 3px solid var(--paper); }
+.graph-review-dot { position: absolute; right: -8px; top: -8px; width: 9px; height: 9px; border-radius: 50%; background: var(--review-reminder); border: 1px solid var(--review-reminder-border); outline: 3px solid var(--paper); }
 .graph-node.covered .graph-dot, .graph-dot.covered { background: var(--review-green, #39874b); border-color: var(--review-green, #39874b); }
 .graph-node:hover .graph-dot, .graph-node:focus-visible .graph-dot, .graph-node.selected .graph-dot { outline: 2px solid var(--green); outline-offset: 5px; }
 .graph-tooltip {

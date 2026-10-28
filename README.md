@@ -26,13 +26,13 @@ In the app, open **Settings → Install a local version** for Windows and Androi
 
 - Ranked or unranked lists, descriptions, tags, and optional reasons for each choice.
 - Compact note trees, nested groups backed by real folders, drag-and-drop moves, and context menus.
-- Optional note canvas under **My notes → More → Canvas view**, with groups and subgroups branching from the current library's name. Hollow circles mark empty notes, filled green circles mark populated notes, and a small extra dot marks reviews due. Lists remain the default.
+- Optional note canvas under **My notes → More → Canvas view**, with groups and subgroups branching from the current library's name. Hollow circles mark empty notes, filled green circles mark populated notes, and a small light pink dot marks reviews due. New libraries default to lists; each library remembers its last list/canvas view.
 - Arrange notes and whole groups on the canvas. Drop into another group to move the local files, or on a sibling group's top/bottom edge to reorder groups in both views. Right-click a group to create within it. Positions and group order are saved with the library.
 - Search, filtering, and sorting. Titles are unique across the library; new untitled notes receive unique numbered titles.
 - 45 built-in themes covering positive, negative, and mixed feelings; personal templates and template coverage. The default template canvas branches by tag, supports panning and zooming, and marks recorded themes with filled green circles. Open a circle for template actions, or switch to cards.
 - Separate reading and editing modes, autosaved drafts, optional update logs, and cancel editing.
 - Version comparison and restoration, milestones, and a yearly activity graph of creation, updates, and reviews.
-- Review intervals of 1 or 3 days, 1 or 2 weeks, calendar months, or a custom number of minutes, hours, days, weeks, months, or years; green reminders and review confirmations recorded in history. The default remains 3 months.
+- Review intervals of 1 or 3 days, 1 or 2 weeks, calendar months, or a custom number of minutes, hours, days, weeks, months, or years; light pink reminders and review confirmations recorded in history. The default remains 3 months.
 - PNG sharing with optional signatures, anonymous attribution, long images or pages. Both image types include a QR code for the web app; invitations omit your own answers.
 - Chinese and English; light, dark, or system appearance. Preferences stay on your device.
 - Full library backup and restoration, Tistnote Markdown import, and Trash recovery.
@@ -41,7 +41,7 @@ Tistnote supports thoughtful writing: favorite books, foods you avoid, people yo
 
 ## Explore, reflect, revisit
 
-**See your notes in context.** The optional note canvas follows your groups and subgroups. Hollow circles are empty notes; green circles contain choices; a small extra dot marks a review due.
+**See your notes in context.** The optional note canvas follows your groups and subgroups. Hollow circles are empty notes; green circles contain choices; a small light pink dot marks a review due.
 
 ![Note canvas with nested groups, populated and empty notes, and review reminders](docs/screenshots/notes-canvas-en.png)
 

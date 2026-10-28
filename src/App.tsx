@@ -146,7 +146,7 @@ export default function App() {
     if (!canvasSession) return;
     let cancelled = false;
     setCanvasReady(false);
-    api.command<CanvasState>("canvas_get").then(state => { if (!cancelled) { setCanvasState(state); setCanvasReady(true); } })
+    api.command<CanvasState>("canvas_get").then(state => { if (!cancelled) { setCanvasState(state); setNoteView(state.layout.noteView ?? "list"); setCanvasReady(true); } })
       .catch(error => { if (!cancelled) setError(tr(String(error).replace(/^Error: /, ""))); });
     return () => { cancelled = true; };
   }, [canvasSession]);
@@ -378,6 +378,7 @@ export default function App() {
     conflictRef.current = false;
   }
   function install(v: Vault) {
+    setNoteView("list");
     setCanvasReady(false);
     setCanvasSession(s => s + 1);
     setVault(v);
@@ -846,6 +847,16 @@ export default function App() {
     setGroup(r.group ?? "");
     setNotice(tr("已移到{0}", r.group ? `“${r.group}”` : tr("未分组")));
   }
+  async function changeNoteView(view: "list" | "canvas") {
+    const current = await api.command<CanvasState>("canvas_get");
+    const savedView = await api.command<CanvasState>("canvas_put", {
+      layout: { ...current.layout, noteView: view }, expected: current.revision,
+    });
+    setCanvasState(savedView);
+    setNoteView(view);
+    setListVisible(true);
+    setListPanel(null);
+  }
   async function renameGroupAndLayout(name: string, newName: string) {
     const state = await api.command<CanvasState>("canvas_get");
     await api.command("group_rename", { name, new_name: newName });
@@ -1162,7 +1173,7 @@ export default function App() {
                 <div className="section-heading note-list-heading">
                   <h1>{tr("我的笔记")}</h1>
                   <div className="actions">
-                    {noteView === "canvas" && <button onClick={() => { setNoteView("list"); setListPanel(null); }}>{tr("列表视图")}</button>}
+                    {noteView === "canvas" && <button disabled={busy || !canvasReady} onClick={() => void run(() => changeNoteView("list"))}>{tr("列表视图")}</button>}
                     <button
                       className={`icon-button list-search-button ${query || filter.length ? "active" : ""}`}
                       aria-label={tr("搜索与标签筛选")}
@@ -1233,11 +1244,7 @@ export default function App() {
                     aria-label={tr("笔记列表选项")}
                   >
                     <p className="muted">{formatCount(list.length, "notes")}</p>
-                    <button onClick={() => {
-                      setNoteView(noteView === "list" ? "canvas" : "list");
-                      setListVisible(true);
-                      setListPanel(null);
-                    }}>{tr(noteView === "list" ? "画布视图" : "列表视图")}</button>
+                    <button disabled={busy || !canvasReady} onClick={() => void run(() => changeNoteView(noteView === "list" ? "canvas" : "list"))}>{tr(noteView === "list" ? "画布视图" : "列表视图")}</button>
                     {noteView === "canvas" && <>
                       <button disabled={busy} onClick={() => void run(async () => { setCanvasState(await api.command<CanvasState>("canvas_get")); setCanvasReady(true); setListPanel(null); })}>{tr("刷新画布布局")}</button>
                       <button disabled={busy || !canvasReady} onClick={() => void run(async () => {

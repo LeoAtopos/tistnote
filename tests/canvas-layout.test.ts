@@ -33,12 +33,19 @@ test("reordering sibling branches moves their families into slots and changes tr
 test("layout parsing refuses invalid paths, non-finite coordinates and unknown data", async () => {
   const empty = await readCanvasState(null); assert.equal(empty.revision, null);
   const raw = JSON.stringify(empty.layout); assert((await readCanvasState(raw)).revision);
+  assert.equal((await readCanvasState(raw)).layout.noteView ?? "list", "list");
+  for (const noteView of ["canvas", "list"] as const) {
+    const saved = await readCanvasState(JSON.stringify({ ...empty.layout, noteView }));
+    assert.equal(saved.layout.noteView, noteView);
+    assert.equal(remapCanvasGroup(saved.layout, "A", "B").noteView, noteView);
+  }
   for (const value of [
     { ...empty.layout, positions: { "group:../escape": { x: 0, y: 0 } } },
     { ...empty.layout, positions: { "group:A": { x: NaN, y: 0 } } },
     { ...empty.layout, positions: { "group:A": { x: 1_000_001, y: 0 } } },
     { ...empty.layout, groupOrder: ["A", "A"] },
     { ...empty.layout, schema: 2 }, { ...empty.layout, unexpected: true },
+    { ...empty.layout, noteView: "cards" }, { ...empty.layout, noteView: null },
   ]) assert.throws(() => validateCanvasLayout(value));
   await assert.rejects(readCanvasState("broken"), /原文件已保留/);
 });

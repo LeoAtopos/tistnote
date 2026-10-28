@@ -3,7 +3,7 @@ import { revision } from "./markdown";
 import type { CanvasBranch, CanvasNode } from "./canvas-graph";
 import type { GraphPoint } from "./template-graph";
 
-export interface CanvasLayout { schema: 1; positions: Record<string, GraphPoint>; groupOrder: string[] }
+export interface CanvasLayout { schema: 1; positions: Record<string, GraphPoint>; groupOrder: string[]; noteView?: "list" | "canvas" }
 export interface CanvasState { layout: CanvasLayout; revision: string | null }
 export interface CanvasArrangement {
   key: string;
@@ -15,7 +15,8 @@ export const emptyCanvasLayout = (): CanvasLayout => ({ schema: 1, positions: {}
 export function validateCanvasLayout(value: unknown): asserts value is CanvasLayout {
   const layout = value as CanvasLayout;
   if (!layout || layout.schema !== 1 || !layout.positions || typeof layout.positions !== "object" || Array.isArray(layout.positions)
-    || Object.keys(layout).some(key => !["schema", "positions", "groupOrder"].includes(key))
+    || Object.keys(layout).some(key => !["schema", "positions", "groupOrder", "noteView"].includes(key))
+    || (layout.noteView !== undefined && !["list", "canvas"].includes(layout.noteView))
     || !Array.isArray(layout.groupOrder) || Object.keys(layout.positions).length > 10000 || layout.groupOrder.length > 10000)
     throw Error("画布布局无效，原文件已保留。");
   for (const [key, point] of Object.entries(layout.positions)) {

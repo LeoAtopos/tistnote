@@ -9,7 +9,12 @@ pub struct CanvasLayout {
     schema: u32,
     positions: HashMap<String, Point>,
     group_order: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    note_view: Option<NoteView>,
 }
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+enum NoteView { List, Canvas }
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct Point { x: f64, y: f64 }
@@ -57,6 +62,13 @@ mod tests {
         let layout: CanvasLayout = serde_json::from_value(json!({"schema":1,"positions":{"group:生活":{"x":100.0,"y":-20.0}},"groupOrder":["生活"]})).unwrap();
         let saved = put(dir.path(), layout.clone(), None).unwrap();
         assert_eq!(get(dir.path()).unwrap(), saved);
+        let mut with_view = layout.clone(); with_view.note_view = Some(NoteView::Canvas);
+        let view_saved = put(dir.path(), with_view, saved["revision"].as_str()).unwrap();
+        assert_eq!(get(dir.path()).unwrap()["layout"]["noteView"], "canvas");
+        let mut list_view = layout.clone(); list_view.note_view = Some(NoteView::List);
+        put(dir.path(), list_view, view_saved["revision"].as_str()).unwrap();
+        assert_eq!(get(dir.path()).unwrap()["layout"]["noteView"], "list");
+        assert!(serde_json::from_value::<CanvasLayout>(json!({"schema":1,"positions":{},"groupOrder":[],"noteView":"cards"})).is_err());
         let path = dir.path().join(".tistnote/canvas.json"); let original = fs::read(&path).unwrap();
         assert!(put(dir.path(), layout.clone(), Some("stale")).is_err()); assert_eq!(fs::read(&path).unwrap(), original);
         fs::write(&path, b"broken").unwrap(); assert!(put(dir.path(), layout, None).is_err()); assert_eq!(fs::read(&path).unwrap(), b"broken");
