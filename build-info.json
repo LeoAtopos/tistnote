@@ -1,7 +1,6 @@
 {
-  "version": "0.2.0",
-  "note": "Local-first Pages build; source and binary download URLs are unchanged.",
   "edition": "pages",
-  "sourceCommit": "b06b760999fc21a8a8dc0112da200377d9cec0a1",
-  "builtAt": "2026-10-27T16:51:03.4126900Z"
+  "builtAt": "2026-10-28T13:14:33.4018471Z",
+  "version": "0.2.0",
+  "sourceCommit": "098b2a0a8b3605a8736fdd660a57fa7abce63ae7"
 }
