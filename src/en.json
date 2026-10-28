@@ -1,4 +1,6 @@
 {
+  "我最...": "My most...",
+  "笔记选项": "Note options",
   "已授权文件夹：…/{0}/": "Authorized folder: …/{0}/",
   "浏览器不提供完整磁盘路径": "The browser does not expose the full disk path",
   "浏览器内部存储：{0}": "Browser-local storage: {0}",
@@ -192,6 +194,7 @@
   "从一次品察开始。": "Start with something you notice.",
   "喜欢与讨厌，都可以成为一份记录。": "Likes and dislikes both deserve a place.",
   "写一份新笔记": "Write a new note",
+  "随机模板开始": "Start with a random template",
   "去模板库找灵感": "Find inspiration in templates",
   "世间万事，皆可一品": "Everything can inspire a list",
   "喜欢、不喜欢，或说不清的感受，从一个主题开始记录。": "Likes, dislikes, or feelings you cannot quite name. Start with a topic.",
@@ -389,7 +392,7 @@
   "一位虚弱的老人躺在医院病床上": "A frail elderly person in a hospital bed",
   "最后时刻，最珍视的记忆怎么记不起来了？": "At the end, why can I no longer recall my most treasured memories?",
   "课堂里的男孩害羞地看着前排女孩的背影": "A shy boy looks at a girl sitting ahead of him in class",
-  "最爱音乐人的品单发给她了，她会回复她的品单么？": "I sent her my favorite musicians. Will she send me her list?",
+  "“最爱音乐人”的品单发给她了，她会回复她的么？": "I sent her my “Favorite musicians” list. Will she reply with hers?",
   "中年人在夜晚的书桌前面对电脑打字": "A middle-aged person types at a desk late at night",
   "回顾几年品记历史，发现自己越来越爱大山了。": "Looking back through years of Tistnote, I see how much more I love the mountains.",
   "用点线逐行写出品单的动画": "An animation drawing a list with dots and lines",

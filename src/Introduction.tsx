@@ -9,7 +9,7 @@ const slides = [
   { image: "brand.svg", alt: "品记标志与名称", caption: "记录品好，建设自我" },
   { image: "conversation.png", alt: "聊天中的女孩突然抬起眼睛，挑起一边的眉毛", caption: "突然被问，最喜欢的5位作家是谁？" },
   { image: "hospital.png", alt: "一位虚弱的老人躺在医院病床上", caption: "最后时刻，最珍视的记忆怎么记不起来了？" },
-  { image: "classroom.png", alt: "课堂里的男孩害羞地看着前排女孩的背影", caption: "最爱音乐人的品单发给她了，她会回复她的品单么？" },
+  { image: "classroom.png", alt: "课堂里的男孩害羞地看着前排女孩的背影", caption: "“最爱音乐人”的品单发给她了，她会回复她的么？" },
   { image: "night-desk.png", alt: "中年人在夜晚的书桌前面对电脑打字", caption: "回顾几年品记历史，发现自己越来越爱大山了。" },
   { image: null, alt: "用点线逐行写出品单的动画", caption: "品记，你的人生值得花时间好好建设" },
 ];

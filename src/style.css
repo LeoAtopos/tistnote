@@ -787,7 +787,7 @@ svg {
 }
 .tree-folder-button[draggable="true"],
 .tree-note[draggable="true"] {
-  cursor: grab;
+  cursor: default;
 }
 .tree-dragging [draggable="true"] {
   cursor: grabbing;
@@ -950,6 +950,12 @@ svg {
   border: 0;
   font-size: 20px;
   padding: 12px;
+}
+.editor-toolbar .more-menu {
+  position: fixed;
+  z-index: 10;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .note-context-menu {
   position: fixed;

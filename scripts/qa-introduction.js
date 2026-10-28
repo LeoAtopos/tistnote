@@ -9,7 +9,7 @@ async page => {
   await intro.waitFor();
   const active=()=>intro.locator('.intro-slide[aria-hidden="false"]');
   const turn=()=>intro.getByRole('button',{name:'下一页',exact:true}).click();
-  const captions=['记录品好，建设自我','突然被问，最喜欢的5位作家是谁？','最后时刻，最珍视的记忆怎么记不起来了？','最爱音乐人的品单发给她了，她会回复她的品单么？','回顾几年品记历史，发现自己越来越爱大山了。','品记，你的人生值得花时间好好建设'];
+  const captions=['记录品好，建设自我','突然被问，最喜欢的5位作家是谁？','最后时刻，最珍视的记忆怎么记不起来了？','“最爱音乐人”的品单发给她了，她会回复她的么？','回顾几年品记历史，发现自己越来越爱大山了。','品记，你的人生值得花时间好好建设'];
   await intro.getByRole('button',{name:'关闭对话框',exact:true}).click();
   check(await page.evaluate(()=>localStorage.getItem('tistnote-introduction-seen-v1'))==='1','Close did not persist seen state');
   await page.evaluate(()=>localStorage.removeItem('tistnote-introduction-seen-v1'));

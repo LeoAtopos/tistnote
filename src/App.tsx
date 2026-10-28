@@ -70,6 +70,7 @@ type Dialog =
   | "help"
   | "groups"
   | "new-folder"
+  | "rename-folder"
   | "install"
   | "browser-libraries"
   | "home-screen"
@@ -172,7 +173,11 @@ export default function App() {
     [duplicateTitle, setDuplicateTitle] = useState(""),
     [listVisible, setListVisible] = useState(true),
     [tagText, setTagText] = useState(""),
+    [titleText, setTitleText] = useState(""),
+    [propertiesOpen, setPropertiesOpen] = useState(false),
     [revisionTick, setRevisionTick] = useState(0);
+  const titleInput = useRef<HTMLInputElement>(null);
+  const focusNewTitle = useRef(false);
   const [closedGroups, setClosedGroups] = useState<Set<string>>(new Set());
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [reviewNow, setReviewNow] = useState(Date.now());
@@ -184,7 +189,7 @@ export default function App() {
   const [listPanel, setListPanel] = useState<"search" | "options" | null>(null);
   const listTools = useRef<HTMLDivElement>(null);
   const [treeMenu, setTreeMenu] = useState<{
-    x: number; y: number; group: string; anchor: HTMLElement;
+    x: number; y: number; group: string; renameGroup?: string; anchor: HTMLElement;
   } | null>(null);
   const treeMenuRef = useRef<HTMLDivElement>(null);
   const [newFolderParent, setNewFolderParent] = useState("");
@@ -228,38 +233,56 @@ export default function App() {
   }, [treeMenu]);
   useEffect(() => setTreeMenu(null), [view, dialog, busy, introductionOpen]);
   const tradeTools = useRef<HTMLDivElement>(null);
-  useEffect(() => setTradeOpen(false), [dialog, note?.id, editing, view]);
+  const noteTools = useRef<HTMLDivElement>(null);
+  useEffect(() => { setTradeOpen(false); setMore(false); }, [dialog, note?.id, editing, view]);
   useLayoutEffect(() => {
-    if (!tradeOpen) return;
+    const tools = tradeOpen ? tradeTools.current : more ? noteTools.current : null;
+    if (!tools) return;
     const position = () => {
-      const menu = tradeTools.current?.querySelector<HTMLElement>('[data-trade-menu]');
+      const menu = tools.querySelector<HTMLElement>('.more-menu');
       if (!menu) return;
-      menu.style.left = "auto";
-      menu.style.right = "0";
-      if (menu.getBoundingClientRect().left < 8) {
-        menu.style.left = "0";
-        menu.style.right = "auto";
-      }
+      const viewport = window.visualViewport;
+      const left = (viewport?.offsetLeft ?? 0) + 8;
+      const top = (viewport?.offsetTop ?? 0) + 8;
+      const right = left + (viewport?.width ?? innerWidth) - 16;
+      const bottom = top + (viewport?.height ?? innerHeight) - 16;
+      menu.style.maxWidth = `${right - left}px`;
+      menu.style.maxHeight = `${bottom - top}px`;
+      const anchor = tools.getBoundingClientRect();
+      const bounds = menu.getBoundingClientRect();
+      const below = anchor.bottom + 8;
+      const above = anchor.top - bounds.height - 8;
+      const y = below + bounds.height > bottom && above >= top ? above : below;
+      menu.style.left = `${Math.max(left, Math.min(anchor.right - bounds.width, right - bounds.width))}px`;
+      menu.style.top = `${Math.max(top, Math.min(y, bottom - bounds.height))}px`;
+      menu.style.right = "auto";
     };
     position();
-    tradeTools.current?.querySelector<HTMLElement>('[data-trade-menu] button')?.focus();
+    tools.querySelector<HTMLElement>('.more-menu button')?.focus();
+    const close = () => { setTradeOpen(false); setMore(false); };
     const dismiss = (event: PointerEvent) => {
-      if (!tradeTools.current?.contains(event.target as Node)) setTradeOpen(false);
+      if (!tools.contains(event.target as Node)) close();
     };
     const escape = (event: globalThis.KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      setTradeOpen(false);
-      tradeTools.current?.querySelector<HTMLButtonElement>("button")?.focus();
+      close();
+      tools.querySelector<HTMLButtonElement>("button")?.focus();
     };
     document.addEventListener("pointerdown", dismiss);
     document.addEventListener("keydown", escape);
     window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, true);
+    window.visualViewport?.addEventListener("resize", position);
+    window.visualViewport?.addEventListener("scroll", position);
     return () => {
       document.removeEventListener("pointerdown", dismiss);
       document.removeEventListener("keydown", escape);
       window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position, true);
+      window.visualViewport?.removeEventListener("resize", position);
+      window.visualViewport?.removeEventListener("scroll", position);
     };
-  }, [tradeOpen]);
+  }, [tradeOpen, more]);
   useEffect(() => {
     if (!listPanel) return;
     const dismiss = (event: PointerEvent) => {
@@ -344,6 +367,8 @@ export default function App() {
     setChangeLog("");
     setChangeLogError("");
     setTagText(r?.note.tags.join("，") ?? "");
+    setTitleText(r && validTitle(r.note) ? r.note.title : "");
+    setPropertiesOpen(false);
     undo.current = [];
     redo.current = [];
     setRevisionTick((n) => n + 1);
@@ -394,6 +419,7 @@ export default function App() {
     doc.current = next;
     setNote(next);
     setTagText(next.tags.join("，"));
+    setTitleText(validTitle(next) ? next.title : "");
     setStatus(tr("待保存"));
     setRevisionTick((n) => n + 1);
   }
@@ -515,6 +541,7 @@ export default function App() {
     });
     setVault((v) => (v ? { ...v, notes: [...v.notes, r] } : v));
     select(r, true);
+    focusNewTitle.current = true;
     setGroup(targetGroup);
     setView("notes");
     setPicked(null);
@@ -630,6 +657,11 @@ export default function App() {
       clearTimeout(version);
     };
   }, [revisionTick, note?.id, conflict]);
+  useLayoutEffect(() => {
+    if (!focusNewTitle.current || busy || introductionOpen || !editing) return;
+    titleInput.current?.focus();
+    focusNewTitle.current = false;
+  }, [note?.id, busy, editing, introductionOpen]);
   useEffect(() => {
     const focus = () => void latest.current.focus().catch(fail);
     window.addEventListener("focus", focus);
@@ -1122,6 +1154,7 @@ export default function App() {
                 x: event.clientX || bounds.left + 16,
                 y: event.clientY || bounds.top + 16,
                 group: item?.dataset.createIn ?? "",
+                renameGroup: item?.matches(".tree-folder-button, .graph-group") ? item.dataset.createIn : undefined,
                 anchor,
               });
             }}>
@@ -1349,6 +1382,8 @@ export default function App() {
                               await externalRefresh();
                               editStart.current = structuredClone(saved.current);
                               setChangeLog("");
+                              setTitleText(doc.current && validTitle(doc.current) ? doc.current.title : "");
+                              setPropertiesOpen(false);
                               setEditing(true);
                             }
                             setMore(false);
@@ -1364,10 +1399,17 @@ export default function App() {
                             onClick={() => void run(cancelEditing)}
                           >{tr("取消编辑")}</button>
                           <button
-                            onClick={() =>
-                              void run(() => openDialog("history"))
-                            }
-                          >{tr("历史")}</button>
+                            aria-expanded={propertiesOpen}
+                            aria-controls="note-properties"
+                            onClick={() => {
+                              setPropertiesOpen(!propertiesOpen);
+                              setMore(false);
+                              requestAnimationFrame(() => {
+                                if (!propertiesOpen) document.querySelector<HTMLSelectElement>("#note-properties select")?.focus();
+                                else titleInput.current?.focus();
+                              });
+                            }}
+                          >{tr("设置")}</button>
                         </>
                       )}
                       {!editing && (
@@ -1413,7 +1455,7 @@ export default function App() {
                           </div>
                         )}
                       </div>}
-                      <div className="more-wrap">
+                      <div className="more-wrap" ref={noteTools}>
                         <button
                           aria-label={tr("更多笔记操作")}
                           aria-expanded={more}
@@ -1433,6 +1475,11 @@ export default function App() {
                               </>
                             ) : (
                               <>
+                                <button
+                                  onClick={() =>
+                                    void run(() => openDialog("history"))
+                                  }
+                                >{tr("历史")}</button>
                                 <button
                                   onClick={() => {
                                     setMilestone("");
@@ -1511,19 +1558,23 @@ export default function App() {
                         disabled={busy || conflict}
                       >
                         <input
+                          ref={titleInput}
                           className="note-title"
                           aria-label={tr("笔记主题")}
-                          value={note.title}
+                          placeholder={tr("我最...")}
+                          value={titleText}
                           onKeyDown={(e) => {
                             if (e.key !== "Enter" || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
                             e.preventDefault();
                             e.currentTarget.parentElement?.querySelector<HTMLTextAreaElement>(".description")?.focus();
                           }}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setTitleText(value);
                             edit((n) => {
-                              n.title = e.target.value;
-                            })
-                          }
+                              n.title = value.trim() ? value : copyTitle(tr("未命名笔记"), vault.notes.filter(r => r.note.id !== n.id), 1);
+                            });
+                          }}
                         />
                         <AutoTextarea
                           className="description"
@@ -1534,13 +1585,20 @@ export default function App() {
                             Math.min(5, note.description.split("\n").length),
                           )}
                           value={note.description}
+                          onKeyDown={(e) => {
+                            if (!["Enter", "Tab"].includes(e.key) || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+                            e.preventDefault();
+                            const first = doc.current?.entries[0];
+                            if (first) document.getElementById(`entry-${first.id}`)?.focus();
+                            else addEntry();
+                          }}
                           onChange={(e) =>
                             edit((n) => {
                               n.description = e.target.value;
                             })
                           }
                         />
-                        <div className="note-properties">
+                        {propertiesOpen && <div className="note-properties" id="note-properties">
                           <label className="group-input">
                             <span>{tr("分组")}</span>
                             <select
@@ -1591,7 +1649,7 @@ export default function App() {
                             <option value="false">{tr("无排名")}</option>
                           </select>
                           <ReviewSettings key={note.id} note={note} onChange={edit} />
-                        </div>
+                        </div>}
                         <div className="entries">
                           {note.entries.map((entry, index) => (
                             <article
@@ -1651,10 +1709,11 @@ export default function App() {
                                   onKeyDown={(e) => {
                                     if (
                                       e.key === "Enter" &&
-                                      !e.nativeEvent.isComposing
+                                      !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && !e.repeat &&
+                                      !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
                                     ) {
                                       e.preventDefault();
-                                      addEntry(index);
+                                      e.currentTarget.parentElement?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
                                     }
                                     if (
                                       e.altKey &&
@@ -1677,6 +1736,13 @@ export default function App() {
                                     Math.min(10, entry.reason.split("\n").length),
                                   )}
                                   value={entry.reason}
+                                  onKeyDown={(e) => {
+                                    if (e.key !== "Enter" || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+                                    e.preventDefault();
+                                    const next = doc.current?.entries[index + 1];
+                                    if (next) document.getElementById(`entry-${next.id}`)?.focus();
+                                    else addEntry(index);
+                                  }}
                                   onChange={(e) =>
                                     edit((n) => {
                                       n.entries[index].reason = e.target.value;
@@ -1741,12 +1807,12 @@ export default function App() {
                   <p>{tr("喜欢与讨厌，都可以成为一份记录。")}</p>
                   <button
                     className="primary"
-                    onClick={() => void run(() => create())}
-                  >{tr("写一份新笔记")}</button>
+                    onClick={() => void run(() => create(randomTemplate(templates)))}
+                  >{tr("随机模板开始")}</button>
                   <button
                     className="text-button"
-                    onClick={() => void run(() => switchView("templates"))}
-                  >{tr("去模板库找灵感")}</button>
+                    onClick={() => void run(() => create())}
+                  >{tr("写一份新笔记")}</button>
                 </div>
               )}
             </section>
@@ -1892,38 +1958,56 @@ export default function App() {
           <button role="menuitem" onClick={() => {
             setTreeMenu(null);
             setNewFolderParent(treeMenu.group);
+            setEditingGroup(null);
             setGroupInput("");
             setGroupError("");
             void run(() => openDialog("new-folder"));
           }}>{tr("新建分组")}</button>
+          {treeMenu.renameGroup && <button role="menuitem" onClick={() => {
+            const name = treeMenu.renameGroup!;
+            setTreeMenu(null);
+            setEditingGroup(name);
+            setNewFolderParent(name.includes("/") ? name.slice(0, name.lastIndexOf("/")) : "");
+            setGroupInput(name.split("/").at(-1)!);
+            setGroupError("");
+            void run(() => openDialog("rename-folder"));
+          }}>{tr("重命名")}</button>}
         </div>
       )}
-      {dialog === "new-folder" && vault && (
-        <Modal title={tr("新建分组")} onClose={() => { if (!busy) setDialog(null); }}>
+      {(dialog === "new-folder" || dialog === "rename-folder") && vault && (
+        <Modal title={tr(dialog === "rename-folder" ? "重命名" : "新建分组")} onClose={() => { if (!busy) setDialog(null); }}>
           <form className="form-stack" onSubmit={(event) => {
             event.preventDefault();
             void runGroup(async () => {
               setGroupError("");
               const name = groupName([newFolderParent, groupInput.trim()].filter(Boolean).join("/"));
               await checkpoint();
-              await api.command("group_create", { name });
+              const renamed = dialog === "rename-folder" ? editingGroup : null;
+              if (renamed) await renameGroupAndLayout(renamed, name);
+              else await api.command("group_create", { name });
               const v = await refreshGroups();
               const created = v.groups.find(path => path.toLowerCase() === name.toLowerCase()) ?? name;
-              setGroup(created);
-              setClosedGroups(previous => new Set([...previous].filter(path => !inGroup(created, path))));
-              setNotice(tr("分组已创建"));
+              setGroup(previous => renamed
+                ? previous !== null && inGroup(previous, renamed) ? created + previous.slice(renamed.length) : previous
+                : created);
+              setClosedGroups(previous => new Set(renamed
+                ? [...previous].map(path => inGroup(path, renamed) ? created + path.slice(renamed.length) : path)
+                : [...previous].filter(path => !inGroup(created, path))));
+              setNotice(tr(renamed ? "分组已重命名" : "分组已创建"));
+              setEditingGroup(null);
               setDialog(null);
             });
           }}>
-            <p className="muted">{tr("新建位置：")}{newFolderParent || tr("根目录")}</p>
+            <p className="muted">{dialog === "rename-folder" ? `${tr("分组")}：${editingGroup}` : tr("新建位置：") + (newFolderParent || tr("根目录"))}</p>
             <label className="form-stack">
-              <span>{tr("分组名称")}</span>
-              <input aria-label={tr("分组名称")} autoFocus value={groupInput}
-                disabled={busy} onChange={event => setGroupInput(event.target.value)} />
+              <span>{tr(dialog === "rename-folder" ? "分组新名称" : "分组名称")}</span>
+              <input aria-label={tr(dialog === "rename-folder" ? "分组新名称" : "分组名称")} autoFocus value={groupInput}
+                onFocus={event => { if (dialog === "rename-folder") event.currentTarget.select(); }}
+                disabled={busy} onChange={event => { setGroupInput(event.target.value); setGroupError(""); }} />
             </label>
             {groupError && <p className="error" role="alert">{tr(groupError)}</p>}
             <div className="actions">
-              <button className="primary" disabled={busy || !groupInput.trim()}>{tr("新建分组")}</button>
+              <button className="primary" disabled={busy || !groupInput.trim()}>{tr(dialog === "rename-folder" ? "保存名称" : "新建分组")}</button>
               <button type="button" disabled={busy} onClick={() => setDialog(null)}>{tr("取消")}</button>
             </div>
           </form>

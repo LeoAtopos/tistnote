@@ -13,6 +13,7 @@ src-tauri/target/
 src-tauri/gen/
 output/
 .playwright-cli/
+.playwright-mcp/
 *.log
 release/
 *.tsbuildinfo
