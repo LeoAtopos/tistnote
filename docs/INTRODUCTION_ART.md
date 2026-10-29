@@ -5,10 +5,10 @@
 | 页 | 素材 | 场景 |
 | --- | --- | --- |
 | 1 | `public/introduction/brand.svg` | 品记标志与名称 |
-| 2 | `public/introduction/conversation.png` | 女孩聊天时突然想不起答案，抬眼、挑起一边眉毛 |
-| 3 | `public/introduction/hospital.png` | 虚弱老人躺在医院病床上 |
-| 4 | `public/introduction/classroom.png` | 课堂里男孩害羞地看着前排女孩的背影 |
-| 5 | `public/introduction/night-desk.png` | 中年人在夜晚的书桌前面对电脑打字 |
+| 2 | `public/introduction/conversation.webp` | 女孩聊天时突然想不起答案，抬眼、挑起一边眉毛 |
+| 3 | `public/introduction/hospital.webp` | 虚弱老人躺在医院病床上 |
+| 4 | `public/introduction/classroom.webp` | 课堂里男孩害羞地看着前排女孩的背影 |
+| 5 | `public/introduction/night-desk.webp` | 中年人在夜晚的书桌前面对电脑打字 |
 | 6 | `src/Introduction.tsx` | 标题线先出现，然后依次写出四行圆点与横线 |
 
 ## 生成提示词集
@@ -28,3 +28,4 @@
 统一简化提示：Preserve the exact scene, character age, pose, expression and landscape framing. Refine into a much simpler 1-bit black-and-white pencil line drawing. Remove almost all tonal shading, gray washes, paper grain and tiny texture details. Clean black pencil contours on white paper, limited hatching only where necessary. Airy, light, fresh and humane. Preserve readable faces and essential objects, realistic proportions, no anime eyes. No text or logos.
 
 六句文案以 `src/Introduction.tsx` 为准，使用真实界面文字呈现，不烘焙进生成图片，确保中文清晰可读。用户指定的“品好”“么”等用词保留原样；第 2 至第 5 页按最新确认文案更新。
+
