@@ -13,8 +13,9 @@ async page=>{
     await tab.locator('.intro-track').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)));
     const metrics=await tab.locator('.intro-slide').nth(i).evaluate(slide=>{
      const art=slide.querySelector('.intro-art').getBoundingClientRect(),text=slide.querySelector('h2').getBoundingClientRect(),view=slide.closest('.intro-viewport').getBoundingClientRect();
-     return {gap:text.top-art.bottom,top:art.top-view.top,bottom:view.bottom-text.bottom,font:parseFloat(getComputedStyle(slide.querySelector('h2')).fontSize)};
+     return {clip:getComputedStyle(slide).overflowX,gap:text.top-art.bottom,top:art.top-view.top,bottom:view.bottom-text.bottom,font:parseFloat(getComputedStyle(slide.querySelector('h2')).fontSize)};
     });
+    if(metrics.clip!=='hidden')throw Error('Slide must clip neighboring artwork');
     if(metrics.top < -1||metrics.bottom < -1||metrics.font<18)throw Error(JSON.stringify({size,i,metrics}));
     if(size.width<size.height&&(metrics.gap<0||metrics.gap>18))throw Error('Bad spacing '+JSON.stringify(metrics));
     results.push({size,page:i+1,...metrics});
