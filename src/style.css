@@ -1555,7 +1555,9 @@ summary {
 .intro-art {
   flex: 1;
   min-height: 120px;
-  margin: 0 24px;
+  width: calc(100% - 48px);
+  min-width: 0;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1564,6 +1566,7 @@ summary {
 .intro-writing {
   display: block;
   min-width: 0;
+  max-width: 100%;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -1622,7 +1625,7 @@ summary {
 }
 @media (max-width: 640px) {
   .intro-modal .modal-header { padding: 12px 16px; }
-  .intro-art { margin: 0 10px; }
+  .intro-art { width: calc(100% - 20px); }
   .intro-caption { margin: 14px 20px 20px; font-size: 20px; line-height: 1.5; }
   .intro-navigation { padding: 14px 16px; gap: 8px; }
   .intro-navigation button { padding: 9px 12px; }

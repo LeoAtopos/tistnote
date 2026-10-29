@@ -21,6 +21,15 @@ async page => {
   fail=false;await tab.getByRole('button',{name:'Retry',exact:true}).click();await tab.locator('.app').waitFor();
   fail=true;await tab.reload({waitUntil:'domcontentloaded'});
   await tab.getByRole('button',{name:'Skip loading and enter Tistnote',exact:true}).click();await tab.locator('.app').waitFor();
-  return {loadingGate:true,retry:true,skip:true};
+  await tab.unrouteAll({behavior:'wait'});
+  await tab.evaluate(()=>localStorage.setItem('tistnote-introduction-seen-v1','1'));
+  const requests=[];
+  tab.on('request',r=>{if(r.url().includes('/introduction/'))requests.push(r.url());});
+  await tab.route('**/introduction/**',route=>route.abort());
+  await tab.reload({waitUntil:'networkidle'});await tab.locator('.app').waitFor();
+  if(await tab.locator('.startup').count()||requests.length)throw Error('Returning visitor preloaded intro images');
+  await tab.locator('.brand').click();await tab.locator('.intro-modal').waitFor();
+  if(!requests.length)throw Error('Manual introduction did not load on demand');
+  return {loadingGate:true,retry:true,skip:true,returningVisitorNoLoading:true,noIntroRequests:true,manualIntro:true};
  }finally{await ctx.close();}
 }

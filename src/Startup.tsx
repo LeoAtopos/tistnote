@@ -1,10 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { web, preview } from "./api";
 import { tr } from "./i18n";
+import { introductionSeenKey } from "./Introduction";
 import { introductionArt, introductionImage } from "./introduction-art";
 
 export function Startup({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(!web && !preview);
+  const [ready, setReady] = useState(() => {
+    if (!web && !preview) return true;
+    try { return localStorage.getItem(introductionSeenKey) === "1"; }
+    catch { return false; }
+  });
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(0);
   const [failed, setFailed] = useState(false);
