@@ -1,3 +1,8 @@
+## 2026-10-29 手机引导图片左右居中
+
+- intro-art 改为明确的可用宽度加 margin-inline:auto；手机为页宽减 20px，宽屏为页宽减 48px。图片 max-width:100%，容器 min-width:0，避免 flex/aspect-ratio 自动尺寸超过页面后被右侧裁切。
+- Chromium 与 WebKit 26.6，深浅主题，390×844、414×896、768×1024、1100×900 的六页检查通过：手机左右各 10px，宽屏各 24px，图片左右边界一致；原裁切、图文间距和字号检查仍通过。查看暗色手机截图，Pages 构建通过；未在用户实体 iPhone 上复测。
+
 ## 2026-10-29 引导轮播相邻图片漏出
 
 - 每个 intro-slide 独立 overflow:hidden，避免插图溢出本页后显示在相邻页；图片/SVG 设置 min-width:0，允许 flex 子项缩至页宽以内。
