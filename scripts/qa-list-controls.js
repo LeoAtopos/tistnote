@@ -152,7 +152,7 @@ async (page) => {
             el.matches("input,textarea,select")),
       );
       const small = texts
-        .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 18)
+        .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 13)
         .map((el) => ({
           text: el.textContent.slice(0, 30),
           font: getComputedStyle(el).fontSize,

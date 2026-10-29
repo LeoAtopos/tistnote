@@ -19,7 +19,7 @@ async page => {
       const nodes=[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden'&&([...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||el.matches('input,textarea,select')));
       return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minFont:Math.min(...nodes.map(el=>parseFloat(getComputedStyle(el).fontSize)))};
     });
-    check(audit.minFont>=18&&audit.scrollWidth<=width,'Font/overflow regression');
+    check(audit.minFont>=13&&audit.scrollWidth<=width,'Font/overflow regression');
   }
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'去模板库找灵感',exact:true}).click();
@@ -40,5 +40,5 @@ async page => {
   await page.getByRole('button',{name:'移入回收站',exact:true}).click();
   await empty.waitFor();
   check(!(await tree.isVisible()),'Deleting last note did not return to empty introduction');
-  return {empty:'introduction on new vault and reload; three portrait sizes',actions:'create and browse templates work',nonempty:'reload shows note list',lastDeletion:'returns to introduction',fonts:'>=18px; no page overflow'};
+  return {empty:'introduction on new vault and reload; three portrait sizes',actions:'create and browse templates work',nonempty:'reload shows note list',lastDeletion:'returns to introduction',fonts:'>=13px; no page overflow'};
 }

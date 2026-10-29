@@ -39,7 +39,7 @@ async page => {
         if(device.language==='en')check(!/[\u4e00-\u9fff]/.test(copy),'Untranslated guide');
         check(await guide.locator('ol li').count()===2,'Missing steps');
         const minFont=await guide.evaluate(el=>Math.min(...[...el.querySelectorAll('p,li,strong,button')].map(e=>parseFloat(getComputedStyle(e).fontSize))));
-        check(minFont>=18,'Small guide text');
+        check(minFont>=13,'Small guide text');
         await tab.screenshot({path:`output/playwright/home-screen-guide-${device.id}.png`});
         await guide.getByRole('button',{name:device.language==='zh'?'知道了':'Got it',exact:true}).click();
         await tab.locator('.home-screen-tip .icon-button').click();await tab.reload();

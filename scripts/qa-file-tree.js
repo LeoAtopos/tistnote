@@ -107,7 +107,7 @@ async page => {
   const audit = () => page.evaluate(() => {
     const visible = el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' && !el.closest('dialog:not([open])');
     const nodes = [...document.querySelectorAll('body *')].filter(el => visible(el) && ([...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) || el.matches('input,textarea,select')));
-    return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minimumFont:Math.min(...nodes.map(el=>parseFloat(getComputedStyle(el).fontSize))),small:nodes.filter(el=>parseFloat(getComputedStyle(el).fontSize)<18).map(el=>el.textContent.slice(0,30))};
+    return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minimumFont:Math.min(...nodes.map(el=>parseFloat(getComputedStyle(el).fontSize))),small:nodes.filter(el=>parseFloat(getComputedStyle(el).fontSize)<13).map(el=>el.textContent.slice(0,30))};
   });
   await page.getByRole('button',{name:'笔记列表选项',exact:true}).click();
   await page.screenshot({path:'output/playwright/note-toolbar-options.png',fullPage:true});

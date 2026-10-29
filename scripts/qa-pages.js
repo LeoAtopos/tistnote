@@ -6,7 +6,7 @@ async page => {
   const check=(ok,message)=>{if(!ok)throw Error(message);};
   const failures=[];
   page.on('pageerror',error=>failures.push(String(error)));
-  const fonts=()=>page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>({text:el.textContent.slice(0,60),size:parseFloat(getComputedStyle(el).fontSize)})).filter(row=>row.size<18));
+  const fonts=()=>page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>({text:el.textContent.slice(0,60),size:parseFloat(getComputedStyle(el).fontSize)})).filter(row=>row.size<13));
   await page.addInitScript(()=>{
     localStorage.setItem('tistnote-preferences-v1',JSON.stringify({language:'en',theme:'light'}));
     localStorage.setItem('tistnote-introduction-seen-v1','1');
@@ -93,7 +93,7 @@ async page => {
   await page.getByRole('dialog').waitFor({state:'hidden'});
   await page.getByRole('heading',{name:'Web folder test',exact:true}).last().waitFor();
   await page.screenshot({path:'output/playwright/pages-local-1440.png'});
-  check(!(await fonts()).length,'Desktop text below 18px');
+  check(!(await fonts()).length,'Desktop text below 13px');
   await page.setViewportSize({width:390,height:844});
   await page.locator('.rail nav button').first().click();
   await page.getByRole('button',{name:'Settings',exact:true}).waitFor({state:'visible'});
@@ -101,7 +101,7 @@ async page => {
   await page.screenshot({path:'output/playwright/pages-local-390.png'});
   const narrow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
   check(narrow.scroll<=narrow.width,'Narrow Pages layout overflow');
-  check(!(await fonts()).length,'Narrow text below 18px');
+  check(!(await fonts()).length,'Narrow text below 13px');
   check(!failures.length,failures.join('\n'));
   const disk=await page.evaluate(async id=>{
     const root=await navigator.storage.getDirectory(),backups=await root.getDirectoryHandle('qa-backups');

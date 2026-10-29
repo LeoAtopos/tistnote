@@ -40,7 +40,7 @@ async page => {
           const buttons = [...el.querySelectorAll('button')];
           return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, viewportLeft: v?.offsetLeft ?? 0, viewportTop: v?.offsetTop ?? 0, width: v?.width ?? innerWidth, height: v?.height ?? innerHeight, minFont: Math.min(...buttons.map(b => parseFloat(getComputedStyle(b).fontSize))), scrollable: getComputedStyle(el).overflowY };
         });
-        if (bounds.left < bounds.viewportLeft + 7 || bounds.right > bounds.viewportLeft + bounds.width - 7 || bounds.top < bounds.viewportTop + 7 || bounds.bottom > bounds.viewportTop + bounds.height - 7 || bounds.minFont < 18) throw Error(JSON.stringify({ width, height, mode, bounds }));
+        if (bounds.left < bounds.viewportLeft + 7 || bounds.right > bounds.viewportLeft + bounds.width - 7 || bounds.top < bounds.viewportTop + 7 || bounds.bottom > bounds.viewportTop + bounds.height - 7 || bounds.minFont < 13) throw Error(JSON.stringify({ width, height, mode, bounds }));
         await menu.getByRole('button').last().evaluate(el => el.scrollIntoView({ block: 'nearest' }));
         const reachable = await menu.getByRole('button').last().evaluate(el => {
           const r = el.getBoundingClientRect();

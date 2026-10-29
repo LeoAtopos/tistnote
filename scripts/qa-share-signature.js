@@ -41,7 +41,7 @@ async page => {
       minFont: Math.min(...[...el.querySelectorAll('label,input,textarea,legend,button,p')].filter(n => n.getClientRects().length).map(n => parseFloat(getComputedStyle(n).fontSize))),
       overflow: el.scrollWidth > el.clientWidth,
     }));
-    check(audit.minFont >= 18 && !audit.overflow, 'Narrow screen font or overflow regression');
+    check(audit.minFont >= 13 && !audit.overflow, 'Narrow screen font or overflow regression');
     await page.screenshot({ path: `output/playwright/signature-${mode}-390.png` });
     await input.fill('');
     await savePreview(dialog, `${mode}-anonymous`);

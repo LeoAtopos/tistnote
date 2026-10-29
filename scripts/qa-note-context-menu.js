@@ -71,7 +71,7 @@ async page => {
       const b = el.getBoundingClientRect();
       return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, minFont: Math.min(...[...el.querySelectorAll('button')].map(button => parseFloat(getComputedStyle(button).fontSize))) };
     });
-    check(layout.left >= 0 && layout.top >= 0 && layout.right <= width && layout.bottom <= height && layout.minFont >= 18, 'Menu clipped or font too small');
+    check(layout.left >= 0 && layout.top >= 0 && layout.right <= width && layout.bottom <= height && layout.minFont >= 13, 'Menu clipped or font too small');
     layouts.push({ width, height, ...layout });
     await page.screenshot({ path: `output/playwright/note-context-menu-${width}.png` });
     await page.keyboard.press('Escape');

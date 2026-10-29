@@ -99,7 +99,7 @@ async page => {
   await page.getByRole('button',{name:/^笔记/}).first().click();
   await page.screenshot({path:'output/playwright/tree-drag-narrow.png',fullPage:true});
   const narrow=await audit();
-  check(desktop.minFont>=18&&narrow.minFont>=18&&desktop.scrollWidth<=desktop.width&&narrow.scrollWidth<=narrow.width,'Font/overflow regression');
+  check(desktop.minFont>=13&&narrow.minFont>=13&&desktop.scrollWidth<=desktop.width&&narrow.scrollWidth<=narrow.width,'Font/overflow regression');
   const beforeReload=JSON.stringify((await stored()).vault);
   await page.reload();
   check(JSON.stringify((await stored()).vault)===beforeReload,'Moved groups lost on reload');

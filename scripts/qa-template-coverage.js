@@ -55,7 +55,7 @@ async page => {
     check(await page.locator('.random-card .template-covered').innerText()==='有品','Random selection lost covered badge');
     await page.screenshot({path:`output/playwright/template-coverage-${width}.png`,fullPage:true});
     const result=await audit();
-    check(result.minFont>=18&&result.scrollWidth<=width&&result.navScrollWidth<=result.navWidth,'Font or overflow regression: '+JSON.stringify(result));
+    check(result.minFont>=13&&result.scrollWidth<=width&&result.navScrollWidth<=result.navWidth,'Font or overflow regression: '+JSON.stringify(result));
     audits.push(result);
     await page.getByRole('button',{name:'清除',exact:true}).click();
     await page.getByRole('button',{name:'展开或收起搜索',exact:true}).click();

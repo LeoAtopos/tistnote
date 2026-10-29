@@ -42,7 +42,7 @@ async (page) => {
       inside: mark.getBoundingClientRect().right <= innerWidth
     };
   });
-  check(layout.width <= layout.viewport && layout.titleFont >= 18 && layout.markFont >= 18 && layout.sameRow && layout.inside, 'Long title layout failed: ' + JSON.stringify(layout));
+  check(layout.width <= layout.viewport && layout.titleFont >= 13 && layout.markFont >= 13 && layout.sameRow && layout.inside, 'Long title layout failed: ' + JSON.stringify(layout));
   await page.screenshot({ path: 'output/playwright/compact-long-title-narrow.png', fullPage: true });
   await card(long).click();
   await page.getByRole('button', {name:'编辑',exact:true}).click();

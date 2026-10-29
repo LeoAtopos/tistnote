@@ -16,7 +16,7 @@ async page=>{
      return {clip:getComputedStyle(slide).overflowX,gap:text.top-art.bottom,top:art.top-view.top,bottom:view.bottom-text.bottom,font:parseFloat(getComputedStyle(slide.querySelector('h2')).fontSize)};
     });
     if(metrics.clip!=='hidden')throw Error('Slide must clip neighboring artwork');
-    if(metrics.top < -1||metrics.bottom < -1||metrics.font<18)throw Error(JSON.stringify({size,i,metrics}));
+    if(metrics.top < -1||metrics.bottom < -1||metrics.font<13)throw Error(JSON.stringify({size,i,metrics}));
     if(size.width<size.height&&(metrics.gap<0||metrics.gap>18))throw Error('Bad spacing '+JSON.stringify(metrics));
     results.push({size,page:i+1,...metrics});
     if(i===4)await tab.screenshot({path:`output/playwright/intro-spacing-${size.width}.png`});

@@ -15,8 +15,8 @@ async page => {
       check(await tab.getByRole('button',{name:'Create or open a local library',exact:true}).count()===1,'Introduction requires a library');
       check(await tab.evaluate(()=>localStorage.getItem('tistnote-introduction-seen-v1'))===null,'First visit unexpectedly marked as seen');
       await intro.locator('.intro-slide[aria-hidden="false"] img').evaluate(img=>img.decode());
-      const small=await intro.evaluate(dialog=>[...dialog.querySelectorAll('*')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(node=>node.nodeType===3&&node.textContent.trim())&&parseFloat(getComputedStyle(el).fontSize)<18).length);
-      check(!small,'Introduction text below 18px');
+      const small=await intro.evaluate(dialog=>[...dialog.querySelectorAll('*')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(node=>node.nodeType===3&&node.textContent.trim())&&parseFloat(getComputedStyle(el).fontSize)<13).length);
+      check(!small,'Introduction text below 13px');
       await tab.screenshot({path:`output/playwright/web-introduction-${width}.png`});
       for(let i=1;i<=6;i++){
         const active=intro.locator('.intro-slide[aria-hidden="false"]');
@@ -36,7 +36,7 @@ async page => {
       await intro.waitFor({state:'hidden'});
       await tab.getByRole('button',{name:'Settings',exact:true}).click();
       const settings=tab.getByRole('dialog',{name:'Local library',exact:true});
-      check(await settings.getByRole('button',{name:'Introduction',exact:true}).evaluate(button=>parseFloat(getComputedStyle(button).fontSize))>=22,'Settings guide text too small');
+      check(await settings.getByRole('button',{name:'Introduction',exact:true}).evaluate(button=>parseFloat(getComputedStyle(button).fontSize))>=14,'Settings guide text too small');
       await settings.screenshot({path:`output/playwright/settings-guide-${width}.png`});
       await settings.getByRole('button',{name:'Introduction',exact:true}).click();
       await settings.waitFor({state:'hidden'});

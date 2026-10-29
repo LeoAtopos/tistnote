@@ -29,7 +29,7 @@ async page => {
     check(await tree.locator('.tree-note').count()===2,'Startup lost notes');
     await page.screenshot({path:`output/playwright/startup-list-${width}.png`,fullPage:true});
     const result=await audit();
-    check(result.minFont>=18&&result.scrollWidth<=width,'Font or overflow regression');
+    check(result.minFont>=13&&result.scrollWidth<=width,'Font or overflow regression');
     results.push(result);
     await card('想反复重看的电影').click();
     await page.getByRole('article',{name:'笔记内容',exact:true}).waitFor();

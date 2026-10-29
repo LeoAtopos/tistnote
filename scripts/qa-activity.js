@@ -90,7 +90,7 @@ async page => {
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:'output/playwright/activity-narrow.png',fullPage:true});
   const narrow=await audit();
-  check(desktop.minFont>=18&&narrow.minFont>=18&&desktop.scrollWidth<=desktop.width&&narrow.scrollWidth<=narrow.width,'Font or page overflow regression: '+JSON.stringify({desktop,narrow}));
+  check(desktop.minFont>=13&&narrow.minFont>=13&&desktop.scrollWidth<=desktop.width&&narrow.scrollWidth<=narrow.width,'Font or page overflow regression: '+JSON.stringify({desktop,narrow}));
   check(narrow.graphScrollable,'Narrow chart should scroll within its own panel');
   await page.reload();
   await history();

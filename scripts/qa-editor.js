@@ -16,7 +16,7 @@ async (page) => {
   await page.getByRole('textbox',{name:'笔记主题',exact:true}).press('Control+s');
   await page.getByRole('status').filter({hasText:'已保存'}).waitFor();
   await page.screenshot({path:'output/playwright/editor-desktop.png',fullPage:true});
-  const fonts=await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&([...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||['INPUT','TEXTAREA','SELECT'].includes(e.tagName))).map(e=>({text:(e.textContent||e.getAttribute('aria-label')||'').slice(0,35),px:parseFloat(getComputedStyle(e).fontSize)})).filter(x=>x.px<18));
+  const fonts=await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&([...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||['INPUT','TEXTAREA','SELECT'].includes(e.tagName))).map(e=>({text:(e.textContent||e.getAttribute('aria-label')||'').slice(0,35),px:parseFloat(getComputedStyle(e).fontSize)})).filter(x=>x.px<13));
   if(fonts.length) throw Error(JSON.stringify(fonts));
-  return {editor:'passed',minimumFont:'18px',entries:3};
+  return {editor:'passed',minimumFont:'13px',entries:3};
 }

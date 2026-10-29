@@ -24,7 +24,7 @@ async page => {
         const nav=document.querySelector('.intro-navigation').getBoundingClientRect();
         return {captionTop:caption.top,captionBottom:caption.bottom,navTop:nav.top,navBottom:nav.bottom,font:parseFloat(getComputedStyle(el.querySelector('.intro-caption')).fontSize),artHeight:el.querySelector('.intro-art').getBoundingClientRect().height};
       });
-      check(layout.font>=18&&layout.captionTop>=0&&layout.captionBottom<=layout.navTop&&layout.navBottom<=height&&layout.artHeight>=100,'English intro clipped '+JSON.stringify({width,height,i,layout}));
+      check(layout.font>=13&&layout.captionTop>=0&&layout.captionBottom<=layout.navTop&&layout.navBottom<=height&&layout.artHeight>=100,'English intro clipped '+JSON.stringify({width,height,i,layout}));
       introLayouts.push({width,height,page:i+1,...layout});
       if(i===0||i===5)await page.screenshot({path:`output/playwright/intro-en-dark-${width}-page-${i+1}.png`});
       if(i<5)await intro.getByRole('button',{name:'Next',exact:true}).click();

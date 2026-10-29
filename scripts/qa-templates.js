@@ -26,7 +26,7 @@ async(page)=>{
  await page.setViewportSize({width:390,height:844});
  await page.evaluate(()=>window.scrollTo(0,0));
  await page.screenshot({path:'output/playwright/templates-mobile.png',fullPage:true});
- const bad=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,small:[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&e.textContent.trim()&&parseFloat(getComputedStyle(e).fontSize)<18).length}));
+ const bad=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,small:[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&e.textContent.trim()&&parseFloat(getComputedStyle(e).fontSize)<13).length}));
  if(bad.overflow||bad.small)throw Error(JSON.stringify(bad));
  await page.setViewportSize({width:1440,height:1000});
  return {templates:'filter, random, independent note, personal template, mobile passed'};

@@ -77,7 +77,7 @@ async page => {
   await tab.locator('.tag-filter').getByRole('button',{name:'全部',exact:true}).click();
   await tab.getByRole('button',{name:'搜索和标签',exact:true}).click();
   for(let i=0;i<6;i++)if(!await canvas.getByRole('button',{name:'缩小画布',exact:true}).isDisabled())await canvas.getByRole('button',{name:'缩小画布',exact:true}).click();
-  check(await canvas.locator('.graph-tag').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))>=18,'Zoom shrank readable text');
+  check(await canvas.locator('.graph-tag').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize))>=13,'Zoom shrank readable text');
   await canvas.getByRole('button',{name:'居中',exact:true}).click();
   await tab.getByRole('button',{name:'卡片视图',exact:true}).click();
   check(await tab.locator('.template-grid > .template-card').count()===45,'Card fallback lost templates');
@@ -121,7 +121,7 @@ async page => {
   await node.focus();await node.click();await card.waitFor();
   await tab.screenshot({path:'output/playwright/template-canvas-mobile.png',fullPage:true});
   const fonts=await tab.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>parseFloat(getComputedStyle(el).fontSize)));
-  check(Math.min(...fonts)>=18,'Rendered text below 18px');
+  check(Math.min(...fonts)>=13,'Rendered text below 13px');
   check(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile horizontal overflow');
   await card.getByRole('button',{name:'关闭模板详情',exact:true}).click();
   await tab.evaluate(()=>{

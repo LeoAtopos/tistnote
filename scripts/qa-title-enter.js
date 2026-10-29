@@ -93,7 +93,7 @@ async page => {
       check(stored.length === 1 && stored[0].note.title === '愿意再去的地方' && stored[0].note.tags.includes('测试') && stored[0].note.entries[0].name === '大山与河流', 'Stored draft/title/options mismatch');
       await tab.screenshot({ path: `output/playwright/writing-flow-${width}-${language}.png` });
       const minFont = await description.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
-      check(minFont >= 18 && await tab.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Font or horizontal overflow regression');
+      check(minFont >= 13 && await tab.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Font or horizontal overflow regression');
       const createAnother = async () => {
         const back = tab.locator('.editor-toolbar .back-button');
         if (await back.isVisible()) await back.click();

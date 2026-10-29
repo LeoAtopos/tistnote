@@ -109,7 +109,7 @@ async page => {
         await tab.mouse.move(1, 1);
         await tab.clock.runFor(250);
         const fonts = await tab.evaluate(() => [...document.querySelectorAll('body *')].filter(el => el.getClientRects().length && [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())).map(el => parseFloat(getComputedStyle(el).fontSize)));
-        if (Math.min(...fonts) < 18) throw Error('Rendered text below 18px');
+        if (Math.min(...fonts) < 13) throw Error('Rendered text below 13px');
         const file = `docs/screenshots/${name}-${language}.png`;
         const png = await tab.screenshot({ path: file, animations: 'disabled' });
         results.push({ file, minFont: Math.min(...fonts), bytes: png.length });

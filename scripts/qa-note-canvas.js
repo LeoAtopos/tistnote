@@ -86,7 +86,7 @@ async page=>{
   await tab.waitForFunction(()=>document.querySelector('.note-list-heading button.primary')?.disabled===false);
   await tab.screenshot({path:'output/playwright/note-canvas-mobile-light-en.png',animations:'disabled'});
   const fonts=await tab.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>parseFloat(getComputedStyle(el).fontSize)));
-  check(Math.min(...fonts)>=18,'Font below 18px');
+  check(Math.min(...fonts)>=13,'Font below 13px');
   check(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow');
   check(errors.length===0,errors.join('\n'));
   return {defaultList:true,notes:6,nestedGroups:true,ungrouped:true,filled:4,reviewMarkers:2,reviewConfirmation:true,liveDueTimer:true,search:true,zoom:true,pan:true,listToggle:true,keyboard:true,mobileHeight:mobile.height,minFont:Math.min(...fonts)};

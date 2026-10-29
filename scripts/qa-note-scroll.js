@@ -44,7 +44,7 @@ async page => {
       check(after.toolbar.top===before.toolbar.top && after.rail.top===before.rail.top && after.listTools.top===before.listTools.top,'Other panels moved');
       check(after.list.scroll===before.list.scroll,'Content scrolling moved the note list');
       check(after.toolbar.top>=0 && after.toolbar.bottom<=height,'Toolbar left the viewport');
-      check(after.minimumFont>=18 && after.documentWidth<=width,'Font/width rule failed');
+      check(after.minimumFont>=13 && after.documentWidth<=width,'Font/width rule failed');
       await page.locator('.note-content').evaluate(el=>el.scrollTop=el.scrollHeight);
       await page.mouse.wheel(0,1000);
       await page.waitForTimeout(100);

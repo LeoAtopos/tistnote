@@ -43,6 +43,6 @@ async page => {
   await page.locator('.editor').getByRole('button',{name:'历史',exact:true}).click();
   await page.getByRole('dialog',{name:'审美与偏好的变化',exact:true}).waitFor();
   await page.getByRole('button',{name:'关闭对话框',exact:true}).click();
-  for(const result of results)check(result.minFont>=18&&result.scrollWidth<=result.width,'Font or overflow regression: '+JSON.stringify(result));
+  for(const result of results)check(result.minFont>=13&&result.scrollWidth<=result.width,'Font or overflow regression: '+JSON.stringify(result));
   return {welcome:'aesthetics and preferences including likes and dislikes',empty:'start from observation',templates:'45 topics, original IDs preserved; negative topic searchable',editor:'neutral reason prompt; negative content unchanged',history:'aesthetics and preferences',results};
 }

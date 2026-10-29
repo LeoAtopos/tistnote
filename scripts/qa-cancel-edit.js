@@ -39,7 +39,7 @@ async page => {
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:'output/playwright/cancel-edit-confirm-narrow.png'});
   const audit=await confirmation.evaluate(el=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minFont:Math.min(...[...el.querySelectorAll('*')].filter(n=>n.getClientRects().length).map(n=>parseFloat(getComputedStyle(n).fontSize)))}));
-  check(audit.minFont>=18&&audit.scrollWidth<=audit.width,'Cancel dialog layout/font rule failed');
+  check(audit.minFont>=13&&audit.scrollWidth<=audit.width,'Cancel dialog layout/font rule failed');
   await confirmation.getByRole('button',{name:'放弃更新',exact:true}).click();
   await page.getByRole('button',{name:'编辑',exact:true}).waitFor();
   let current=(await stored()).vault.notes[0];

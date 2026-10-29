@@ -21,12 +21,12 @@ async page=>{
     if(!['https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote.exe','https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk'].includes(href))throw Error('Wrong welcome download URL');
    }
    const welcomeLayout=await welcome.evaluate(el=>({minFont:Math.min(...[...el.querySelectorAll('a')].map(n=>parseFloat(getComputedStyle(n).fontSize))),overflow:document.documentElement.scrollWidth>innerWidth}));
-   if(welcomeLayout.minFont<18||welcomeLayout.overflow)throw Error(JSON.stringify(welcomeLayout));
+   if(welcomeLayout.minFont<13||welcomeLayout.overflow)throw Error(JSON.stringify(welcomeLayout));
    if(platform==='web')await tab.screenshot({path:`output/playwright/welcome-downloads-${width}.png`,fullPage:true});
    if(platform==='web'){
     const banner=tab.locator('.preview-banner');
     if(await banner.count()!==1)throw Error('Browser tip missing');
-    if(await banner.locator('span').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))<18)throw Error('Browser tip font too small');
+    if(await banner.locator('span').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))<13)throw Error('Browser tip font too small');
     await banner.getByRole('button',{name:'关闭提示',exact:true}).focus();
     await tab.keyboard.press('Enter');
     if(await banner.count())throw Error('Browser tip did not close');
@@ -45,7 +45,7 @@ async page=>{
    }
    if(await android.count()&&await android.getAttribute('href')!=='https://github.com/LeoAtopos/tistnote/releases/download/v0.2.0/tistnote-0.2.0-android.apk')throw Error('Wrong APK URL');
    const layout=await modal.evaluate(el=>({minFont:Math.min(...[...el.querySelectorAll('a,strong,span,button,h2')].map(n=>parseFloat(getComputedStyle(n).fontSize))),overflow:el.scrollWidth>el.clientWidth}));
-   if(layout.minFont<18||layout.overflow)throw Error(JSON.stringify(layout));
+   if(layout.minFont<13||layout.overflow)throw Error(JSON.stringify(layout));
    if(platform==='web')await tab.screenshot({path:`output/playwright/install-menu-web-${width}.png`});
    if(platform==='web'){
     await tab.evaluate(()=>{const key='tistnote-preferences-v1',newValue=JSON.stringify({language:'en',theme:'light'});localStorage.setItem(key,newValue);window.dispatchEvent(new StorageEvent('storage',{key,newValue}));});

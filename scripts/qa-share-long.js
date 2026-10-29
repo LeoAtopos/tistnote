@@ -43,7 +43,7 @@ async page => {
   await page.setViewportSize({ width: 390, height: 844 });
   await dialog.evaluate(el => { el.scrollTop = 0; });
   const layout = await dialog.evaluate(el => ({ font: parseFloat(getComputedStyle(el.querySelector('select')).fontSize), overflow: el.scrollWidth > el.clientWidth }));
-  check(layout.font >= 18 && !layout.overflow, 'Narrow layout regressed');
+  check(layout.font >= 13 && !layout.overflow, 'Narrow layout regressed');
   await page.screenshot({ path: 'output/playwright/share-long-390.png' });
   const drawing = await page.evaluate(async () => {
     const { renderShare, MAX_LONG_HEIGHT } = await import('/src/share.ts');

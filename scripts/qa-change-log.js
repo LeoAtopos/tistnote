@@ -45,7 +45,7 @@ async page => {
   await field().fill('复核当前选择，没有调整内容。');
   await page.setViewportSize({width:390,height:844});
   const audit = await dialog.evaluate(el=>({width:document.documentElement.scrollWidth,viewport:innerWidth,minFont:Math.min(...[...el.querySelectorAll('*')].filter(n=>n.getClientRects().length).map(n=>parseFloat(getComputedStyle(n).fontSize)))}));
-  check(audit.width<=audit.viewport && audit.minFont>=18,'Narrow modal/font rule failed');
+  check(audit.width<=audit.viewport && audit.minFont>=13,'Narrow modal/font rule failed');
   await page.screenshot({path:'output/playwright/change-log-narrow.png'});
   await page.evaluate(()=>{
     window.changeLogSetItem = Storage.prototype.setItem;

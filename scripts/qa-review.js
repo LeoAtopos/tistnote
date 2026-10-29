@@ -67,13 +67,13 @@ async page => {
     return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minFont:Math.min(...nodes.map(el=>parseFloat(getComputedStyle(el).fontSize)))};
   });
   const editing=await audit();
-  check(editing.minFont>=18 && editing.scrollWidth<=editing.width,'Narrow editing layout failed');
+  check(editing.minFont>=13 && editing.scrollWidth<=editing.width,'Narrow editing layout failed');
   await page.getByRole('button',{name:'完成编辑',exact:true}).click();
   await page.getByRole('button',{name:'提交更新',exact:true}).click();
   await page.getByRole('button',{name:'回顾确认',exact:true}).waitFor();
   await page.screenshot({path:'output/playwright/review-read-narrow.png'});
   const reading=await audit();
-  check(reading.minFont>=18 && reading.scrollWidth<=reading.width,'Narrow reading layout failed');
+  check(reading.minFont>=13 && reading.scrollWidth<=reading.width,'Narrow reading layout failed');
   await page.getByRole('button',{name:'‹ 笔记',exact:true}).click();
   await page.screenshot({path:'output/playwright/review-list-narrow.png'});
   await card('旧版品单').click();

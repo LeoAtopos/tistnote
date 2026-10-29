@@ -82,7 +82,7 @@ async page => {
       const visible=[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden'&&([...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||el.matches('input,textarea,select')));
       return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,minFont:Math.min(...visible.map(el=>parseFloat(getComputedStyle(el).fontSize)))};
     });
-    check(audit.minFont>=18&&audit.scrollWidth<=width,'Font or overflow regression: '+JSON.stringify(audit));
+    check(audit.minFont>=13&&audit.scrollWidth<=width,'Font or overflow regression: '+JSON.stringify(audit));
     audits.push(audit);
     await page.screenshot({path:`output/playwright/template-note-library-${width}.png`,fullPage:true});
     await random.getByRole('button',{name:'查看笔记',exact:true}).click();

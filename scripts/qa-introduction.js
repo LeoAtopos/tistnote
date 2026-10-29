@@ -43,7 +43,7 @@ async page => {
       });
       if(i===5) await page.waitForFunction(()=>parseFloat(getComputedStyle(document.querySelectorAll('.intro-writing.active .intro-stroke')[4]).strokeDashoffset)===0);
       const layout=await audit();
-      check(layout.minFont>=18&&layout.scrollWidth<=width,'Font/horizontal overflow '+JSON.stringify(layout));
+      check(layout.minFont>=13&&layout.scrollWidth<=width,'Font/horizontal overflow '+JSON.stringify(layout));
       check(layout.dialogTop>=0&&layout.dialogBottom<=height+1&&layout.navBottom<=height&&layout.captionBottom<=layout.navTop&&layout.artHeight>=100,'Clipped introduction '+JSON.stringify(layout));
       await page.screenshot({path:`output/playwright/intro-${width}-page-${i+1}.png`});
       if(i<5)await turn();

@@ -86,7 +86,7 @@ async page => {
   await english.getByText(/Avoid private browsing/).waitFor();
   await tab.screenshot({path:'output/playwright/ios-local-settings-en-ipad.png'});
   const minFont=await english.evaluate(el=>Math.min(...[...el.querySelectorAll('*')].filter(n=>n.getClientRects().length&&[...n.childNodes].some(c=>c.nodeType===3&&c.textContent.trim())).map(n=>parseFloat(getComputedStyle(n).fontSize))));
-  check(minFont>=18,'Text below 18px');
+  check(minFont>=13,'Text below 13px');
   check(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal page overflow');
   check(errors.length===0,errors.join('\n'));
   return {browserLocal:true,markdown:true,reload:true,tipDismissal:true,multiTabLock:true,quotaPreservesOriginal:true,zipDownload:true,restoreNewLibrary:true,corruptBackupPreserves:true,switchLibrary:true,newLibrary:true,markdownImport:true,english:true,minFont};

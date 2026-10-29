@@ -43,7 +43,7 @@ async page => {
       check(JSON.stringify((await state()).vault) === JSON.stringify(before.vault), 'Invalid path changed library');
       await input.fill('新组');
       const layoutCheck = await dialog.evaluate(el => ({ minFont: Math.min(...[...el.querySelectorAll('*')].filter(n => n.getClientRects().length && [...n.childNodes].some(t => t.nodeType === 3 && t.textContent.trim())).map(n => parseFloat(getComputedStyle(n).fontSize))), overflow: el.scrollWidth > el.clientWidth }));
-      check(layoutCheck.minFont >= 18 && !layoutCheck.overflow, 'Rename dialog font or overflow regression');
+      check(layoutCheck.minFont >= 13 && !layoutCheck.overflow, 'Rename dialog font or overflow regression');
       await tab.screenshot({ path: `output/playwright/group-rename-${width}-${language}.png` });
       await save.click(); await dialog.waitFor({ state: 'hidden' });
       await group('新组/子组').waitFor();

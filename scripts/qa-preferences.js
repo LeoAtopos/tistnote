@@ -49,7 +49,7 @@ async page => {
     for (const [width,height] of [[1440,1000],[390,844]]) {
       await page.setViewportSize({width,height});
       const result = await audit();
-      check(result.minFont>=18&&!result.overflow,'Invalid settings layout '+JSON.stringify({lang,appearance,width,result}));
+      check(result.minFont>=13&&!result.overflow,'Invalid settings layout '+JSON.stringify({lang,appearance,width,result}));
       await page.screenshot({path:`output/playwright/preferences-${lang}-${appearance}-${width}.png`});
       layouts.push({lang,appearance,width,...result});
     }

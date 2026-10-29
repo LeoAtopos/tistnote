@@ -117,7 +117,7 @@ async page=>{
   await tab.setViewportSize({width:390,height:844});await canvas.waitFor();await idle();
   await tab.screenshot({path:'output/playwright/canvas-organize-mobile.png',animations:'disabled'});
   const minFont=await tab.evaluate(()=>Math.min(...[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>parseFloat(getComputedStyle(el).fontSize))));
-  check(minFont>=18,'Text below 18px');check(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow');
+  check(minFont>=13,'Text below 13px');check(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow');
   check(errors.length===0,errors.join('\n'));
   return {contextNote:true,contextSubgroup:true,notePosition:true,groupPosition:true,subtreeDrag:true,siblingOrder:true,listOrder:true,noteMove:true,groupMove:true,markdownPreserved:true,reopen:true,cancel:true,pinchCancel:true,keyboardPosition:true,selectedRingRemoved:true,minFont};
  }catch(error){await tab.screenshot({path:'output/playwright/canvas-organize-failure.png'});throw Error(String(error)+'\n'+(await tab.locator('body').innerText()).slice(-2000))}

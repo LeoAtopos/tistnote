@@ -17,7 +17,7 @@ async (page) => {
   await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:'output/playwright/editor-mobile.png',fullPage:true});
-  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,tooSmall:[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&([...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||['INPUT','TEXTAREA','SELECT'].includes(e.tagName))).filter(e=>parseFloat(getComputedStyle(e).fontSize)<18).map(e=>e.tagName)}));
+  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,tooSmall:[...document.querySelectorAll('body *')].filter(e=>e instanceof HTMLElement&&e.checkVisibility()&&([...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||['INPUT','TEXTAREA','SELECT'].includes(e.tagName))).filter(e=>parseFloat(getComputedStyle(e).fontSize)<13).map(e=>e.tagName)}));
   if(layout.scroll>layout.width||layout.tooSmall.length)throw Error(JSON.stringify(layout));
   await page.setViewportSize({width:1440,height:1000});
   return {share:'PNG exported',invitation:'PNG exported',mobile:layout};

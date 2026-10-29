@@ -31,6 +31,6 @@ async page=>{
  await share.getByText('Copied to clipboard',{exact:true}).waitFor();
  await share.getByRole('button',{name:'Close dialog',exact:true}).click();
  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,minFont:Math.min(...[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length&&[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())).map(el=>parseFloat(getComputedStyle(el).fontSize)))}));
- if(layout.scroll>layout.width||layout.minFont<18||errors.length)throw Error(JSON.stringify({layout,errors}));
+ if(layout.scroll>layout.width||layout.minFont<13||errors.length)throw Error(JSON.stringify({layout,errors}));
  return {nativeAndroid:await page.evaluate(()=>!!window.TistnoteAndroid),unicodeNote:true,review:true,clipboard:true,...layout};
 }

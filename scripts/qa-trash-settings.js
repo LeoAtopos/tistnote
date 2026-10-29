@@ -25,7 +25,7 @@ async page => {
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:'output/playwright/trash-settings-narrow.png',fullPage:true});
   const audit=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,fonts:[...document.querySelectorAll('.modal button')].filter(el=>el.getClientRects().length).map(el=>parseFloat(getComputedStyle(el).fontSize))}));
-  check(audit.width>=audit.scrollWidth&&audit.fonts.every(px=>px>=18),'Settings font or overflow regression');
+  check(audit.width>=audit.scrollWidth&&audit.fonts.every(px=>px>=13),'Settings font or overflow regression');
   await settings.getByRole('button',{name:'回收站',exact:true}).click();
   await page.getByRole('heading',{name:'回收站',exact:true}).waitFor();
   check(await settings.count()===0,'Settings did not close after opening trash');
