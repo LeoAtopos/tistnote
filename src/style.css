@@ -2364,3 +2364,10 @@ fieldset.editor-page {
     margin-left: auto;
   }
 }
+
+.startup { min-height: 100dvh; display: grid; place-items: center; padding: 24px; text-align: center; }
+.startup-content { width: min(100%, 520px); }
+.startup h1 { font-size: 32px; margin: 16px 0; }
+.startup p { font-size: 20px; }
+.startup progress { width: min(100%, 320px); accent-color: var(--green); }
+.startup-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }

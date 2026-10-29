@@ -1,5 +1,5 @@
 import { tr } from "./i18n";
-import { language, theme } from "./preferences";
+import { introductionImage } from "./introduction-art";
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "./components";
 
@@ -76,7 +76,7 @@ export function Introduction({ onClose }: { onClose: () => void }) {
               <article className="intro-slide" key={index} data-intro-page={index + 1} aria-hidden={index !== page} inert={index !== page}>
                 <div className="intro-art">
                   {slide.image ? (
-                    index <= page + 1 && <img decoding="async" fetchPriority={index === page ? "high" : "low"} src={`${import.meta.env.BASE_URL}introduction/${slide.image === "brand.svg" ? `brand${language() === "en" ? "-en" : ""}${theme() === "dark" ? "-dark" : ""}.svg` : slide.image}`} alt={tr(slide.alt)} draggable={false} />
+                    index <= page + 1 && <img decoding="async" fetchPriority={index === page ? "high" : "low"} src={introductionImage(slide.image)} alt={tr(slide.alt)} draggable={false} />
                   ) : (
                     <WritingIllustration key={page === index ? "playing" : "waiting"} active={page === index} />
                   )}

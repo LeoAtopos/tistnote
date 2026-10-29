@@ -659,5 +659,10 @@
   "选择“添加到主屏幕”，再点“添加”。": "Choose Add to Home Screen, then tap Add.",
   "如果找不到这个选项，请用 Safari 打开当前网址；也可在共享菜单底部的“编辑操作”中查找。": "If the option is missing, open this address in Safari. You can also look under Edit Actions at the bottom of the Share menu.",
   "已有笔记？先在设置中导出“完整备份”。主屏幕网页 App 与浏览器的存储独立，笔记不会自动迁移；从主屏幕打开后，可在设置中“从备份恢复”。": "Already have notes? Use Settings → Full backup first. The Home Screen web app and your browser have separate storage; notes do not move automatically. After opening from the Home Screen, use Settings → Restore backup.",
-  "页面资源需要联网加载；添加到主屏幕不会开启云同步。删除主屏幕网页 App 前请先备份。": "Page resources load over the internet. Adding to Home Screen does not enable cloud sync. Back up before deleting the Home Screen web app."
+  "页面资源需要联网加载；添加到主屏幕不会开启云同步。删除主屏幕网页 App 前请先备份。": "Page resources load over the internet. Adding to Home Screen does not enable cloud sync. Back up before deleting the Home Screen web app.",
+  "正在加载引导图片…": "Loading introduction images…",
+  "图片加载未完成，请检查网络后重试。": "Images could not finish loading. Check your connection and retry.",
+  "图片加载进度": "Image loading progress",
+  "跳过加载，进入品记": "Skip loading and enter Tistnote",
+  "重试": "Retry"
 }
