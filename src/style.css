@@ -1613,6 +1613,12 @@ summary {
   .intro-caption { margin-top: 8px; margin-bottom: 12px; font-size: 22px; }
   .intro-navigation { padding-top: 10px; padding-bottom: 10px; }
 }
+@media (orientation: portrait) {
+  .intro-slide { justify-content: center; }
+  .intro-art { flex: 0 1 auto; min-height: 0; aspect-ratio: 3 / 2; max-height: 60%; }
+  .intro-caption { margin-top: 16px; }
+  .intro-slide[data-intro-page="1"] .intro-caption { top: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .intro-track { transition: none; }
   .intro-writing .intro-stroke { animation: none !important; stroke-dashoffset: 0; }
