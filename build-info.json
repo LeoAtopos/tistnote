@@ -1,6 +1,6 @@
 {
-  "sourceCommit": "453fd9937ba86afee2d865533f91a20254381a75",
+  "version": "0.2.0",
+  "sourceCommit": "427aeb7582be0e8280a26465c308cafdbad91cba",
   "edition": "pages",
-  "builtAt": "2026-10-29T11:26:43.7585452Z",
-  "version": "0.2.0"
+  "builtAt": "2026-10-29T11:52:52.4050842Z"
 }
